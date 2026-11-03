@@ -4,40 +4,40 @@
 
 # Duckwalk
 
-Duckwalk turns a Flipper Zero into Harold, a rubber debugging duck who lives on your desk. When you step away, Harold keeps your computer awake by walking the mouse pointer around, never on the same path twice. When you are working, he leaves the pointer alone. The same Flipper is also a remote for the computer.
+Duckwalk turns a Flipper Zero into Harold, a rubber debugging duck who lives on your desk. When you step away, Harold keeps your computer awake by walking the mouse pointer around, never on the same path twice. With the small PC helper running, he lets go the moment you touch your own mouse or keyboard. The same Flipper is also a remote for the computer.
 
-It works over USB or Bluetooth: there is nothing to install on the computer, and no drivers.
+<p align="center">
+  <img src="docs/screens/home-awake@4x.png" width="32%" alt="Harold at his desk, reading code on his laptop">
+  <img src="docs/screens/home-bug-quack@4x.png" width="32%" alt="Harold quacking at a bug in the code">
+  <img src="docs/screens/home-walking@4x.png" width="32%" alt="Harold walking while the pointer walks">
+</p>
 
-> **Status: in development, not released yet.** The USB design has been tested on a Flipper (official firmware 1.5.1) with Windows 11. Version 0.1 is being built in the open; follow the [M1 milestone](https://github.com/arudaev/duckwalk/milestone/2).
+It works over USB or Bluetooth. The Flipper app needs nothing on the computer and no drivers; the PC helper is optional.
+
+> **Status: in development, not released yet.** Tested on a Flipper (official firmware 1.5.1) with Windows 11, over USB and Bluetooth. Version 0.1 is being built in the open; follow the [M1 milestone](https://github.com/arudaev/duckwalk/milestone/2).
+
+**[Read the docs](docs/README.md)**: the [user guide](docs/guide.md) with every screen, the [PC helper](desktop/helper/README.md), and for contributors the [architecture](docs/architecture.md) and [developer guide](docs/development.md).
 
 ## What Harold does
 
 | On the Flipper | What happens on the computer |
 |---|---|
-| **Home** – Harold asleep or awake; OK puts him to sleep or wakes him, holding OK makes him quack | Keep-awake on or off. In **Walk** mode the pointer takes a short, curved, randomised walk every few minutes and Harold walks along on the screen; in **Subtle** mode it moves one pixel and back |
-| **Right** – Settings | Mode, how often, how far, work hours only, sound and vibration. Saved on the SD card in `apps_data/duckwalk/settings.txt` |
-| **Left** – Remote | **Media:** play/pause, next and previous track, volume. **Slides:** next and back, by scrolling, which PowerPoint and most PDF viewers follow. **Mouse:** the D-pad moves the pointer, OK clicks, holding OK right-clicks |
-| **Up** – Preview | The next walk drawn to scale, with a small Harold tracing it. OK plays it now, Right plans a different one |
-| **Back** | Leaves the app; USB goes back to normal |
+| **Home** – Harold at his desk, reading code and hunting bugs. OK puts him to sleep or wakes him; holding OK makes him quack | Keep-awake on or off. In **Walk** mode the pointer takes a short, curved, randomised walk every few minutes and Harold walks along on the screen; in **Subtle** mode it moves one pixel and back |
+| **Right** – Settings | Mode, USB or Bluetooth, how often, how far, work hours only, sound and vibration |
+| **Left** – Remote | **Media:** play/pause, tracks, volume. **Slides:** next and back. **Mouse:** the D-pad moves the pointer, OK clicks |
+| **Up** – Preview | The next walk drawn to scale before it happens; OK plays it now |
+| **Down** – Bluetooth | A pairing checklist that shows which side, Flipper or computer, needs attention |
+| **Back** | Leaves the app; USB and Bluetooth go back to normal |
 
-Planned next: an optional desktop app where Harold walks along your taskbar and starts walks only when you are really away.
-
-## Connecting over Bluetooth
-
-1. On the Flipper, open Duckwalk, press **Right** for Settings and set **Connection** to **Bluetooth**. Make sure Bluetooth is on in the Flipper's own settings.
-2. Press **Back**. Duckwalk shows the pairing screen with the name to look for, for example **Harold Rgudalap** (Harold plus your Flipper's name).
-3. On Windows: **Settings > Bluetooth & devices > Add device > Bluetooth**, then pick that name. On macOS: **System Settings > Bluetooth**, then **Connect** next to it.
-4. The Flipper says "Connected to" and goes back to Harold. From then on the computer reconnects by itself whenever Duckwalk runs in Bluetooth mode.
-
-If the name doesn't show up on Windows, set **Bluetooth devices discovery** to **Advanced** on the same settings page. To start over, hold **OK** on the pairing screen (press **Down** on the home screen to open it) and remove Harold on the computer as well.
-
-In Bluetooth mode the USB port stays a normal Flipper port, so charging and qFlipper keep working.
+The [user guide](docs/guide.md) shows every screen.
 
 ## How it works
 
 Most Flipper apps that talk to a computer switch the USB port into a single mode, so a mouse jiggler and a PC monitor cannot run at the same time. Duckwalk presents one USB device with three parts: a mouse, media keys and a small data channel. All three are standard USB HID, which computers support without extra drivers; so far it has been tested on Windows 11, and macOS and Linux reports are welcome.
 
 Teams, screen savers and lock timers decide you are away from the computer's idle timer, and any mouse input resets it. In our test the idle timer reset with every move while the data channel was busy.
+
+Over Bluetooth, Duckwalk uses the Flipper firmware's own HID profile and pairs like any Bluetooth mouse. The PC helper uses Windows Raw Input to tell your devices from Duckwalk's and sends one number, how long you have been idle, over the USB data channel. The [architecture page](docs/architecture.md) has the diagrams.
 
 ## Install
 

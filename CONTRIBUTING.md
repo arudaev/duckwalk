@@ -52,6 +52,7 @@ Commits are authored by the person who wrote them. Do not add AI co-author trail
 
 ## More
 
+- [Docs hub](docs/README.md): every page in one place, with the [architecture](docs/architecture.md) and the [developer guide](docs/development.md) (debugging, simulator, Bluetooth)
 - [Contributor guide](docs/contributing/README.md): issues, stacks, reviews, brand
 - [Code of conduct](CODE_OF_CONDUCT.md) · [Security policy](SECURITY.md)
 - Agents: [AGENTS.md](AGENTS.md)
