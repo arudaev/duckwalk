@@ -43,7 +43,7 @@
 #define INPUT_QUEUE_LEN 16
 
 /* The longest Harold takes to bring the pointer home when you leave. */
-#define LET_GO_MS 3000
+#define LET_GO_MS (WANDER_HOME_STEPS * WALK_STEP_MS + 500)
 
 static void draw_callback(Canvas* canvas, void* ctx) {
     Duckwalk* app = ctx;

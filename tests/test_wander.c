@@ -48,7 +48,7 @@ static void check_one(WalkLength length, uint32_t seed) {
 }
 
 /* Told to go home at any moment, from anywhere: it lands on the start
- * within the 3 s the app waits on exit. */
+ * within the time the app waits on exit. */
 static void check_homing(WalkLength length, uint32_t seed) {
     Wander w;
     wander_start(&w, length);
@@ -63,7 +63,9 @@ static void check_homing(WalkLength length, uint32_t seed) {
     int steps = 0;
     while(!wander_is_home(&w) && steps < WANDER_HOME_STEPS) {
         WalkPoint m = wander_step(&w);
-        CHECK(abs(m.x) <= 127 && abs(m.y) <= 127, "seed %lu: jump on the way home", (unsigned long)seed);
+        /* No faster than the wander went out: pointer acceleration would
+         * make a faster way home overshoot. */
+        CHECK(abs(m.x) <= 4 && abs(m.y) <= 4, "seed %lu: rushed home (%d,%d)", (unsigned long)seed, m.x, m.y);
         x += m.x;
         y += m.y;
         steps++;
