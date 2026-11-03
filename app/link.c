@@ -52,11 +52,11 @@ static void bt_start(void) {
     bt_disconnect(link.bt);
     furi_delay_ms(200); /* let the radio core drop the old connection */
     bt_keys_storage_set_storage_path(link.bt, BT_KEYS_PATH);
+    /* Subscribe first: the service only reports changes, and advertising
+     * starts as soon as the profile does. */
+    bt_set_status_changed_callback(link.bt, bt_status_changed, NULL);
     link.profile = bt_profile_start(link.bt, ble_profile_hid, (void*)&bt_params);
-    if(link.profile) {
-        furi_hal_bt_start_advertising();
-        bt_set_status_changed_callback(link.bt, bt_status_changed, NULL);
-    }
+    if(link.profile) furi_hal_bt_start_advertising();
 }
 
 static void bt_stop(void) {
@@ -102,27 +102,24 @@ bool link_is_connected(void) {
     return link.profile && link.bt_status == BtStatusConnected;
 }
 
+/* Advertising or connected, asked of the radio itself rather than the last
+ * status message, which can be missed. */
+static bool bt_on_air(void) {
+    return link.profile && (link.bt_status == BtStatusConnected || furi_hal_bt_is_active());
+}
+
 const char* link_status(void) {
     if(link.kind == LinkUsb) {
         if(!link.usb_ok) return "USB busy";
         return usb_duck_is_connected() ? "USB" : "no USB";
     }
     if(!link.profile) return "BT failed";
-    switch(link.bt_status) {
-    case BtStatusConnected:
-        return "BT";
-    case BtStatusAdvertising:
-        return "BT pairing";
-    case BtStatusOff:
-        return "BT off";
-    default:
-        return "no BT";
-    }
+    if(link.bt_status == BtStatusConnected) return "BT";
+    return bt_on_air() ? "BT pairing" : "BT off";
 }
 
 bool link_bt_off(void) {
-    return link.started && link.kind == LinkBluetooth &&
-           (!link.profile || link.bt_status == BtStatusOff);
+    return link.started && link.kind == LinkBluetooth && !bt_on_air();
 }
 
 const char* link_bt_name(void) {
