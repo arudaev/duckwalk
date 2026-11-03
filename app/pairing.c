@@ -1,15 +1,18 @@
-/* Pairing: a checklist that follows the connection from the Flipper to the
- * computer and ticks itself off, so the first open box shows which side
- * needs attention:
+/* Connection check: a checklist that follows the link from the Flipper to
+ * the computer and ticks itself off, so the first open box shows which side
+ * needs attention. Over Bluetooth:
  *   1. Flipper – Harold is on air (Bluetooth on, profile running)
  *   2. PC      – the computer paired and connected
  *   3. PC      – the pointer really moves: Harold draws a small circle and
  *                asks whether you saw it
- * Right shows the fix for the first open box. Opens after choosing Bluetooth
- * in Settings or on the first launch, or with Down on the home screen. */
+ * Over USB the same three, as: Harold has the USB port, the PC sees him, the
+ * pointer moves. Right shows the fix for the first open box. Opens with Down
+ * on the home screen, after choosing Bluetooth in Settings and on the first
+ * launch. Once all is set it also says whether the PC helper is running. */
 
 #include "duckwalk.h"
 #include "duckwalk_icons.h"
+#include "helper.h"
 #include "link.h"
 #include "util.h"
 
@@ -26,14 +29,23 @@ typedef enum {
 static const struct {
     const char* label;
     const char* side;
-} rows[] = {
-    [StepOnAir] = {"Harold on air", "Flipper"},
-    [StepConnected] = {"Paired, connected", "PC"},
-    [StepPointer] = {"Pointer moves", "PC"},
+} rows[LinkCount][StepAllSet] = {
+    [LinkUsb] =
+        {
+            [StepOnAir] = {"Harold has USB", "Flipper"},
+            [StepConnected] = {"PC sees Harold", "PC"},
+            [StepPointer] = {"Pointer moves", "PC"},
+        },
+    [LinkBluetooth] =
+        {
+            [StepOnAir] = {"Harold on air", "Flipper"},
+            [StepConnected] = {"Paired, connected", "PC"},
+            [StepPointer] = {"Pointer moves", "PC"},
+        },
 };
 
 static Step current_step(Duckwalk* app) {
-    if(link_bt_off()) return StepOnAir;
+    if(link_off()) return StepOnAir;
     if(!link_is_connected()) return StepConnected;
     if(!app->pairing.pointer_ok) return StepPointer;
     return StepAllSet;
@@ -59,6 +71,8 @@ static void draw_box(Canvas* canvas, int32_t x, int32_t y, bool done, bool faile
 
 static void draw_checklist(Canvas* canvas, Duckwalk* app) {
     Step step = current_step(app);
+    LinkKind kind = link_kind();
+    bool usb = kind == LinkUsb;
     char line[40];
 
     canvas_set_font(canvas, FontSecondary);
@@ -66,8 +80,8 @@ static void draw_checklist(Canvas* canvas, Duckwalk* app) {
         int32_t y = 15 + i * 11;
         bool failed = i == StepPointer && app->pairing.pointer_failed && step == StepPointer;
         draw_box(canvas, 2, y, i < step, failed, i == step);
-        canvas_draw_str(canvas, 14, y + 8, rows[i].label);
-        canvas_draw_str_aligned(canvas, 126, y + 8, AlignRight, AlignBottom, rows[i].side);
+        canvas_draw_str(canvas, 14, y + 8, rows[kind][i].label);
+        canvas_draw_str_aligned(canvas, 126, y + 8, AlignRight, AlignBottom, rows[kind][i].side);
     }
 
     /* What to do now, in one line. */
@@ -75,7 +89,9 @@ static void draw_checklist(Canvas* canvas, Duckwalk* app) {
     if(app->pairing.testing) {
         next = "Watch the pointer...";
     } else if(step == StepOnAir) {
-        next = "Not on air yet: Help >";
+        next = usb ? "USB is busy: Help >" : "Not on air yet: Help >";
+    } else if(step == StepConnected && usb) {
+        next = "Plug into the PC: Help >";
     } else if(step == StepConnected) {
         snprintf(line, sizeof(line), "PC: add %s", link_bt_name());
     } else if(step == StepPointer && app->pairing.asked) {
@@ -85,7 +101,8 @@ static void draw_checklist(Canvas* canvas, Duckwalk* app) {
     } else if(step == StepPointer) {
         next = "OK: test the pointer";
     } else {
-        next = "All set!";
+        /* The helper is what makes Harold let go while you work. */
+        next = helper_present() ? "All set, PC helper on" : "All set, no PC helper";
     }
     canvas_draw_line(canvas, 0, 50, 127, 50);
     canvas_draw_str(canvas, 2, 60, next);
@@ -93,10 +110,28 @@ static void draw_checklist(Canvas* canvas, Duckwalk* app) {
 
 static void draw_help(Canvas* canvas, Duckwalk* app) {
     Step step = current_step(app);
+    bool usb = link_kind() == LinkUsb;
     canvas_set_font(canvas, FontSecondary);
     const char* lines[5] = {0};
     char pick[40];
-    if(step == StepOnAir) {
+    if(step == StepOnAir && usb) {
+        lines[0] = "Another app holds the";
+        lines[1] = "USB port. Close qFlipper";
+        lines[2] = "and Flipper Lab on the";
+        lines[3] = "PC, then open Duckwalk";
+        lines[4] = "again.";
+    } else if(step == StepConnected && usb) {
+        lines[0] = "Plug the Flipper into the";
+        lines[1] = "PC with a data cable.";
+        lines[2] = "Charge-only cables don't";
+        lines[3] = "work. Or pick Bluetooth";
+        lines[4] = "in Settings.";
+    } else if(step == StepPointer && usb) {
+        lines[0] = "The PC sees Harold, but";
+        lines[1] = "the pointer didn't move.";
+        lines[2] = "Unplug the Flipper, plug";
+        lines[3] = "it in again and retry.";
+    } else if(step == StepOnAir) {
         lines[0] = "Harold couldn't start";
         lines[1] = "Bluetooth. Close apps";
         lines[2] = "that use it (PC Health,";
@@ -115,17 +150,18 @@ static void draw_help(Canvas* canvas, Duckwalk* app) {
         lines[2] = "remove Harold, hold OK";
         lines[3] = "here, then add him again.";
     }
-    for(size_t i = 0; i < 5 && lines[i]; i++) canvas_draw_str(canvas, 2, 21 + i * 9, lines[i]);
+    for(size_t i = 0; i < 5 && lines[i]; i++) canvas_draw_str(canvas, 2, 20 + i * 8, lines[i]);
     canvas_draw_line(canvas, 0, 53, 127, 53);
     canvas_draw_str(canvas, 2, 63, "< Back");
-    canvas_draw_str_aligned(canvas, 126, 63, AlignRight, AlignBottom, "hold OK reset");
+    if(!usb) canvas_draw_str_aligned(canvas, 126, 63, AlignRight, AlignBottom, "hold OK reset");
 }
 
 void pairing_draw(Canvas* canvas, Duckwalk* app) {
     canvas_set_font(canvas, FontPrimary);
-    canvas_draw_str(canvas, 2, 10, app->pairing.help ? "Help" : "Bluetooth");
+    const char* title = link_kind() == LinkUsb ? "USB" : "Bluetooth";
+    canvas_draw_str(canvas, 2, 10, app->pairing.help ? "Help" : title);
     canvas_draw_icon(canvas, 116, 1, &I_harold_mini_10x10);
-    if(!link_is_connected()) {
+    if(link_kind() == LinkBluetooth && !link_is_connected()) {
         /* Radio waves from Harold while he waits for the computer. */
         uint32_t waves = furi_get_tick() / furi_ms_to_ticks(400) % 3;
         canvas_set_font(canvas, FontSecondary);
@@ -150,6 +186,8 @@ void pairing_draw(Canvas* canvas, Duckwalk* app) {
 void pairing_input(Duckwalk* app, const InputEvent* input) {
     PairingState* p = &app->pairing;
     if(input->key == InputKeyOk && input->type == InputTypeLong) {
+        /* Forgetting paired computers only means something over Bluetooth. */
+        if(link_kind() != LinkBluetooth) return;
         app->pending.forget = true;
         memset(p, 0, sizeof(*p));
         p->forgot_until = tick_in_ms(FORGOT_MS);
@@ -173,9 +211,9 @@ void pairing_input(Duckwalk* app, const InputEvent* input) {
         if(step == StepPointer && p->asked) {
             p->pointer_ok = true;
             p->done_at = furi_get_tick();
-        } else if(step == StepPointer && !p->testing && !keep_awake_is_walking(&app->keep_awake)) {
+        } else if(step == StepPointer && !p->testing && !keep_awake_is_playing(&app->keep_awake)) {
             keep_awake_play_circle(&app->keep_awake);
-            p->testing = keep_awake_is_walking(&app->keep_awake);
+            p->testing = keep_awake_is_playing(&app->keep_awake);
             p->asked = false;
             p->pointer_failed = false;
         }
@@ -196,7 +234,7 @@ void pairing_tick(Duckwalk* app) {
     if(app->screen != ScreenPairing) return;
 
     /* The pointer test: keep-awake plays the circle; ask once it's done. */
-    if(p->testing && !keep_awake_is_walking(&app->keep_awake)) {
+    if(p->testing && !keep_awake_is_playing(&app->keep_awake)) {
         p->testing = false;
         p->asked = true;
     }

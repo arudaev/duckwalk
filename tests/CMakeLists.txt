@@ -29,13 +29,21 @@ find_library(MATH m)
 add_executable(test_walk test_walk.c ${APP}/walk.c)
 target_link_libraries(test_walk shim $<$<BOOL:${MATH}>:${MATH}>)
 
+add_executable(test_wander test_wander.c ${APP}/wander.c)
+target_link_libraries(test_wander shim $<$<BOOL:${MATH}>:${MATH}>)
+
+add_executable(test_keep_awake test_keep_awake.c fake_link.c ${APP}/keep_awake.c ${APP}/walk.c ${APP}/wander.c)
+target_link_libraries(test_keep_awake shim $<$<BOOL:${MATH}>:${MATH}>)
+
 add_executable(test_settings test_settings.c ${APP}/settings.c)
 target_link_libraries(test_settings shim)
 
-add_executable(test_helper test_helper.c fake_link.c ${APP}/helper.c ${APP}/keep_awake.c ${APP}/walk.c)
+add_executable(test_helper test_helper.c fake_link.c ${APP}/helper.c ${APP}/keep_awake.c ${APP}/walk.c ${APP}/wander.c)
 target_link_libraries(test_helper shim $<$<BOOL:${MATH}>:${MATH}>)
 
 enable_testing()
 add_test(NAME walk COMMAND test_walk)
+add_test(NAME wander COMMAND test_wander)
+add_test(NAME keep_awake COMMAND test_keep_awake)
 add_test(NAME helper COMMAND test_helper)
 add_test(NAME settings COMMAND test_settings WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})

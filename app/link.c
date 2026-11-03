@@ -178,8 +178,9 @@ const char* link_status(void) {
     return bt_on_air() ? "BT pairing" : "BT starting";
 }
 
-bool link_bt_off(void) {
-    if(!link.started || link.kind != LinkBluetooth) return false;
+bool link_off(void) {
+    if(!link.started) return false;
+    if(link.kind == LinkUsb) return !link.usb_ok;
     if(!link.profile) return true;
     bool grace = tick_before(link.bt_started_at + furi_ms_to_ticks(BT_START_GRACE_MS));
     return !bt_on_air() && !grace;

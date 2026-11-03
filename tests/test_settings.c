@@ -102,5 +102,17 @@ int main(void) {
     s.values[SettingHours] = HoursAlways;
     CHECK(settings_on_duty(&s), "Always is off duty on Saturday");
 
+    /* Stop after: the time, and Never. */
+    settings_defaults(&s);
+    CHECK(s.values[SettingStopAfter] == StopAfter4h, "default isn't 4 h");
+    CHECK(!settings_stop_due(&s, 4u * 3600000u - 1), "stopped before 4 h");
+    CHECK(settings_stop_due(&s, 4u * 3600000u), "didn't stop at 4 h");
+    s.values[SettingStopAfter] = StopAfter1h;
+    CHECK(settings_stop_due(&s, 3600000u) && !settings_stop_due(&s, 3599999u), "1 h boundary");
+    s.values[SettingStopAfter] = StopAfter8h;
+    CHECK(!settings_stop_due(&s, 8u * 3600000u - 1) && settings_stop_due(&s, 8u * 3600000u), "8 h boundary");
+    s.values[SettingStopAfter] = StopAfterNever;
+    CHECK(!settings_stop_due(&s, UINT32_MAX), "Never stopped");
+
     return check_result("settings");
 }

@@ -4,13 +4,19 @@
 
 #include <furi_hal_random.h>
 
+/* After the Remote moves the pointer, a wander keeps off it this long. */
+#define REMOTE_HOLD_MS 30000
+
 static uint32_t random_between(uint32_t lo, uint32_t hi) {
     if(hi <= lo) return lo;
     return lo + furi_hal_random_get() % (hi - lo + 1);
 }
 
 static void schedule(KeepAwake* ka) {
-    ka->next_tick = furi_get_tick() + furi_ms_to_ticks(random_between(ka->min_s, ka->max_s) * 1000);
+    ka->next_tick = furi_get_tick();
+    /* Wander has no wait: it sets off again as soon as it may. */
+    if(ka->mode == KeepAwakeWander) return;
+    ka->next_tick += furi_ms_to_ticks(random_between(ka->min_s, ka->max_s) * 1000);
 }
 
 void keep_awake_init(KeepAwake* ka, uint32_t min_s, uint32_t max_s) {
@@ -22,13 +28,33 @@ void keep_awake_init(KeepAwake* ka, uint32_t min_s, uint32_t max_s) {
     ka->paused = false;
     ka->user_active = false;
     ka->step = 0;
+    ka->wandering = false;
     walk_plan(&ka->path, ka->walk_length);
     schedule(ka);
 }
 
+/* The path Preview shows and OK plays: a walk, or a sample of wandering. */
+static void plan(KeepAwake* ka) {
+    if(ka->mode == KeepAwakeWander) {
+        wander_sample(&ka->path, ka->walk_length);
+    } else {
+        walk_plan(&ka->path, ka->walk_length);
+    }
+}
+
+/* Take the pointer back from a wander where it is, without going home:
+ * the user or another movement needs it now. */
+static void drop_wander(KeepAwake* ka) {
+    if(!ka->wandering) return;
+    ka->wandering = false;
+    ka->moves++;
+}
+
 void keep_awake_set_mode(KeepAwake* ka, KeepAwakeMode mode) {
+    bool was_wander = ka->mode == KeepAwakeWander;
     ka->mode = mode;
     if(mode != KeepAwakeOff) schedule(ka);
+    if(!ka->step && was_wander != (mode == KeepAwakeWander)) plan(ka);
 }
 
 void keep_awake_set_interval(KeepAwake* ka, uint32_t min_s, uint32_t max_s) {
@@ -41,7 +67,7 @@ void keep_awake_set_interval(KeepAwake* ka, uint32_t min_s, uint32_t max_s) {
 void keep_awake_set_walk_length(KeepAwake* ka, WalkLength length) {
     if(ka->walk_length == length) return;
     ka->walk_length = length;
-    if(!ka->step) walk_plan(&ka->path, length);
+    if(!ka->step) plan(ka);
 }
 
 void keep_awake_set_paused(KeepAwake* ka, bool paused) {
@@ -61,17 +87,24 @@ void keep_awake_set_user_active(KeepAwake* ka, bool active) {
     if(active && ka->step) {
         /* Let go of the pointer: the user has it now. */
         ka->step = 0;
-        walk_plan(&ka->path, ka->walk_length);
+        plan(ka);
     }
+    if(active) drop_wander(ka);
     if(!active) schedule(ka);
 }
 
 void keep_awake_postpone(KeepAwake* ka) {
-    if(!ka->step) schedule(ka);
+    if(ka->step) return;
+    schedule(ka);
+    if(ka->mode == KeepAwakeWander) {
+        /* The Remote has the pointer: let go and keep off it a while. */
+        drop_wander(ka);
+        ka->next_tick += furi_ms_to_ticks(REMOTE_HOLD_MS);
+    }
 }
 
 void keep_awake_replan(KeepAwake* ka) {
-    if(!ka->step) walk_plan(&ka->path, ka->walk_length);
+    if(!ka->step) plan(ka);
 }
 
 void keep_awake_play_circle(KeepAwake* ka) {
@@ -88,12 +121,35 @@ void keep_awake_walk_now(KeepAwake* ka) {
 }
 
 bool keep_awake_is_walking(const KeepAwake* ka) {
+    return ka->step != 0 || ka->wandering;
+}
+
+bool keep_awake_is_playing(const KeepAwake* ka) {
     return ka->step != 0;
 }
 
+bool keep_awake_is_wandering(const KeepAwake* ka) {
+    return ka->wandering;
+}
+
+bool keep_awake_is_homing(const KeepAwake* ka) {
+    return ka->wandering && ka->wander.homing;
+}
+
 WalkPoint keep_awake_position(const KeepAwake* ka) {
-    if(!ka->step) return (WalkPoint){0, 0};
-    return ka->path.points[ka->step - 1];
+    if(ka->step) return ka->path.points[ka->step - 1];
+    if(ka->wandering) return wander_position(&ka->wander);
+    return (WalkPoint){0, 0};
+}
+
+int16_t keep_awake_reach(const KeepAwake* ka) {
+    if(!ka->step && ka->wandering) return wander_reach(&ka->wander);
+    return walk_reach(&ka->path);
+}
+
+bool keep_awake_let_go(KeepAwake* ka) {
+    if(ka->wandering) wander_go_home(&ka->wander);
+    return !keep_awake_is_walking(ka);
 }
 
 /* Mouse reports carry at most 127 counts per axis. */
@@ -140,7 +196,30 @@ static bool walk_step(KeepAwake* ka) {
         if(++ka->step >= ka->path.count) {
             ka->step = 0;
             ka->moves++;
-            walk_plan(&ka->path, ka->walk_length);
+            plan(ka);
+            schedule(ka);
+        }
+    }
+    return moved;
+}
+
+static bool wander_tick(KeepAwake* ka) {
+    if(!link_is_connected()) {
+        drop_wander(ka);
+        return false;
+    }
+    /* The mode ended or work hours are over: glide home, then stop. */
+    if(ka->mode != KeepAwakeWander || ka->paused) wander_go_home(&ka->wander);
+    /* After a stall (a slow link change, say), carry on from now rather
+     * than send every missed step at once. */
+    if(tick_reached(ka->step_tick + furi_ms_to_ticks(WALK_STEP_MS * 5))) ka->step_tick = furi_get_tick();
+    bool moved = false;
+    while(ka->wandering && tick_reached(ka->step_tick)) {
+        WalkPoint m = wander_step(&ka->wander);
+        moved |= move_by(m.x, m.y);
+        ka->step_tick += furi_ms_to_ticks(WALK_STEP_MS);
+        if(wander_is_home(&ka->wander)) {
+            drop_wander(ka);
             schedule(ka);
         }
     }
@@ -149,9 +228,17 @@ static bool walk_step(KeepAwake* ka) {
 
 bool keep_awake_tick(KeepAwake* ka) {
     if(ka->step) return walk_step(ka);
+    if(ka->wandering) return wander_tick(ka);
     if(ka->mode == KeepAwakeOff || ka->paused || ka->user_active) return false;
     if(tick_before(ka->next_tick)) return false;
 
+    if(ka->mode == KeepAwakeWander) {
+        if(!link_is_connected()) return false;
+        wander_start(&ka->wander, ka->walk_length);
+        ka->wandering = true;
+        ka->step_tick = furi_get_tick();
+        return wander_tick(ka);
+    }
     if(ka->mode == KeepAwakeWalk) {
         keep_awake_walk_now(ka);
         if(ka->step) return walk_step(ka);

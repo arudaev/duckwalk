@@ -1,6 +1,7 @@
 /* Draws every Duckwalk screen in the states that matter and saves each as a
  * PNG, at the Flipper's 128x64 and four times larger, in the display's
- * orange and black. Exits non-zero if any text runs off the screen.
+ * orange and black. Exits non-zero if any text runs off the screen or a
+ * scene doesn't reach the state it sets up.
  *
  *   duckwalk_sim <output folder>
  */
@@ -32,8 +33,18 @@ static void fresh(void) {
     app.screen = ScreenHome;
     app.remote.page = RemotePageMenu;
     app.home.blink_at = NOW + 5000;
+    app.active_at = NOW;
     sim_link = (SimLink){.kind = LinkUsb, .connected = true, .on_air = true};
     helper_stop(); /* no PC helper unless a scene says so */
+}
+
+/* A scene that didn't reach its state fails the run, like text off the
+ * screen does. */
+static int unmet = 0;
+static void expect(bool ok, const char* what) {
+    if(ok) return;
+    fprintf(stderr, "%s\n", what);
+    unmet++;
 }
 
 /* Let time pass the way the main loop would. */
@@ -43,6 +54,8 @@ static void run_for(uint32_t ms) {
         keep_awake_set_user_active(&app.keep_awake, helper_user_active(30000));
         remote_tick(&app);
         pairing_tick(&app);
+        preview_tick(&app);
+        duckwalk_check_stop_after(&app, false);
         if(keep_awake_tick(&app.keep_awake)) home_on_move(&app);
         home_tick(&app);
     }
@@ -113,13 +126,57 @@ static void home_bug_fixed(void) {
     home_bug_quack();
     run_for(900);
 }
+/* Start one of Harold's routines and catch it partway through. */
+static void routine(Routine r, uint32_t ms) {
+    run_for(500);
+    app.home.routine = r;
+    app.home.routine_start = furi_get_tick();
+    app.home.routine_until = furi_get_tick() + 3000;
+    run_for(ms);
+}
+static void home_sip(void) {
+    routine(RoutineSip, 600);
+}
+static void home_typing(void) {
+    routine(RoutineType, 300);
+}
+static void home_hop(void) {
+    routine(RoutineHop, 20);
+}
 static void home_asleep(void) {
     press(InputKeyOk, InputTypeShort);
     run_for(600);
 }
+static void home_stopped(void) {
+    /* Stop after ran out: nobody pressed anything for the default 4 h,
+     * long enough to catch a 32-bit overflow in the idle time. */
+    run_for(500);
+    app.active_at = furi_get_tick() - 4u * 3600u * 1000u;
+    run_for(500);
+    expect(app.stopped, "home-stopped: Stop after didn't fire");
+}
 static void home_walking(void) {
     keep_awake_walk_now(&app.keep_awake);
     run_for(1300);
+}
+static void wander_mode(void) {
+    app.settings.values[SettingMode] = KeepAwakeWander;
+    duckwalk_apply_settings(&app);
+}
+static void home_wandering(void) {
+    wander_mode();
+    run_for(2500);
+}
+static void home_wander_homing(void) {
+    home_wandering();
+    app.settings.values[SettingMode] = KeepAwakeOff;
+    duckwalk_apply_settings(&app);
+    run_for(200);
+}
+static void preview_wandering(void) {
+    home_wandering();
+    press(InputKeyUp, InputTypeShort);
+    run_for(500);
 }
 static void home_quack(void) {
     press(InputKeyOk, InputTypeLong);
@@ -200,6 +257,26 @@ static void pairing_all_set(void) {
     pairing_ask();
     press(InputKeyOk, InputTypeShort);
 }
+static void pairing_usb_busy(void) {
+    sim_link = (SimLink){.kind = LinkUsb, .connected = false, .on_air = false};
+    pairing_open(&app);
+}
+static void pairing_usb_unplugged_help(void) {
+    sim_link = (SimLink){.kind = LinkUsb, .connected = false, .on_air = true};
+    pairing_open(&app);
+    press(InputKeyRight, InputTypeShort);
+}
+static void pairing_usb_all_set(void) {
+    sim_link = (SimLink){.kind = LinkUsb, .connected = true, .on_air = true};
+    pairing_open(&app);
+    press(InputKeyOk, InputTypeShort);
+    run_for(1200);
+    /* The PC helper is running and the user has been away a minute. */
+    uint8_t packet[HELPER_PACKET_LEN] = {HELPER_MAGIC, HELPER_VERSION, HELPER_MSG_IDLE};
+    helper_put_u32(packet + 3, 60000);
+    helper_receive(packet, furi_get_tick());
+    press(InputKeyOk, InputTypeShort);
+}
 static void welcome(void) {
     app.screen = ScreenWelcome;
 }
@@ -212,8 +289,14 @@ static const struct {
     {"home-bug", home_bug},
     {"home-bug-quack", home_bug_quack},
     {"home-bug-fixed", home_bug_fixed},
+    {"home-sip", home_sip},
+    {"home-typing", home_typing},
+    {"home-hop", home_hop},
     {"home-asleep", home_asleep},
+    {"home-stopped", home_stopped},
     {"home-walking", home_walking},
+    {"home-wandering", home_wandering},
+    {"home-wander-homing", home_wander_homing},
     {"home-quack", home_quack},
     {"home-working", home_working},
     {"home-bluetooth", home_bluetooth},
@@ -224,6 +307,7 @@ static const struct {
     {"remote-slides", remote_slides},
     {"remote-mouse", remote_mouse},
     {"preview", preview},
+    {"preview-wandering", preview_wandering},
     {"pairing-waiting", pairing_waiting},
     {"pairing-not-on-air", pairing_not_on_air},
     {"pairing-not-on-air-help", pairing_not_on_air_help},
@@ -232,6 +316,9 @@ static const struct {
     {"pairing-ask", pairing_ask},
     {"pairing-failed", pairing_failed},
     {"pairing-all-set", pairing_all_set},
+    {"pairing-usb-busy", pairing_usb_busy},
+    {"pairing-usb-unplugged-help", pairing_usb_unplugged_help},
+    {"pairing-usb-all-set", pairing_usb_all_set},
     {"welcome", welcome},
 };
 
@@ -274,5 +361,5 @@ int main(int argc, char** argv) {
         printf("%-26s ok\n", scenes[i].name);
     }
     printf("%d scenes, %d with text off the screen\n", (int)(sizeof(scenes) / sizeof(scenes[0])), problems);
-    return problems ? 1 : 0;
+    return problems || unmet ? 1 : 0;
 }

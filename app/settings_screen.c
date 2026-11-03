@@ -3,6 +3,7 @@
 
 #include "duckwalk.h"
 #include "link.h"
+#include "util.h"
 
 #define ROW_H    10
 #define ROWS_TOP 13
@@ -21,6 +22,31 @@ void duckwalk_apply_settings(Duckwalk* app) {
         keep_awake_set_mode(&app->keep_awake, s->values[SettingMode]);
     }
     if(s->values[SettingMode] != KeepAwakeOff) s->awake_mode = s->values[SettingMode];
+}
+
+/* Stop after: with nobody around for that long, Harold goes to sleep, so
+ * the computer can lock. A button on the Flipper or the PC helper seeing
+ * the user counts as somebody. */
+void duckwalk_check_stop_after(Duckwalk* app, bool pressed) {
+    KeepAwake* ka = &app->keep_awake;
+    if(pressed || ka->user_active) app->active_at = furi_get_tick();
+    if(ka->mode != KeepAwakeOff) app->stopped = false;
+    /* Asleep, outside work hours or still on the first launch's Welcome:
+     * nothing to stop (stopping would save settings, and Welcome would
+     * never show again). A night outside work hours mustn't count as being
+     * away when they start again. */
+    if(ka->mode == KeepAwakeOff || ka->paused || app->screen == ScreenWelcome) {
+        app->active_at = furi_get_tick();
+        return;
+    }
+    /* 64-bit: hours of ticks times 1000 overflow 32 bits after 71 minutes. */
+    uint32_t idle_ms = (uint32_t)((uint64_t)(furi_get_tick() - app->active_at) * 1000 / furi_kernel_get_tick_frequency());
+    if(!settings_stop_due(&app->settings, idle_ms)) return;
+    FURI_LOG_I(TAG, "Nobody around for a while: going to sleep");
+    app->settings.values[SettingMode] = KeepAwakeOff;
+    duckwalk_apply_settings(app);
+    app->pending.save = true;
+    app->stopped = true;
 }
 
 void settings_draw(Canvas* canvas, Duckwalk* app) {

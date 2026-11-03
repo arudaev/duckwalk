@@ -19,6 +19,7 @@
     } while(0)
 
 #define UNUSED(x) (void)(x)
+#define COUNT_OF(x) (sizeof(x) / sizeof((x)[0]))
 
 /* Logging goes nowhere on the host. */
 #define FURI_LOG_E(tag, ...) ((void)(tag))

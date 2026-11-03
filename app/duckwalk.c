@@ -42,6 +42,9 @@
 
 #define INPUT_QUEUE_LEN 16
 
+/* The longest Harold takes to bring the pointer home when you leave. */
+#define LET_GO_MS (WANDER_HOME_STEPS * WALK_STEP_MS + 500)
+
 static void draw_callback(Canvas* canvas, void* ctx) {
     Duckwalk* app = ctx;
     if(furi_mutex_acquire(app->mutex, furi_ms_to_ticks(DRAW_WAIT_MS)) != FuriStatusOk) return;
@@ -119,6 +122,7 @@ int32_t duckwalk_app(void* p) {
     app->notifications = furi_record_open(RECORD_NOTIFICATION);
     app->screen = ScreenHome;
     app->running = true;
+    app->active_at = furi_get_tick();
     app->remote.page = RemotePageMenu;
     if(!settings_load(&app->settings)) app->screen = ScreenWelcome;
     keep_awake_init(&app->keep_awake, 0, 0);
@@ -142,6 +146,7 @@ int32_t duckwalk_app(void* p) {
 
         furi_mutex_acquire(app->mutex, FuriWaitForever);
         if(got) handle_input(app, &input);
+        duckwalk_check_stop_after(app, got);
         if(furi_get_tick() - duty_checked >= furi_ms_to_ticks(DUTY_CHECK_MS)) {
             duty_checked = furi_get_tick();
             keep_awake_set_paused(&app->keep_awake, !settings_on_duty(&app->settings));
@@ -151,11 +156,25 @@ int32_t duckwalk_app(void* p) {
         pairing_tick(app);
         if(keep_awake_tick(&app->keep_awake)) home_on_move(app);
         home_tick(app);
+        preview_tick(app);
         busy = keep_awake_is_walking(&app->keep_awake) || app->remote.held || link_busy();
         furi_mutex_release(app->mutex);
 
         run_pending(app);
         view_port_update(view_port);
+    }
+
+    /* A wander glides the pointer home before Harold lets go of it. */
+    uint32_t leaving = furi_get_tick();
+    while(furi_get_tick() - leaving < furi_ms_to_ticks(LET_GO_MS)) {
+        /* The screen is still up and reads this state as it draws. */
+        furi_mutex_acquire(app->mutex, FuriWaitForever);
+        bool done = keep_awake_let_go(&app->keep_awake);
+        if(!done) keep_awake_tick(&app->keep_awake);
+        furi_mutex_release(app->mutex);
+        if(done) break;
+        link_flush();
+        furi_delay_ms(WALK_STEP_MS);
     }
 
     /* The screen goes first, so nothing draws while the link is torn down. */

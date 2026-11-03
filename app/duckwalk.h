@@ -43,6 +43,17 @@ typedef enum {
     DeskFixed, /* "Fixed." */
 } DeskPhase;
 
+/* What Harold does at his desk between bug hunts, one every few seconds. */
+typedef enum {
+    RoutineNone,
+    RoutineType, /* types away; the code scrolls faster */
+    RoutineSip, /* turns to his coffee; the mug steams up */
+    RoutineLook, /* looks round at you */
+    RoutineHop, /* a happy little bounce */
+    RoutineNod, /* nods off for a moment and shakes it off */
+    RoutineCount,
+} Routine;
+
 /* Harold's moods on the home screen; all times are ticks. Changed only by
  * home_tick and home_input, read by home_draw. */
 typedef struct {
@@ -50,8 +61,10 @@ typedef struct {
     uint32_t quack_until;
     uint32_t blink_at; /* the next blink starts here */
     uint32_t blink_until;
-    uint32_t look_until;
-    uint32_t typing_until;
+    Routine routine;
+    uint32_t routine_start;
+    uint32_t routine_until;
+    uint32_t routine_at; /* the next routine starts here */
     int16_t last_x;
     bool facing_right;
     /* The laptop */
@@ -82,11 +95,23 @@ typedef struct {
     bool forget; /* forget every paired computer */
 } DuckwalkPending;
 
+/* Where a wander has been lately, for Preview to draw as a fading trail. */
+#define TRAIL_LEN 24
+
+typedef struct {
+    WalkPoint points[TRAIL_LEN];
+    uint8_t head; /* the next slot to write */
+    uint8_t count;
+    uint32_t at;
+} Trail;
+
 typedef struct {
     FuriMutex* mutex;
     NotificationApp* notifications;
     bool running;
     bool skip_save; /* left from Welcome: nothing was chosen yet */
+    uint32_t active_at; /* the user last pressed a button or worked on the PC */
+    bool stopped; /* put to sleep by Stop after; cleared when woken */
     DuckwalkPending pending;
     Screen screen;
     KeepAwake keep_awake;
@@ -96,6 +121,7 @@ typedef struct {
     HomeAnim home;
     RemoteState remote;
     uint32_t preview_started;
+    Trail trail;
     PairingState pairing;
 } Duckwalk;
 
@@ -120,6 +146,9 @@ void remote_tick(Duckwalk* app);
 void preview_draw(Canvas* canvas, Duckwalk* app);
 void preview_input(Duckwalk* app, const InputEvent* input);
 
+/* Records the wander's trail; call every loop. */
+void preview_tick(Duckwalk* app);
+
 void welcome_draw(Canvas* canvas, Duckwalk* app);
 void welcome_input(Duckwalk* app, const InputEvent* input);
 
@@ -133,3 +162,8 @@ void pairing_tick(Duckwalk* app);
 /* Push the current settings into keep-awake, and ask the main loop to
  * switch the connection if it changed. */
 void duckwalk_apply_settings(Duckwalk* app);
+
+/* Stop after: puts Harold to sleep once nobody has been around for the
+ * set time. `pressed` is true when a button was just pressed; call every
+ * loop. */
+void duckwalk_check_stop_after(Duckwalk* app, bool pressed);

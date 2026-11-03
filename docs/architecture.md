@@ -88,7 +88,7 @@ stateDiagram-v2
     Home --> Settings: Right
     Home --> Remote: Left
     Home --> Preview: Up
-    Home --> Pairing: Down (Bluetooth)
+    Home --> Pairing: Down
     Settings --> Home: Back
     Settings --> Pairing: Back, Bluetooth not connected
     Remote --> Home: Back from the menu
@@ -104,12 +104,15 @@ flowchart TD
     wait["Waiting<br/>(random 30 s to 4 min)"] -->|time is up| mode{Mode}
     mode -->|Subtle| nudge["1 px out and back"] --> wait
     mode -->|Walk| play["Play the planned walk<br/>one step every 20 ms"]
+    mode -->|Wander| wander["Wander: steer for a random spot,<br/>a new one before it's reached"]
+    wander -->|mode off, work hours over, leaving the app| home["Glide back to the start"] --> wait
+    wander -->|user active (PC helper)| stop
     play -->|last step| plan["Plan the next walk"] --> wait
     play -->|user active (PC helper)| stop["Let go of the pointer"] --> hold
     wait -->|user active| hold["Hold: nothing moves<br/>until 30 s after the user's last input"] -->|user away| wait
 ```
 
-A walk is planned before it plays, so Preview shows the path that will really play. If a report doesn't get through, its movement is added to the next one (`link.c`), so a walk always ends where it started.
+A walk is planned before it plays, so Preview shows the path that will really play. If a report doesn't get through, its movement is added to the next one (`link.c`), so a walk always ends where it started. A wander isn't planned: `wander.c` works out each step from where the cursor is, turning a little at a time so it moves in arcs, and keeps count of what it sent, so going home lands exactly on the start.
 
 ## The data channel
 

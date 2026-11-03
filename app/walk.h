@@ -8,7 +8,7 @@
  * Preview can show the exact path before it is played. */
 
 #define WALK_STEP_MS   20
-#define WALK_MAX_STEPS 256
+#define WALK_MAX_STEPS 384
 
 typedef enum {
     WalkLengthShort,
