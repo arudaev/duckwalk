@@ -1,10 +1,12 @@
 /* Home: Harold, the rubber debugging duck, at his desk.
  *
- * While keep-awake waits, he reads code scrolling on his laptop, types a
- * little, blinks and looks around. Every so often a bug turns up in the
- * code: he spots it ("Bug!"), turns round and quacks at it, and it's fixed.
- * Asleep, the laptop is closed and the z's float. During a walk he leaves
- * the desk and walks in step with the cursor. A long OK makes him quack.
+ * Something is always moving: the code scrolls on his laptop, the coffee
+ * steams and the plant sways. Every few seconds Harold does something: he
+ * types, sips his coffee, looks round, bounces or nods off for a moment.
+ * Every so often a bug turns up in the code: he spots it ("Bug!"), turns
+ * round and quacks at it, and it's fixed. Asleep, the laptop is closed, he
+ * breathes slowly and the z's float. During a walk or a wander he leaves the
+ * desk and moves in step with the cursor. A long OK makes him quack.
  *
  * home_tick moves the scene on; home_draw only draws it. */
 
@@ -17,17 +19,19 @@
 #include <furi_hal_random.h>
 #include <notification/notification_messages.h>
 
-/* Layout */
-#define HOME_X    50 /* Harold's seat at the desk */
-#define HAROLD_Y  28 /* his flat bottom sits on the desk line */
-#define DESK_Y    52
-#define WALK_SPAN 36 /* how far he strays across the screen during a walk */
-#define LAPTOP_X  80
-#define LAPTOP_Y  28
-#define LAPTOP_W  36
-#define LAPTOP_H  22
-#define MUG_X     4
-#define MUG_Y     44
+/* Layout, left to right: plant, mug, Harold, laptop. */
+#define HOME_X     56 /* Harold's seat at the desk */
+#define HAROLD_Y   28 /* his flat bottom sits on the desk line */
+#define DESK_Y     52
+#define WALK_LEFT  48 /* how far he strays across the screen during a walk, */
+#define WALK_RIGHT 20 /* less to the right, where the laptop is */
+#define LAPTOP_X   86
+#define LAPTOP_Y   28
+#define LAPTOP_W   32
+#define LAPTOP_H   22
+#define MUG_X      38
+#define MUG_Y      44
+#define PLANT_X    10
 
 /* The code on the laptop: rows 3 px apart, scrolling up one pixel at a time. */
 #define CODE_X      (LAPTOP_X + 3)
@@ -41,9 +45,11 @@
 #define WADDLE_MS  900
 #define QUACK_MS   700
 #define BLINK_MS   140
-#define LOOK_MS    1600
-#define TYPE_MS    1500
 #define STRIDE_MS  150
+#define SWAY_MS    700
+#define BREATH_MS  1500
+#define ROUTINE_MIN_MS 2500 /* the pause between two routines */
+#define ROUTINE_MAX_MS 5000
 #define Z_CYCLE_MS 1800
 #define SPOT_MS    1200
 #define FIXED_MS   1400
@@ -94,6 +100,43 @@ static void schedule_blink(HomeAnim* anim) {
     anim->blink_at = tick_in_ms(random_ms(2000, 6000));
 }
 
+/* How long each routine lasts, and how often it comes up (out of 20). */
+static const struct {
+    uint16_t ms;
+    uint8_t weight;
+} routines[RoutineCount] = {
+    [RoutineType] = {2400, 7},
+    [RoutineSip] = {1800, 4},
+    [RoutineLook] = {1600, 4},
+    [RoutineHop] = {600, 3},
+    [RoutineNod] = {1800, 2},
+};
+
+static void schedule_routine(HomeAnim* anim) {
+    anim->routine = RoutineNone;
+    anim->routine_at = tick_in_ms(random_ms(ROUTINE_MIN_MS, ROUTINE_MAX_MS));
+}
+
+static void start_routine(HomeAnim* anim) {
+    uint32_t roll = furi_hal_random_get() % 20;
+    Routine r = RoutineType;
+    for(Routine i = RoutineType; i < RoutineCount; i++) {
+        if(roll < routines[i].weight) {
+            r = i;
+            break;
+        }
+        roll -= routines[i].weight;
+    }
+    anim->routine = r;
+    anim->routine_start = furi_get_tick();
+    anim->routine_until = tick_in_ms(routines[r].ms);
+}
+
+/* Milliseconds into the routine playing now. */
+static uint32_t routine_ms(const HomeAnim* anim) {
+    return (furi_get_tick() - anim->routine_start) * 1000 / furi_kernel_get_tick_frequency();
+}
+
 static void schedule_bug(HomeAnim* anim) {
     anim->desk = DeskReading;
     anim->bug_at = tick_in_ms(random_ms(BUG_MIN_MS, BUG_MAX_MS));
@@ -108,34 +151,91 @@ static bool at_desk(const Duckwalk* app) {
 static int32_t harold_x(const Duckwalk* app) {
     const KeepAwake* ka = &app->keep_awake;
     if(!keep_awake_is_walking(ka)) return HOME_X;
-    int16_t reach = keep_awake_reach(ka);
+    int32_t reach = keep_awake_reach(ka);
     if(reach < 1) reach = 1;
-    return HOME_X + keep_awake_position(ka).x * WALK_SPAN / reach;
+    int32_t x = keep_awake_position(ka).x;
+    return HOME_X + x * (x < 0 ? WALK_LEFT : WALK_RIGHT) / reach;
 }
 
-static const Icon* harold_frame(const Duckwalk* app) {
+typedef enum {
+    PoseIdle,
+    PoseBob,
+    PoseBlink,
+    PoseQuack,
+} Pose;
+
+/* Each pose facing right and left, and the masks that blank out whatever
+ * he stands in front of. */
+static const Icon* const sprites[][2] = {
+    [PoseIdle] = {&I_harold_idle_24x25, &I_harold_idle_l_24x25},
+    [PoseBob] = {&I_harold_bob_24x25, &I_harold_bob_l_24x25},
+    [PoseBlink] = {&I_harold_blink_24x25, &I_harold_blink_l_24x25},
+    [PoseQuack] = {&I_harold_quack_24x25, &I_harold_quack_l_24x25},
+};
+static const Icon* const masks[][2] = {
+    [PoseIdle] = {&I_harold_idle_mask_24x25, &I_harold_idle_l_mask_24x25},
+    [PoseBob] = {&I_harold_bob_mask_24x25, &I_harold_bob_l_mask_24x25},
+    [PoseBlink] = {&I_harold_blink_mask_24x25, &I_harold_blink_l_mask_24x25},
+    [PoseQuack] = {&I_harold_quack_mask_24x25, &I_harold_quack_l_mask_24x25},
+};
+
+typedef struct {
+    Pose pose;
+    bool left;
+    int32_t lift; /* pixels above his seat */
+} Frame;
+
+static Frame routine_frame(const HomeAnim* anim) {
+    uint32_t t = routine_ms(anim);
+    switch(anim->routine) {
+    case RoutineType:
+        return (Frame){(t / (STRIDE_MS * 2)) % 2 ? PoseBob : PoseIdle, false, 0};
+    case RoutineSip:
+        /* Turns to the mug for a long sip, then a contented blink. */
+        return (Frame){t > 1300 && t < 1500 ? PoseBlink : PoseIdle, t < 1300, 0};
+    case RoutineLook:
+        return (Frame){t > 700 && t < 850 ? PoseBlink : PoseIdle, true, 0};
+    case RoutineHop:
+        return (Frame){PoseBob, false, (t / STRIDE_MS) % 2 ? 0 : 2};
+    case RoutineNod:
+        /* Eyes shut for a moment, then a start: awake again. */
+        if(t < 1200) return (Frame){PoseBlink, false, 0};
+        return (Frame){t < 1400 ? PoseBob : PoseIdle, false, t < 1400 ? 1 : 0};
+    default:
+        return (Frame){PoseIdle, false, 0};
+    }
+}
+
+static Frame harold_frame(const Duckwalk* app) {
     const HomeAnim* anim = &app->home;
     const KeepAwake* ka = &app->keep_awake;
     bool stride = (furi_get_tick() / ms(STRIDE_MS)) % 2;
 
-    if(tick_before(anim->quack_until)) return &I_harold_quack_24x25;
+    if(tick_before(anim->quack_until)) return (Frame){PoseQuack, false, 0};
     if(keep_awake_is_walking(ka)) {
         /* A rubber duck doesn't step, he bobs along. */
-        if(anim->facing_right) return stride ? &I_harold_bob_24x25 : &I_harold_idle_24x25;
-        return stride ? &I_harold_bob_l_24x25 : &I_harold_idle_l_24x25;
+        return (Frame){stride ? PoseBob : PoseIdle, !anim->facing_right, 0};
     }
-    if(ka->mode == KeepAwakeOff) return &I_harold_blink_24x25;
-    if(tick_before(anim->waddle_until)) return stride ? &I_harold_bob_24x25 : &I_harold_idle_24x25;
+    if(ka->mode == KeepAwakeOff) {
+        /* Asleep: a slow breath in and out. */
+        return (Frame){PoseBlink, false, (furi_get_tick() / ms(BREATH_MS)) % 2};
+    }
+    if(tick_before(anim->waddle_until)) return (Frame){stride ? PoseBob : PoseIdle, false, 0};
     /* The bug hunt: he turns round and quacks at you. */
-    if(anim->desk == DeskQuack) return &I_harold_quack_l_24x25;
+    if(anim->desk == DeskQuack) return (Frame){PoseQuack, true, 0};
     /* You're at the computer: he turns to watch you work. */
-    if(ka->user_active) return tick_before(anim->blink_until) ? &I_harold_blink_l_24x25 : &I_harold_idle_l_24x25;
-    if(tick_before(anim->blink_until)) return &I_harold_blink_24x25;
-    if(tick_before(anim->look_until)) return &I_harold_idle_l_24x25;
-    if(tick_before(anim->typing_until)) {
-        return (furi_get_tick() / ms(STRIDE_MS * 2)) % 2 ? &I_harold_bob_24x25 : &I_harold_idle_24x25;
-    }
-    return &I_harold_idle_24x25;
+    bool blink = tick_before(anim->blink_until);
+    if(ka->user_active) return (Frame){blink ? PoseBlink : PoseIdle, true, 0};
+    if(anim->routine != RoutineNone) return routine_frame(anim);
+    return (Frame){blink ? PoseBlink : PoseIdle, false, 0};
+}
+
+static void draw_harold(Canvas* canvas, int32_t x, Frame frame) {
+    int32_t y = HAROLD_Y - frame.lift;
+    canvas_set_color(canvas, ColorWhite);
+    canvas_draw_icon(canvas, x, y, masks[frame.pose][frame.left]);
+    canvas_set_color(canvas, ColorBlack);
+    canvas_draw_icon(canvas, x, y, sprites[frame.pose][frame.left]);
 }
 
 void home_tick(Duckwalk* app) {
@@ -152,20 +252,30 @@ void home_tick(Duckwalk* app) {
         anim->last_x = 0;
     }
 
-    /* Blink every few seconds; now and then look away after, or type. */
+    /* Blink every few seconds. */
     if(tick_reached(anim->blink_at)) {
         anim->blink_until = tick_in_ms(BLINK_MS);
-        uint32_t roll = furi_hal_random_get() % 6;
-        if(roll == 0) anim->look_until = tick_in_ms(BLINK_MS + LOOK_MS);
-        if(roll == 1 || roll == 2) anim->typing_until = tick_in_ms(BLINK_MS + TYPE_MS);
         schedule_blink(anim);
     }
 
-    /* The code scrolls while he reads. */
+    /* The code scrolls while he reads, quicker while he types. */
     bool reading = at_desk(app) && !ka->user_active && anim->desk == DeskReading;
     if(reading && tick_reached(anim->scroll_at)) {
         anim->scroll++;
-        anim->scroll_at = tick_in_ms(SCROLL_MS);
+        anim->scroll_at = tick_in_ms(anim->routine == RoutineType ? SCROLL_MS / 3 : SCROLL_MS);
+    }
+
+    /* A routine every few seconds while he reads; none while he's away,
+     * busy with a bug or watching you work. */
+    if(!reading) {
+        anim->routine = RoutineNone;
+        if(!anim->routine_at) schedule_routine(anim);
+    } else if(anim->routine != RoutineNone) {
+        if(tick_reached(anim->routine_until)) schedule_routine(anim);
+    } else if(!anim->routine_at) {
+        schedule_routine(anim);
+    } else if(tick_reached(anim->routine_at)) {
+        start_routine(anim);
     }
 
     /* The bug hunt: spot it, quack at it, fix it. */
@@ -177,7 +287,7 @@ void home_tick(Duckwalk* app) {
     case DeskReading:
         if(!anim->bug_at) {
             schedule_bug(anim);
-        } else if(tick_reached(anim->bug_at)) {
+        } else if(tick_reached(anim->bug_at) && anim->routine == RoutineNone) {
             anim->desk = DeskSpotted;
             anim->bug_row = 2 + furi_hal_random_get() % 3;
             anim->desk_until = tick_in_ms(SPOT_MS);
@@ -232,9 +342,12 @@ static void draw_laptop(Canvas* canvas, const Duckwalk* app) {
         int32_t indent = (h >> 3) % 3 * 3;
         int32_t len = 4 + (h >> 6) % (CODE_W - 8);
         if(indent + len > CODE_W) len = CODE_W - indent;
+        bool bug = row == anim->bug_row && anim->desk != DeskReading;
+        /* Room for the bug after the line, inside the screen. */
+        if(bug && indent + len > CODE_W - 6) len = CODE_W - 6 - indent;
         canvas_draw_line(canvas, CODE_X + indent, y, CODE_X + indent + len - 1, y);
 
-        if(row == anim->bug_row && anim->desk != DeskReading) {
+        if(bug) {
             int32_t bx = CODE_X + indent + len + 2;
             if(anim->desk == DeskFixed) {
                 /* A tick where the bug was. */
@@ -256,13 +369,36 @@ static void draw_mug(Canvas* canvas, const Duckwalk* app) {
     canvas_draw_line(canvas, MUG_X + 9, MUG_Y + 3, MUG_X + 9, MUG_Y + 4);
     canvas_draw_line(canvas, MUG_X + 7, MUG_Y + 5, MUG_X + 8, MUG_Y + 5);
     if(app->keep_awake.mode == KeepAwakeOff) return;
-    /* Steam that drifts up and sways. */
-    uint32_t t = furi_get_tick() / ms(250);
-    for(uint32_t i = 0; i < 2; i++) {
-        uint32_t phase = (t + i * 3) % 6;
+    /* Steam that drifts up and sways; more of it while he sips. */
+    bool sip = app->home.routine == RoutineSip;
+    uint32_t t = furi_get_tick() / ms(sip ? 120 : 250);
+    for(uint32_t i = 0; i < (sip ? 3u : 2u); i++) {
+        uint32_t phase = (t + i * 2) % 6;
         int32_t sway = (phase % 4 < 2) ? 0 : 1;
-        canvas_draw_dot(canvas, MUG_X + 2 + i * 2 + sway, MUG_Y - 2 - (int32_t)phase);
+        canvas_draw_dot(canvas, MUG_X + 1 + i * 2 + sway, MUG_Y - 2 - (int32_t)phase);
     }
+}
+
+/* A potted plant whose leaves sway, faster while Harold bounces. */
+static void draw_plant(Canvas* canvas, const Duckwalk* app) {
+    int32_t x = PLANT_X, y = DESK_Y;
+    canvas_draw_line(canvas, x - 1, y - 8, x + 9, y - 8);
+    canvas_draw_line(canvas, x, y - 7, x + 1, y - 1);
+    canvas_draw_line(canvas, x + 8, y - 7, x + 7, y - 1);
+    canvas_draw_line(canvas, x + 1, y - 1, x + 7, y - 1);
+
+    bool asleep = app->keep_awake.mode == KeepAwakeOff;
+    bool hop = app->home.routine == RoutineHop;
+    uint32_t period = asleep ? SWAY_MS * 3 : hop ? SWAY_MS / 4 : SWAY_MS;
+    int32_t s = (furi_get_tick() / ms(period)) % 2;
+    int32_t cx = x + 4;
+    /* Three leaves on short stems; the tips move with the sway. */
+    canvas_draw_line(canvas, cx, y - 9, cx + s, y - 18);
+    canvas_draw_line(canvas, cx + s, y - 18, cx + s + 1, y - 21);
+    canvas_draw_line(canvas, cx, y - 10, cx - 4 + s, y - 15);
+    canvas_draw_line(canvas, cx - 4 + s, y - 15, cx - 6 + s, y - 15);
+    canvas_draw_line(canvas, cx, y - 12, cx + 4 + s, y - 16);
+    canvas_draw_line(canvas, cx + 4 + s, y - 16, cx + 6 + s, y - 17);
 }
 
 static void draw_zzz(Canvas* canvas, int32_t x) {
@@ -334,9 +470,10 @@ void home_draw(Canvas* canvas, Duckwalk* app) {
     draw_status(canvas, app);
     canvas_draw_str_aligned(canvas, 126, 21, AlignRight, AlignBottom, "^ Preview");
 
-    draw_laptop(canvas, app);
+    draw_plant(canvas, app);
     draw_mug(canvas, app);
-    canvas_draw_icon(canvas, x, HAROLD_Y, harold_frame(app));
+    draw_laptop(canvas, app);
+    draw_harold(canvas, x, harold_frame(app));
     /* The desk goes on top: the sprite's blank bottom row would hide it. */
     canvas_draw_line(canvas, 0, DESK_Y, 127, DESK_Y);
 

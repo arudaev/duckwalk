@@ -43,6 +43,17 @@ typedef enum {
     DeskFixed, /* "Fixed." */
 } DeskPhase;
 
+/* What Harold does at his desk between bug hunts, one every few seconds. */
+typedef enum {
+    RoutineNone,
+    RoutineType, /* types away; the code scrolls faster */
+    RoutineSip, /* turns to his coffee; the mug steams up */
+    RoutineLook, /* looks round at you */
+    RoutineHop, /* a happy little bounce */
+    RoutineNod, /* nods off for a moment and shakes it off */
+    RoutineCount,
+} Routine;
+
 /* Harold's moods on the home screen; all times are ticks. Changed only by
  * home_tick and home_input, read by home_draw. */
 typedef struct {
@@ -50,8 +61,10 @@ typedef struct {
     uint32_t quack_until;
     uint32_t blink_at; /* the next blink starts here */
     uint32_t blink_until;
-    uint32_t look_until;
-    uint32_t typing_until;
+    Routine routine;
+    uint32_t routine_start;
+    uint32_t routine_until;
+    uint32_t routine_at; /* the next routine starts here */
     int16_t last_x;
     bool facing_right;
     /* The laptop */

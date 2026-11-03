@@ -114,6 +114,23 @@ static void home_bug_fixed(void) {
     home_bug_quack();
     run_for(900);
 }
+/* Start one of Harold's routines and catch it partway through. */
+static void routine(Routine r, uint32_t ms) {
+    run_for(500);
+    app.home.routine = r;
+    app.home.routine_start = furi_get_tick();
+    app.home.routine_until = furi_get_tick() + 3000;
+    run_for(ms);
+}
+static void home_sip(void) {
+    routine(RoutineSip, 600);
+}
+static void home_typing(void) {
+    routine(RoutineType, 300);
+}
+static void home_hop(void) {
+    routine(RoutineHop, 20);
+}
 static void home_asleep(void) {
     press(InputKeyOk, InputTypeShort);
     run_for(600);
@@ -246,6 +263,9 @@ static const struct {
     {"home-bug", home_bug},
     {"home-bug-quack", home_bug_quack},
     {"home-bug-fixed", home_bug_fixed},
+    {"home-sip", home_sip},
+    {"home-typing", home_typing},
+    {"home-hop", home_hop},
     {"home-asleep", home_asleep},
     {"home-walking", home_walking},
     {"home-wandering", home_wandering},

@@ -19,6 +19,9 @@ copy facing left:
     blink  harold-24-blink.txt, eyes closed; also used while asleep
     quack  harold-24-quack.txt, the bill open
 
+Each pose also gets a mask ("_mask"): Harold filled in solid, so the app can
+blank out what he stands in front of before drawing him.
+
 The README banner (brand/banner.png) is a separate pen drawing, not made here.
 """
 
@@ -49,6 +52,20 @@ def headroom(bitmap, raised=False):
 
 def mirror(bitmap):
     return [list(reversed(row)) for row in bitmap]
+
+
+def silhouette(bitmap):
+    """The sprite filled in: every pixel not reachable from the edge."""
+    h, w = len(bitmap), len(bitmap[0])
+    outside = [[False] * w for _ in range(h)]
+    todo = [(x, y) for x in range(w) for y in (0, h - 1)] + [(x, y) for y in range(h) for x in (0, w - 1)]
+    while todo:
+        x, y = todo.pop()
+        if not (0 <= x < w and 0 <= y < h) or outside[y][x] or bitmap[y][x]:
+            continue
+        outside[y][x] = True
+        todo += [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+    return [[0 if outside[y][x] else 1 for x in range(w)] for y in range(h)]
 
 
 def to_image(bitmap, on=(0, 0, 0), off=(255, 255, 255), mode="1"):
@@ -93,10 +110,18 @@ def main():
         "blink": headroom(load("harold-24-blink.txt")),
         "quack": headroom(load("harold-24-quack.txt")),
     }
-    sprites = {}
+    # The open bill lets a fill leak inside, so every mask is filled in
+    # together with the idle body at the same height.
+    body = {"idle": poses["idle"], "bob": poses["bob"], "blink": poses["idle"], "quack": poses["idle"]}
+    sprites, masks = {}, {}
     for name, bm in poses.items():
+        filled = silhouette(bm)
+        base = silhouette(body[name])
+        mask = [[a | b for a, b in zip(r1, r2)] for r1, r2 in zip(filled, base)]
         sprites[f"harold_{name}"] = bm
         sprites[f"harold_{name}_l"] = mirror(bm)
+        masks[f"harold_{name}"] = mask
+        masks[f"harold_{name}_l"] = mirror(mask)
 
     images = ROOT / "app" / "images"
     images.mkdir(parents=True, exist_ok=True)
@@ -104,6 +129,8 @@ def main():
         old.unlink()
     for name, bm in sprites.items():
         to_image(bm).save(images / f"{name}_{len(bm[0])}x{len(bm)}.png")
+        mask = masks[name]
+        to_image(mask).save(images / f"{name}_mask_{len(bm[0])}x{len(bm)}.png")
     to_image(icon_bitmap()).save(ROOT / "app" / "icon.png")
     # The icon doubles as the small Harold that traces a walk in Preview.
     to_image(icon_bitmap()).save(images / "harold_mini_10x10.png")
