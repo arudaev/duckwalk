@@ -4,7 +4,7 @@
 
 #include "duckwalk.h"
 #include "duckwalk_icons.h"
-#include "usb/usb_duck.h"
+#include "link.h"
 
 #define BOX_X     6
 #define BOX_Y     15
@@ -72,7 +72,7 @@ void preview_draw(Canvas* canvas, Duckwalk* app) {
     canvas_set_color(canvas, ColorBlack);
     canvas_draw_icon(canvas, x - 5, y - 5, &I_harold_mini_10x10);
 
-    canvas_draw_str(canvas, 2, 63, usb_duck_is_connected() ? "OK walk now" : "no USB");
+    canvas_draw_str(canvas, 2, 63, link_is_connected() ? "OK walk now" : link_status());
     canvas_draw_str_aligned(canvas, 126, 63, AlignRight, AlignBottom, "new path >");
 }
 

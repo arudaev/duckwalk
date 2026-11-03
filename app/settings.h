@@ -7,6 +7,7 @@
 
 typedef enum {
     SettingMode,
+    SettingConnection,
     SettingInterval,
     SettingLength,
     SettingHours,

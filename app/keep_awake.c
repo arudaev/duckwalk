@@ -1,5 +1,5 @@
 #include "keep_awake.h"
-#include "usb/usb_duck.h"
+#include "link.h"
 
 #include <furi_hal_random.h>
 
@@ -62,7 +62,7 @@ void keep_awake_replan(KeepAwake* ka) {
 }
 
 void keep_awake_walk_now(KeepAwake* ka) {
-    if(ka->step || !usb_duck_is_connected()) return;
+    if(ka->step || !link_is_connected()) return;
     ka->step = 1;
     ka->step_tick = furi_get_tick();
 }
@@ -82,7 +82,7 @@ static bool move_by(int16_t dx, int16_t dy) {
     while(ok && (dx || dy)) {
         int8_t sx = dx > 127 ? 127 : dx < -127 ? -127 : (int8_t)dx;
         int8_t sy = dy > 127 ? 127 : dy < -127 ? -127 : (int8_t)dy;
-        ok = usb_duck_mouse_move(sx, sy);
+        ok = link_mouse_move(sx, sy);
         dx -= sx;
         dy -= sy;
     }
@@ -107,7 +107,7 @@ static bool nudge(void) {
         dy = -1;
         break;
     }
-    return usb_duck_mouse_move(dx, dy) && usb_duck_mouse_move(-dx, -dy);
+    return link_mouse_move(dx, dy) && link_mouse_move(-dx, -dy);
 }
 
 static bool walk_step(KeepAwake* ka) {
@@ -138,7 +138,7 @@ bool keep_awake_tick(KeepAwake* ka) {
         schedule(ka);
         return false;
     }
-    bool sent = usb_duck_is_connected() && nudge();
+    bool sent = link_is_connected() && nudge();
     if(sent) ka->moves++;
     schedule(ka);
     return sent;

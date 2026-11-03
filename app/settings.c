@@ -1,5 +1,6 @@
 #include "settings.h"
 #include "keep_awake.h"
+#include "link.h"
 
 #include <furi_hal_rtc.h>
 #include <storage/storage.h>
@@ -11,6 +12,7 @@
 #define AWAKE_KEY        "Awake mode"
 
 static const char* const mode_names[] = {"Off", "Subtle", "Walk"};
+static const char* const connection_names[] = {"USB", "Bluetooth"};
 static const char* const interval_names[] = {"30-60 s", "1-3 min", "2-4 min"};
 static const char* const length_names[] = {"Short", "Medium", "Long"};
 static const char* const hours_names[] = {"Always", "Mon-Fri 8-18"};
@@ -23,6 +25,7 @@ static const struct {
     uint8_t fallback;
 } settings_table[SettingCount] = {
     [SettingMode] = {"Mode", mode_names, KeepAwakeModeCount, KeepAwakeWalk},
+    [SettingConnection] = {"Connection", connection_names, LinkCount, LinkUsb},
     [SettingInterval] = {"Every", interval_names, IntervalCount, IntervalNormal},
     [SettingLength] = {"Walk length", length_names, WalkLengthCount, WalkLengthMedium},
     [SettingHours] = {"Hours", hours_names, HoursCount, HoursAlways},

@@ -4,7 +4,7 @@
 
 #include "duckwalk.h"
 #include "duckwalk_icons.h"
-#include "usb/usb_duck.h"
+#include "link.h"
 
 #include <furi_hal_random.h>
 #include <notification/notification_messages.h>
@@ -154,10 +154,7 @@ void home_draw(Canvas* canvas, Duckwalk* app) {
     canvas_set_font(canvas, FontPrimary);
     canvas_draw_str(canvas, 2, 10, "Duckwalk");
     canvas_set_font(canvas, FontSecondary);
-    const char* usb = !app->usb_ok              ? "USB busy" :
-                      usb_duck_is_connected() ? "USB" :
-                                                "no USB";
-    canvas_draw_str_aligned(canvas, 126, 10, AlignRight, AlignBottom, usb);
+    canvas_draw_str_aligned(canvas, 126, 10, AlignRight, AlignBottom, link_status());
     draw_status(canvas, app);
     canvas_draw_str_aligned(canvas, 126, 21, AlignRight, AlignBottom, "^ Preview");
 

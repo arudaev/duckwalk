@@ -6,7 +6,7 @@
 #include <furi_hal.h>
 
 #include "duckwalk.h"
-#include "usb/usb_duck.h"
+#include "link.h"
 
 /* Walks are played one step every WALK_STEP_MS, so the loop never sleeps
  * longer than that. */
@@ -60,11 +60,6 @@ int32_t duckwalk_app(void* p) {
     Gui* gui = furi_record_open(RECORD_GUI);
     gui_add_view_port(gui, view_port, GuiLayerFullscreen);
 
-    FuriHalUsbInterface* usb_prev = furi_hal_usb_get_config();
-    for(int i = 0; i < 20 && !(app->usb_ok = furi_hal_usb_set_config(&usb_duck, NULL)); i++) {
-        furi_delay_ms(100);
-    }
-
     uint32_t duty_checked = 0;
     while(app->running) {
         InputEvent input;
@@ -98,7 +93,7 @@ int32_t duckwalk_app(void* p) {
         view_port_update(view_port);
     }
 
-    if(app->usb_ok) furi_hal_usb_set_config(usb_prev, NULL);
+    link_stop();
     settings_save(&app->settings);
 
     gui_remove_view_port(gui, view_port);

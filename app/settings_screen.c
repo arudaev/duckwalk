@@ -2,6 +2,7 @@
  * change. Back saves and returns to Harold. */
 
 #include "duckwalk.h"
+#include "link.h"
 
 #define ROW_H    10
 #define ROWS_TOP 13
@@ -9,6 +10,7 @@
 
 void duckwalk_apply_settings(Duckwalk* app) {
     DuckwalkSettings* s = &app->settings;
+    link_start(s->values[SettingConnection]);
     uint32_t min_s, max_s;
     settings_interval(s->values[SettingInterval], &min_s, &max_s);
     keep_awake_set_interval(&app->keep_awake, min_s, max_s);

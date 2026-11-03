@@ -4,7 +4,7 @@
 
 #include "duckwalk.h"
 #include "duckwalk_icons.h"
-#include "usb/usb_duck.h"
+#include "link.h"
 
 #include <hid_usage_consumer.h>
 
@@ -77,9 +77,9 @@ static void draw_page(Canvas* canvas, Duckwalk* app) {
     canvas_set_font(canvas, FontPrimary);
     canvas_draw_str(canvas, 2, 10, page_names[r->page]);
     canvas_draw_icon(canvas, 116, 1, &I_harold_mini_10x10);
-    if(!usb_duck_is_connected()) {
+    if(!link_is_connected()) {
         canvas_set_font(canvas, FontSecondary);
-        canvas_draw_str_aligned(canvas, 112, 10, AlignRight, AlignBottom, "no USB");
+        canvas_draw_str_aligned(canvas, 112, 10, AlignRight, AlignBottom, link_status());
     }
 
     canvas_set_font(canvas, FontSecondary);
@@ -115,21 +115,21 @@ static void menu_input(Duckwalk* app, const InputEvent* input) {
 }
 
 static bool media_key(InputKey key, InputType type) {
-    if(type == InputTypeLong && key == InputKeyOk) return usb_duck_consumer_tap(HID_CONSUMER_MUTE);
+    if(type == InputTypeLong && key == InputKeyOk) return link_consumer_tap(HID_CONSUMER_MUTE);
     bool tap = type == InputTypeShort;
     bool hold = type == InputTypeRepeat && (key == InputKeyUp || key == InputKeyDown);
     if(!tap && !hold) return false;
     switch(key) {
     case InputKeyUp:
-        return usb_duck_consumer_tap(HID_CONSUMER_VOLUME_INCREMENT);
+        return link_consumer_tap(HID_CONSUMER_VOLUME_INCREMENT);
     case InputKeyDown:
-        return usb_duck_consumer_tap(HID_CONSUMER_VOLUME_DECREMENT);
+        return link_consumer_tap(HID_CONSUMER_VOLUME_DECREMENT);
     case InputKeyLeft:
-        return usb_duck_consumer_tap(HID_CONSUMER_SCAN_PREVIOUS_TRACK);
+        return link_consumer_tap(HID_CONSUMER_SCAN_PREVIOUS_TRACK);
     case InputKeyRight:
-        return usb_duck_consumer_tap(HID_CONSUMER_SCAN_NEXT_TRACK);
+        return link_consumer_tap(HID_CONSUMER_SCAN_NEXT_TRACK);
     case InputKeyOk:
-        return usb_duck_consumer_tap(HID_CONSUMER_PLAY_PAUSE);
+        return link_consumer_tap(HID_CONSUMER_PLAY_PAUSE);
     default:
         return false;
     }
@@ -137,15 +137,15 @@ static bool media_key(InputKey key, InputType type) {
 
 static bool slides_key(InputKey key, InputType type) {
     if(type != InputTypeShort && type != InputTypeRepeat) return false;
-    if(key == InputKeyRight) return usb_duck_mouse_scroll(-1);
-    if(key == InputKeyLeft) return usb_duck_mouse_scroll(1);
+    if(key == InputKeyRight) return link_mouse_scroll(-1);
+    if(key == InputKeyLeft) return link_mouse_scroll(1);
     return false;
 }
 
 static bool mouse_key(RemoteState* r, InputKey key, InputType type) {
     if(key == InputKeyOk) {
-        if(type == InputTypeShort) return usb_duck_mouse_click(USB_DUCK_BUTTON_LEFT);
-        if(type == InputTypeLong) return usb_duck_mouse_click(USB_DUCK_BUTTON_RIGHT);
+        if(type == InputTypeShort) return link_mouse_click(LINK_BUTTON_LEFT);
+        if(type == InputTypeLong) return link_mouse_click(LINK_BUTTON_RIGHT);
         return false;
     }
     /* Arrows move while held; remote_tick does the moving. */
@@ -207,7 +207,7 @@ void remote_tick(Duckwalk* app) {
     if(r->held & (1 << 1)) dy += step;
     if(r->held & (1 << 2)) dx -= step;
     if(r->held & (1 << 3)) dx += step;
-    if((dx || dy) && usb_duck_mouse_move(dx, dy)) {
+    if((dx || dy) && link_mouse_move(dx, dy)) {
         r->lit = __builtin_ctz(r->held);
         r->lit_until = furi_get_tick() + furi_ms_to_ticks(FLASH_MS);
         keep_awake_postpone(&app->keep_awake);

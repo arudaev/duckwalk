@@ -45,7 +45,6 @@ typedef struct {
 typedef struct {
     FuriMutex* mutex;
     NotificationApp* notifications;
-    bool usb_ok;
     bool running;
     Screen screen;
     KeepAwake keep_awake;
