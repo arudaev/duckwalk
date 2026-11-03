@@ -44,6 +44,18 @@ typedef struct {
     bool facing_right;
 } HomeAnim;
 
+/* The Bluetooth pairing checklist (pairing.c). */
+typedef struct {
+    bool help; /* showing the fix for the first open box */
+    uint8_t circle_step; /* pointer test in progress; 0 when not */
+    uint32_t circle_tick;
+    bool asked; /* "did you see the circle?" */
+    bool pointer_ok;
+    bool pointer_failed;
+    uint32_t done_at;
+    uint32_t forgot_until;
+} PairingState;
+
 typedef struct {
     FuriMutex* mutex;
     NotificationApp* notifications;
@@ -56,10 +68,7 @@ typedef struct {
     HomeAnim home;
     RemoteState remote;
     uint32_t preview_started;
-    struct {
-        uint32_t connected_at;
-        uint32_t forgot_until;
-    } pairing;
+    PairingState pairing;
 } Duckwalk;
 
 /* Each screen draws itself and handles its own buttons. Both run with
@@ -87,7 +96,7 @@ void pairing_open(Duckwalk* app);
 void pairing_draw(Canvas* canvas, Duckwalk* app);
 void pairing_input(Duckwalk* app, const InputEvent* input);
 
-/* Returns home a moment after the computer connects; call every loop. */
+/* Plays the pointer test and returns home once it passed; call every loop. */
 void pairing_tick(Duckwalk* app);
 
 /* Push the current settings into keep-awake. */
