@@ -156,6 +156,7 @@ def main():
     sprites = {
         "harold_idle": with_feet(idle, 0),
         "harold_asleep": with_feet(asleep, 0),
+        "harold_blink_r": mirror(with_feet(asleep, 0)),
         "harold_quack": with_feet(quack, 0),
         "harold_walk_0": walk[0],
         "harold_walk_1": walk[1],

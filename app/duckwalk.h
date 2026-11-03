@@ -35,6 +35,14 @@ typedef struct {
     uint32_t lit_until;
 } RemoteState;
 
+/* The bug hunt at Harold's desk (home.c). */
+typedef enum {
+    DeskReading,
+    DeskSpotted, /* "Bug!" */
+    DeskQuack, /* he quacks at it */
+    DeskFixed, /* "Fixed." */
+} DeskPhase;
+
 /* Harold's moods on the home screen; all times are ticks. Changed only by
  * home_tick and home_input, read by home_draw. */
 typedef struct {
@@ -43,8 +51,16 @@ typedef struct {
     uint32_t blink_at; /* the next blink starts here */
     uint32_t blink_until;
     uint32_t look_until;
+    uint32_t typing_until;
     int16_t last_x;
     bool facing_right;
+    /* The laptop */
+    uint32_t scroll; /* pixels the code has scrolled */
+    uint32_t scroll_at;
+    DeskPhase desk;
+    uint32_t desk_until;
+    uint32_t bug_at;
+    uint8_t bug_row;
 } HomeAnim;
 
 /* The Bluetooth pairing checklist (pairing.c). */

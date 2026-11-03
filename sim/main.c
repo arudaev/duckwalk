@@ -100,6 +100,19 @@ static void draw(Canvas* canvas) {
 static void home_awake(void) {
     run_for(3000);
 }
+static void home_bug(void) {
+    run_for(1000);
+    app.home.bug_at = furi_get_tick() + 100;
+    run_for(600);
+}
+static void home_bug_quack(void) {
+    home_bug();
+    run_for(1200);
+}
+static void home_bug_fixed(void) {
+    home_bug_quack();
+    run_for(900);
+}
 static void home_asleep(void) {
     press(InputKeyOk, InputTypeShort);
     run_for(600);
@@ -196,6 +209,9 @@ static const struct {
     void (*setup)(void);
 } scenes[] = {
     {"home-awake", home_awake},
+    {"home-bug", home_bug},
+    {"home-bug-quack", home_bug_quack},
+    {"home-bug-fixed", home_bug_fixed},
     {"home-asleep", home_asleep},
     {"home-walking", home_walking},
     {"home-quack", home_quack},
