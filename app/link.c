@@ -235,28 +235,48 @@ static int8_t clamp8(int16_t v) {
     return v > 127 ? 127 : v < -127 ? -127 : (int8_t)v;
 }
 
+/* Over Bluetooth the firmware's report calls return false when the report
+ * went out (ble_gatt_characteristic_update returns result != SUCCESS), so
+ * their results can't be trusted either way; its own Remote ignores them.
+ * Taking false as a failure would keep every move owed and send it again
+ * with the next one, and a click would never be released. A Bluetooth
+ * report counts as sent while the computer is connected. */
 static bool send_move(int8_t dx, int8_t dy) {
     if(link.kind == LinkUsb) return usb_duck_mouse_move(dx, dy);
-    return ble_profile_hid_mouse_move(link.profile, dx, dy);
+    ble_profile_hid_mouse_move(link.profile, dx, dy);
+    return true;
 }
 
 static bool send(const Report* r) {
+    if(link.kind == LinkUsb) {
+        switch(r->type) {
+        case ReportClick:
+            return usb_duck_mouse_click(r->a);
+        case ReportScroll:
+            return usb_duck_mouse_scroll(r->a);
+        case ReportConsumer:
+            return usb_duck_consumer_tap((uint16_t)r->a);
+        case ReportMove:
+            break;
+        }
+        return false;
+    }
     switch(r->type) {
     case ReportClick:
-        if(link.kind == LinkUsb) return usb_duck_mouse_click(r->a);
-        return ble_profile_hid_mouse_press(link.profile, r->a) &&
-               ble_profile_hid_mouse_release(link.profile, r->a);
+        ble_profile_hid_mouse_press(link.profile, r->a);
+        ble_profile_hid_mouse_release(link.profile, r->a);
+        break;
     case ReportScroll:
-        if(link.kind == LinkUsb) return usb_duck_mouse_scroll(r->a);
-        return ble_profile_hid_mouse_scroll(link.profile, r->a);
+        ble_profile_hid_mouse_scroll(link.profile, r->a);
+        break;
     case ReportConsumer:
-        if(link.kind == LinkUsb) return usb_duck_consumer_tap((uint16_t)r->a);
-        return ble_profile_hid_consumer_key_press(link.profile, (uint16_t)r->a) &&
-               ble_profile_hid_consumer_key_release(link.profile, (uint16_t)r->a);
+        ble_profile_hid_consumer_key_press(link.profile, (uint16_t)r->a);
+        ble_profile_hid_consumer_key_release(link.profile, (uint16_t)r->a);
+        break;
     case ReportMove:
         break;
     }
-    return false;
+    return true;
 }
 
 /* Moves are merged with whatever is still owed; what fails stays owed. */
