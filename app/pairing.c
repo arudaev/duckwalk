@@ -211,9 +211,9 @@ void pairing_input(Duckwalk* app, const InputEvent* input) {
         if(step == StepPointer && p->asked) {
             p->pointer_ok = true;
             p->done_at = furi_get_tick();
-        } else if(step == StepPointer && !p->testing && !keep_awake_is_walking(&app->keep_awake)) {
+        } else if(step == StepPointer && !p->testing && !keep_awake_is_playing(&app->keep_awake)) {
             keep_awake_play_circle(&app->keep_awake);
-            p->testing = keep_awake_is_walking(&app->keep_awake);
+            p->testing = keep_awake_is_playing(&app->keep_awake);
             p->asked = false;
             p->pointer_failed = false;
         }
@@ -234,7 +234,7 @@ void pairing_tick(Duckwalk* app) {
     if(app->screen != ScreenPairing) return;
 
     /* The pointer test: keep-awake plays the circle; ask once it's done. */
-    if(p->testing && !keep_awake_is_walking(&app->keep_awake)) {
+    if(p->testing && !keep_awake_is_playing(&app->keep_awake)) {
         p->testing = false;
         p->asked = true;
     }

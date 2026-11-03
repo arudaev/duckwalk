@@ -69,6 +69,7 @@ void wander_start(Wander* w, WalkLength length) {
 void wander_go_home(Wander* w) {
     if(w->homing) return;
     w->homing = true;
+    w->home_steps = 0;
     w->tx = w->ty = 0;
     w->cruise = HOME_SPEED;
 }
@@ -83,26 +84,34 @@ static void steer(Wander* w) {
             w->speed = 0;
             return;
         }
-        if(dist < SLOW_DOWN) {
-            /* The last stretch: straight in, braking. */
-            w->heading = atan2f(dy, dx);
-            float brake = dist * 0.15f;
-            if(brake < 0.6f) brake = 0.6f;
-            if(w->speed > brake) w->speed = brake;
-        }
+        w->home_steps++;
     } else if(dist < NEAR_TARGET || ++w->target_steps > TARGET_STEPS) {
         pick_target(w);
         dx = w->tx - w->x;
         dy = w->ty - w->y;
     }
 
-    /* Turn towards the spot, but only so far each step: smooth arcs. */
+    float pace = w->cruise;
+    if(w->homing) {
+        /* Its turning circle (speed / turn) has to fit inside the distance
+         * left, or it could circle the start for ever; near the end it
+         * brakes. */
+        float fits = dist * TURN_PER_STEP / 2.0f, brake = dist * 0.15f;
+        if(fits < pace) pace = fits;
+        if(brake < pace) pace = brake;
+        if(pace < 0.6f) pace = 0.6f;
+    }
+
+    /* Turn towards the spot, but only so far each step: smooth arcs. The
+     * last stretch home, or a homing that takes too long, goes straight. */
     float turn = wrap_angle(atan2f(dy, dx) - w->heading);
-    if(turn > TURN_PER_STEP) turn = TURN_PER_STEP;
-    if(turn < -TURN_PER_STEP) turn = -TURN_PER_STEP;
+    bool straight = w->homing && (dist < SLOW_DOWN || w->home_steps > WANDER_HOME_STEPS - 40);
+    if(!straight && turn > TURN_PER_STEP) turn = TURN_PER_STEP;
+    if(!straight && turn < -TURN_PER_STEP) turn = -TURN_PER_STEP;
     w->heading = wrap_angle(w->heading + turn);
 
-    if(!(w->homing && dist < SLOW_DOWN)) w->speed += (w->cruise - w->speed) * EASE_SPEED;
+    w->speed += (pace - w->speed) * EASE_SPEED;
+    if(w->homing && w->speed > pace) w->speed = pace;
     w->x += cosf(w->heading) * w->speed;
     w->y += sinf(w->heading) * w->speed;
 }
@@ -135,7 +144,7 @@ void wander_sample(WalkPath* path, WalkLength length) {
     path->min_x = path->max_x = path->min_y = path->max_y = 0;
     path->points[path->count++] = (WalkPoint){0, 0};
     while(path->count < WALK_MAX_STEPS) {
-        if(path->count == WALK_MAX_STEPS - 110) wander_go_home(&w);
+        if(path->count == WALK_MAX_STEPS - WANDER_HOME_STEPS - 1) wander_go_home(&w);
         wander_step(&w);
         WalkPoint p = wander_position(&w);
         path->points[path->count++] = p;

@@ -23,7 +23,11 @@ typedef struct {
     int16_t sent_x, sent_y; /* where the moves sent so far put the cursor */
     float range;
     bool homing;
+    uint16_t home_steps; /* steps since it set off home */
 } Wander;
+
+/* A wander told to go home gets there within this many steps (3 s). */
+#define WANDER_HOME_STEPS 150
 
 void wander_start(Wander* wander, WalkLength length);
 

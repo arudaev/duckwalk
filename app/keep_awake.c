@@ -4,6 +4,9 @@
 
 #include <furi_hal_random.h>
 
+/* After the Remote moves the pointer, a wander keeps off it this long. */
+#define REMOTE_HOLD_MS 30000
+
 static uint32_t random_between(uint32_t lo, uint32_t hi) {
     if(hi <= lo) return lo;
     return lo + furi_hal_random_get() % (hi - lo + 1);
@@ -91,7 +94,13 @@ void keep_awake_set_user_active(KeepAwake* ka, bool active) {
 }
 
 void keep_awake_postpone(KeepAwake* ka) {
-    if(!ka->step) schedule(ka);
+    if(ka->step) return;
+    schedule(ka);
+    if(ka->mode == KeepAwakeWander) {
+        /* The Remote has the pointer: let go and keep off it a while. */
+        drop_wander(ka);
+        ka->next_tick += furi_ms_to_ticks(REMOTE_HOLD_MS);
+    }
 }
 
 void keep_awake_replan(KeepAwake* ka) {
@@ -100,7 +109,6 @@ void keep_awake_replan(KeepAwake* ka) {
 
 void keep_awake_play_circle(KeepAwake* ka) {
     if(ka->step || !link_is_connected()) return;
-    drop_wander(ka);
     walk_circle(&ka->path, 24, 40);
     ka->step = 1;
     ka->step_tick = furi_get_tick();
@@ -108,13 +116,16 @@ void keep_awake_play_circle(KeepAwake* ka) {
 
 void keep_awake_walk_now(KeepAwake* ka) {
     if(ka->step || !link_is_connected()) return;
-    drop_wander(ka);
     ka->step = 1;
     ka->step_tick = furi_get_tick();
 }
 
 bool keep_awake_is_walking(const KeepAwake* ka) {
     return ka->step != 0 || ka->wandering;
+}
+
+bool keep_awake_is_playing(const KeepAwake* ka) {
+    return ka->step != 0;
 }
 
 bool keep_awake_is_wandering(const KeepAwake* ka) {
@@ -195,6 +206,9 @@ static bool wander_tick(KeepAwake* ka) {
     }
     /* The mode ended or work hours are over: glide home, then stop. */
     if(ka->mode != KeepAwakeWander || ka->paused) wander_go_home(&ka->wander);
+    /* After a stall (a slow link change, say), carry on from now rather
+     * than send every missed step at once. */
+    if(tick_reached(ka->step_tick + furi_ms_to_ticks(WALK_STEP_MS * 5))) ka->step_tick = furi_get_tick();
     bool moved = false;
     while(ka->wandering && tick_reached(ka->step_tick)) {
         WalkPoint m = wander_step(&ka->wander);

@@ -164,9 +164,13 @@ int32_t duckwalk_app(void* p) {
 
     /* A wander glides the pointer home before Harold lets go of it. */
     uint32_t leaving = furi_get_tick();
-    while(!keep_awake_let_go(&app->keep_awake) &&
-          furi_get_tick() - leaving < furi_ms_to_ticks(LET_GO_MS)) {
-        keep_awake_tick(&app->keep_awake);
+    while(furi_get_tick() - leaving < furi_ms_to_ticks(LET_GO_MS)) {
+        /* The screen is still up and reads this state as it draws. */
+        furi_mutex_acquire(app->mutex, FuriWaitForever);
+        bool done = keep_awake_let_go(&app->keep_awake);
+        if(!done) keep_awake_tick(&app->keep_awake);
+        furi_mutex_release(app->mutex);
+        if(done) break;
         link_flush();
         furi_delay_ms(WALK_STEP_MS);
     }

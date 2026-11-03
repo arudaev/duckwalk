@@ -74,7 +74,7 @@ static void draw_wandering(Canvas* canvas, KeepAwake* ka, const Trail* trail) {
 
 void preview_draw(Canvas* canvas, Duckwalk* app) {
     KeepAwake* ka = &app->keep_awake;
-    if(keep_awake_is_wandering(ka)) {
+    if(keep_awake_is_wandering(ka) && !keep_awake_is_playing(ka)) {
         draw_wandering(canvas, ka, &app->trail);
         return;
     }
@@ -121,7 +121,7 @@ void preview_input(Duckwalk* app, const InputEvent* input) {
     KeepAwake* ka = &app->keep_awake;
     if(input->key == InputKeyOk) {
         keep_awake_walk_now(ka);
-    } else if(input->key == InputKeyRight && !keep_awake_is_walking(ka)) {
+    } else if(input->key == InputKeyRight && !keep_awake_is_playing(ka)) {
         keep_awake_replan(ka);
         app->preview_started = furi_get_tick();
     } else if(input->key == InputKeyBack) {

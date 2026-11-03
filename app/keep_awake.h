@@ -55,14 +55,16 @@ uint32_t keep_awake_seconds_left(const KeepAwake* ka);
  * progress stops on the spot; once they stop, a fresh wait starts. */
 void keep_awake_set_user_active(KeepAwake* ka, bool active);
 
-/* Start the wait over, e.g. after the user sent input from the remote. */
+/* Start the wait over, e.g. after the user sent input from the remote. A
+ * wander lets go of the pointer and waits 30 s. */
 void keep_awake_postpone(KeepAwake* ka);
 
 /* Throw the planned walk away and plan another (not while walking). */
 void keep_awake_replan(KeepAwake* ka);
 
 /* Play a small circle now (the pairing screen's pointer test). The planned
- * walk is replaced; a new one is planned when the circle ends. */
+ * walk is replaced; a new one is planned when the circle ends. A wander
+ * waits where it is and carries on afterwards. */
 void keep_awake_play_circle(KeepAwake* ka);
 
 /* Play the planned walk now, whatever the mode (Preview uses this). */
@@ -70,6 +72,9 @@ void keep_awake_walk_now(KeepAwake* ka);
 
 /* True while Harold has the pointer: a walk, the circle or a wander. */
 bool keep_awake_is_walking(const KeepAwake* ka);
+
+/* True while a walk or the circle plays (not a wander). */
+bool keep_awake_is_playing(const KeepAwake* ka);
 
 bool keep_awake_is_wandering(const KeepAwake* ka);
 
