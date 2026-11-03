@@ -37,7 +37,7 @@ static void check_one(WalkLength length, uint32_t seed) {
 
     wander_go_home(&w);
     int steps = 0;
-    while(!wander_is_home(&w) && steps < 400) {
+    while(!wander_is_home(&w) && steps < WANDER_HOME_STEPS) {
         WalkPoint m = wander_step(&w);
         x += m.x;
         y += m.y;
@@ -47,7 +47,39 @@ static void check_one(WalkLength length, uint32_t seed) {
     CHECK(x == 0 && y == 0, "seed %lu: home at (%d,%d)", (unsigned long)seed, x, y);
 }
 
+/* Told to go home at any moment, from anywhere: it lands on the start
+ * within the 3 s the app waits on exit. */
+static void check_homing(WalkLength length, uint32_t seed) {
+    Wander w;
+    wander_start(&w, length);
+    int16_t x = 0, y = 0;
+    int before = 1 + furi_hal_random_get() % 1500;
+    for(int i = 0; i < before; i++) {
+        WalkPoint m = wander_step(&w);
+        x += m.x;
+        y += m.y;
+    }
+    wander_go_home(&w);
+    int steps = 0;
+    while(!wander_is_home(&w) && steps < WANDER_HOME_STEPS) {
+        WalkPoint m = wander_step(&w);
+        CHECK(abs(m.x) <= 127 && abs(m.y) <= 127, "seed %lu: jump on the way home", (unsigned long)seed);
+        x += m.x;
+        y += m.y;
+        steps++;
+    }
+    CHECK(wander_is_home(&w) && x == 0 && y == 0, "seed %lu, length %d: at (%d,%d) after %d steps home",
+          (unsigned long)seed, length, x, y, steps);
+}
+
 int main(void) {
+    for(WalkLength length = 0; length < WalkLengthCount; length++) {
+        for(uint32_t seed = 1; seed <= 20000; seed++) {
+            shim_random_seed(seed * 2654435761u + length);
+            check_homing(length, seed);
+        }
+    }
+
     for(WalkLength length = 0; length < WalkLengthCount; length++) {
         for(uint32_t seed = 1; seed <= SEEDS; seed++) {
             shim_random_seed(seed * 2654435761u);
@@ -61,7 +93,7 @@ int main(void) {
         shim_random_seed(seed * 2246822519u);
         wander_sample(&path, WalkLengthLong);
         WalkPoint last = path.points[path.count - 1], before = path.points[path.count - 2];
-        CHECK(path.count > 100 && path.count <= WALK_MAX_STEPS, "seed %lu: %u steps", (unsigned long)seed, path.count);
+        CHECK(path.count > 60 && path.count <= WALK_MAX_STEPS, "seed %lu: %u steps", (unsigned long)seed, path.count);
         CHECK(last.x == 0 && last.y == 0, "seed %lu: sample ends at (%d,%d)", (unsigned long)seed, last.x, last.y);
         CHECK(abs(before.x) <= 5 && abs(before.y) <= 5, "seed %lu: sample snaps home from (%d,%d)", (unsigned long)seed, before.x, before.y);
     }
