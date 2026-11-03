@@ -17,7 +17,15 @@ ufbt            # builds dist/duckwalk.fap against the release SDK
 ufbt launch     # uploads it and starts it on a connected Flipper (close qFlipper first)
 ```
 
-Before every push: `ufbt` builds without warnings and `python scripts/check_text.py` reports no problems.
+No Flipper at hand? The walk planner and the settings file have host tests that run with any C compiler and CMake:
+
+```bash
+cmake -S tests -B build/tests
+cmake --build build/tests
+ctest --test-dir build/tests --output-on-failure
+```
+
+Before every push: `ufbt` builds without warnings, the host tests pass and `python scripts/check_text.py` reports no problems.
 
 ## How work flows
 

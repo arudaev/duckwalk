@@ -9,3 +9,5 @@ dist/
 __pycache__/
 *.pyc
 .venv/
+# Host builds (tests, simulator)
+build/
