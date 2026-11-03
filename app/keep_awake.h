@@ -78,6 +78,9 @@ bool keep_awake_is_playing(const KeepAwake* ka);
 
 bool keep_awake_is_wandering(const KeepAwake* ka);
 
+/* A wander bringing the pointer back to where it started. */
+bool keep_awake_is_homing(const KeepAwake* ka);
+
 /* Where the cursor is on the current walk, relative to its start. */
 WalkPoint keep_awake_position(const KeepAwake* ka);
 

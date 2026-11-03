@@ -132,6 +132,10 @@ bool keep_awake_is_wandering(const KeepAwake* ka) {
     return ka->wandering;
 }
 
+bool keep_awake_is_homing(const KeepAwake* ka) {
+    return ka->wandering && ka->wander.homing;
+}
+
 WalkPoint keep_awake_position(const KeepAwake* ka) {
     if(ka->step) return ka->path.points[ka->step - 1];
     if(ka->wandering) return wander_position(&ka->wander);
