@@ -50,7 +50,7 @@ int main(void) {
         CHECK(keep_awake_is_wandering(&ka), "seed %lu: wander lost after the circle", (unsigned long)seed);
         run_for(&ka, 500);
 
-        /* Another mode: it glides home within the 3 s the app allows. */
+        /* Another mode: it glides home within the time the app allows. */
         keep_awake_set_mode(&ka, KeepAwakeSubtle);
         run_for(&ka, WANDER_HOME_STEPS * WALK_STEP_MS);
         CHECK(!keep_awake_is_walking(&ka), "seed %lu: still moving after mode change", (unsigned long)seed);

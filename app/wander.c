@@ -11,10 +11,13 @@ static const float wander_ranges[WalkLengthCount] = {
     [WalkLengthLong] = 280.0f,
 };
 
-/* Speeds in counts per 20 ms step: an amble, a walk and a hurry (about 60,
- * 120 and 220 pixels a second). */
-static const float cruise_speeds[] = {1.2f, 2.4f, 4.4f};
-#define HOME_SPEED 4.4f
+/* Speeds in counts per 20 ms step: an amble, a walk and a brisk walk (80,
+ * 120 and 160 counts a second). Kept close together, and home at the middle
+ * one: with Windows' "Enhance pointer precision" on (the default), faster
+ * moves go further per count, so a fast way home would overshoot the slow
+ * way out. */
+static const float cruise_speeds[] = {1.6f, 2.4f, 3.2f};
+#define HOME_SPEED 2.4f
 
 #define TURN_PER_STEP 0.10f /* radians: how sharply it can turn */
 #define EASE_SPEED    0.04f /* how quickly the speed follows the cruise */
@@ -105,7 +108,7 @@ static void steer(Wander* w) {
     /* Turn towards the spot, but only so far each step: smooth arcs. The
      * last stretch home, or a homing that takes too long, goes straight. */
     float turn = wrap_angle(atan2f(dy, dx) - w->heading);
-    bool straight = w->homing && (dist < SLOW_DOWN || w->home_steps > WANDER_HOME_STEPS - 40);
+    bool straight = w->homing && (dist < SLOW_DOWN || w->home_steps > WANDER_HOME_STEPS - 60);
     if(!straight && turn > TURN_PER_STEP) turn = TURN_PER_STEP;
     if(!straight && turn < -TURN_PER_STEP) turn = -TURN_PER_STEP;
     w->heading = wrap_angle(w->heading + turn);

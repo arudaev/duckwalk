@@ -26,8 +26,8 @@ typedef struct {
     uint16_t home_steps; /* steps since it set off home */
 } Wander;
 
-/* A wander told to go home gets there within this many steps (3 s). */
-#define WANDER_HOME_STEPS 150
+/* A wander told to go home gets there within this many steps (4.4 s). */
+#define WANDER_HOME_STEPS 220
 
 void wander_start(Wander* wander, WalkLength length);
 
