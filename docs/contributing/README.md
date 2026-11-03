@@ -16,6 +16,8 @@ Children are **native sub-issues** of their epic, and order between issues is re
 
 Milestones: **M0** repository, brand and CI · **M1** v0.1, the Flipper app over USB · **M2** Bluetooth mouse · **M3** desktop app · **M4** Harold's extra jobs.
 
+Every issue and pull request lands on the [project board](project-board.md), which explains its views, fields and automation.
+
 ## Branches and commits
 
 - Branch from `main`: `feat/`, `fix/`, `docs/`, `chore/`, `ci/` or `art/` plus a short slug.
