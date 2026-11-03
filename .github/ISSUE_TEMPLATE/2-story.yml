@@ -1,0 +1,40 @@
+name: User story
+description: One user-visible behaviour that can ship in a single reviewable PR.
+title: "[M?-S?] "
+labels: [type:story, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A story is the size of **one PR**. If it needs several PRs, it is an epic; if it is invisible to users, it is a task.
+        Title: `[M1-S7] Imperative outcome` (milestone, next free number). See the [contributor guide](https://github.com/arudaev/duckwalk/blob/main/docs/contributing/README.md).
+  - type: textarea
+    id: story
+    attributes:
+      label: User story
+      description: Who wants what, and why.
+      placeholder: As someone who steps away from the laptop, I want Harold to keep it awake, so that my status doesn't go idle.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Observable behaviour as a checklist, including what happens when the Flipper is unplugged or the computer sleeps.
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Design and dependencies
+      description: Screens or sprites involved, settings, parent epic and blockers (also set them with the native Relationships panel).
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: How to check it on a Flipper and on Windows, macOS or Linux.
+    validations:
+      required: true

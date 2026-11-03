@@ -1,0 +1,31 @@
+name: Spike (research)
+description: Time-boxed research that ends in a decision, ADR or document.
+title: "[M?-S?] Spike: "
+labels: [type:spike, needs-triage]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: The one question this spike answers, and the decision that depends on it.
+    validations:
+      required: true
+  - type: textarea
+    id: method
+    attributes:
+      label: Method
+      description: Devices, firmware versions, operating systems, experiments.
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Where the answer is written (docs/decisions/ page with measurements).
+    validations:
+      required: true
+  - type: input
+    id: timebox
+    attributes:
+      label: Time box
+      placeholder: 2 days
+    validations:
+      required: true

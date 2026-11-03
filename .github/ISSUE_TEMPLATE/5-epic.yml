@@ -1,0 +1,39 @@
+name: Epic (maintainers)
+description: A milestone-level outcome that owns native sub-issues.
+title: "[M?] "
+labels: [type:epic]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Epics are created by maintainers when a milestone becomes next. Children are **native sub-issues**, not checklists.
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: What is true for users when this epic is done. Include a short flow or diagram.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and non-goals
+      description: A two-column table works well.
+    validations:
+      required: true
+  - type: textarea
+    id: sequence
+    attributes:
+      label: Sequence
+      description: Order of the sub-issues and which can run in parallel. Record blockers with the native "blocked by" relationship.
+  - type: textarea
+    id: completion
+    attributes:
+      label: Completion criteria
+      description: End-to-end checks; the epic closes after acceptance, not when the last child closes.
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
