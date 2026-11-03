@@ -49,6 +49,10 @@ void keep_awake_postpone(KeepAwake* ka);
 /* Throw the planned walk away and plan another (not while walking). */
 void keep_awake_replan(KeepAwake* ka);
 
+/* Play a small circle now (the pairing screen's pointer test). The planned
+ * walk is replaced; a new one is planned when the circle ends. */
+void keep_awake_play_circle(KeepAwake* ka);
+
 /* Play the planned walk now, whatever the mode (Preview uses this). */
 void keep_awake_walk_now(KeepAwake* ka);
 

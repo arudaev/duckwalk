@@ -25,7 +25,12 @@ void welcome_draw(Canvas* canvas, Duckwalk* app) {
 void welcome_input(Duckwalk* app, const InputEvent* input) {
     if(input->type != InputTypeShort) return;
     LinkKind kind;
-    if(input->key == InputKeyLeft || input->key == InputKeyBack) {
+    if(input->key == InputKeyBack) {
+        /* Leaving without a choice: ask again next time. */
+        app->skip_save = true;
+        app->running = false;
+        return;
+    } else if(input->key == InputKeyLeft) {
         kind = LinkUsb;
     } else if(input->key == InputKeyRight) {
         kind = LinkBluetooth;
@@ -34,7 +39,7 @@ void welcome_input(Duckwalk* app, const InputEvent* input) {
     }
     app->settings.values[SettingConnection] = kind;
     duckwalk_apply_settings(app);
-    settings_save(&app->settings);
+    app->pending.save = true;
     if(kind == LinkBluetooth) {
         pairing_open(app);
     } else {

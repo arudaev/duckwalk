@@ -89,5 +89,12 @@ int main(void) {
     CHECK(reach[WalkLengthShort] < reach[WalkLengthMedium] && reach[WalkLengthMedium] < reach[WalkLengthLong],
           "average reach %d, %d, %d", reach[0], reach[1], reach[2]);
 
+    /* The pairing screen's circle comes back to the start. */
+    walk_circle(&path, 24, 40);
+    CHECK(path.count == 41, "circle has %u points", path.count);
+    CHECK(path.points[0].x == 0 && path.points[0].y == 0, "circle starts off the start");
+    CHECK(path.points[40].x == 0 && path.points[40].y == 0, "circle ends at (%d,%d)", path.points[40].x, path.points[40].y);
+    CHECK(walk_reach(&path) == 48, "circle reach %d", walk_reach(&path));
+
     return check_result("walk");
 }

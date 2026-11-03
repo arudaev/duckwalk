@@ -4,7 +4,15 @@
 
 /* The connection to the computer: the USB composite HID (usb/usb_duck.h) or
  * Bluetooth through the firmware's BLE HID profile. Everything else in the
- * app talks to the computer through these calls only. One link at a time. */
+ * app talks to the computer through these calls only. One link at a time.
+ *
+ * Threads: every link_* call comes from the app's main thread. The report
+ * calls (move, click, scroll, consumer key) only queue the report and never
+ * block, so screens can call them while holding the app lock; the main loop
+ * sends the queue with link_flush() after releasing it. link_start, link_stop
+ * and link_bt_forget block for up to a few hundred milliseconds and must be
+ * called without the app lock held. The status getters only read and are safe
+ * from the GUI thread. */
 
 typedef enum {
     LinkUsb,
@@ -29,8 +37,8 @@ bool link_is_connected(void);
 /* A few words for the screen, e.g. "USB", "BT pairing". */
 const char* link_status(void);
 
-/* True when Duckwalk is set to Bluetooth but the Flipper's own Bluetooth
- * switch is off, so nothing can see it. */
+/* True when Duckwalk is set to Bluetooth but isn't on air a few seconds
+ * after starting, so nothing can see it. */
 bool link_bt_off(void);
 
 /* The name the computer lists when pairing, e.g. "Harold Rgudalap". */
@@ -40,6 +48,9 @@ const char* link_bt_name(void);
  * next one can pair from scratch. */
 void link_bt_forget(void);
 
+/* Queue a report. Returns false when there is no computer to send it to or
+ * the queue is full. A mouse move that fails to send is added to the next
+ * one, so the pointer always ends up where the app meant it to be. */
 bool link_mouse_move(int8_t dx, int8_t dy);
 bool link_mouse_click(uint8_t button);
 
@@ -48,3 +59,9 @@ bool link_mouse_scroll(int8_t wheel);
 
 /* Press and release a consumer-page key (media keys, volume). */
 bool link_consumer_tap(uint16_t usage);
+
+/* Send everything queued. Call from the main loop without the app lock. */
+void link_flush(void);
+
+/* True while reports are waiting to be sent. */
+bool link_busy(void);

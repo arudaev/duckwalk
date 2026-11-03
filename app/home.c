@@ -5,6 +5,7 @@
 #include "duckwalk.h"
 #include "duckwalk_icons.h"
 #include "link.h"
+#include "util.h"
 
 #include <furi_hal_random.h>
 #include <notification/notification_messages.h>
@@ -53,7 +54,7 @@ static const NotificationSequence sequence_quack_still = {
 };
 
 static bool before(uint32_t until) {
-    return (int32_t)(until - furi_get_tick()) > 0;
+    return tick_before(until);
 }
 
 static uint32_t ms(uint32_t milliseconds) {
@@ -73,35 +74,43 @@ static int32_t harold_x(Duckwalk* app) {
     return HOME_X + keep_awake_position(ka).x * WALK_SPAN / reach;
 }
 
-static const Icon* harold_frame(Duckwalk* app) {
-    HomeAnim* anim = &app->home;
-    KeepAwake* ka = &app->keep_awake;
-    uint32_t now = furi_get_tick();
-    bool stride = (now / ms(STRIDE_MS)) % 2;
+static const Icon* harold_frame(const Duckwalk* app) {
+    const HomeAnim* anim = &app->home;
+    const KeepAwake* ka = &app->keep_awake;
+    bool stride = (furi_get_tick() / ms(STRIDE_MS)) % 2;
 
     if(before(anim->quack_until)) return &I_harold_quack_28x29;
+    if(keep_awake_is_walking(ka)) {
+        if(anim->facing_right) return stride ? &I_harold_walk_r_1_28x29 : &I_harold_walk_r_0_28x29;
+        return stride ? &I_harold_walk_1_28x29 : &I_harold_walk_0_28x29;
+    }
+    if(ka->mode == KeepAwakeOff) return &I_harold_asleep_28x29;
+    if(before(anim->waddle_until)) return stride ? &I_harold_walk_1_28x29 : &I_harold_walk_0_28x29;
+    if(before(anim->blink_until)) return &I_harold_asleep_28x29;
+    if(before(anim->look_until)) return &I_harold_walk_r_0_28x29;
+    return &I_harold_idle_28x29;
+}
 
+void home_tick(Duckwalk* app) {
+    HomeAnim* anim = &app->home;
+    KeepAwake* ka = &app->keep_awake;
+
+    /* Face the way the cursor is going during a walk. */
     if(keep_awake_is_walking(ka)) {
         int16_t x = keep_awake_position(ka).x;
         if(x > anim->last_x) anim->facing_right = true;
         if(x < anim->last_x) anim->facing_right = false;
         anim->last_x = x;
-        if(anim->facing_right) return stride ? &I_harold_walk_r_1_28x29 : &I_harold_walk_r_0_28x29;
-        return stride ? &I_harold_walk_1_28x29 : &I_harold_walk_0_28x29;
+    } else {
+        anim->last_x = 0;
     }
-    anim->last_x = 0;
 
-    if(ka->mode == KeepAwakeOff) return &I_harold_asleep_28x29;
-    if(before(anim->waddle_until)) return stride ? &I_harold_walk_1_28x29 : &I_harold_walk_0_28x29;
-
-    if(!before(anim->blink_at)) {
-        if(before(anim->blink_at + ms(BLINK_MS))) return &I_harold_asleep_28x29;
-        /* Now and then he looks the other way after a blink. */
-        if(furi_hal_random_get() % 4 == 0) anim->look_until = now + ms(LOOK_MS);
+    /* Blink every few seconds; now and then look the other way after. */
+    if(tick_reached(anim->blink_at)) {
+        anim->blink_until = tick_in_ms(BLINK_MS);
+        if(furi_hal_random_get() % 4 == 0) anim->look_until = tick_in_ms(BLINK_MS + LOOK_MS);
         schedule_blink(anim);
     }
-    if(before(anim->look_until)) return &I_harold_walk_r_0_28x29;
-    return &I_harold_idle_28x29;
 }
 
 static void draw_zzz(Canvas* canvas, int32_t x) {

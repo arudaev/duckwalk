@@ -1,5 +1,6 @@
 #include "keep_awake.h"
 #include "link.h"
+#include "util.h"
 
 #include <furi_hal_random.h>
 
@@ -61,6 +62,13 @@ void keep_awake_replan(KeepAwake* ka) {
     if(!ka->step) walk_plan(&ka->path, ka->walk_length);
 }
 
+void keep_awake_play_circle(KeepAwake* ka) {
+    if(ka->step || !link_is_connected()) return;
+    walk_circle(&ka->path, 24, 40);
+    ka->step = 1;
+    ka->step_tick = furi_get_tick();
+}
+
 void keep_awake_walk_now(KeepAwake* ka) {
     if(ka->step || !link_is_connected()) return;
     ka->step = 1;
@@ -112,7 +120,7 @@ static bool nudge(void) {
 
 static bool walk_step(KeepAwake* ka) {
     bool moved = false;
-    while(ka->step && (int32_t)(furi_get_tick() - ka->step_tick) >= 0) {
+    while(ka->step && tick_reached(ka->step_tick)) {
         WalkPoint from = ka->path.points[ka->step - 1];
         WalkPoint to = ka->path.points[ka->step];
         moved |= move_by(to.x - from.x, to.y - from.y);
@@ -130,7 +138,7 @@ static bool walk_step(KeepAwake* ka) {
 bool keep_awake_tick(KeepAwake* ka) {
     if(ka->step) return walk_step(ka);
     if(ka->mode == KeepAwakeOff || ka->paused) return false;
-    if((int32_t)(furi_get_tick() - ka->next_tick) < 0) return false;
+    if(tick_before(ka->next_tick)) return false;
 
     if(ka->mode == KeepAwakeWalk) {
         keep_awake_walk_now(ka);

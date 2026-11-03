@@ -11,12 +11,10 @@
 #include "duckwalk.h"
 #include "duckwalk_icons.h"
 #include "link.h"
+#include "util.h"
 
-#include <math.h>
-
-#define DONE_MS      2000
-#define CIRCLE_STEPS 40
-#define CIRCLE_R     24.0f
+#define DONE_MS   2000
+#define FORGOT_MS 5000
 
 typedef enum {
     StepOnAir,
@@ -74,10 +72,10 @@ static void draw_checklist(Canvas* canvas, Duckwalk* app) {
 
     /* What to do now, in one line. */
     const char* next = line;
-    if(app->pairing.circle_step) {
+    if(app->pairing.testing) {
         next = "Watch the pointer...";
     } else if(step == StepOnAir) {
-        next = "Bluetooth is off: Help >";
+        next = "Not on air yet: Help >";
     } else if(step == StepConnected) {
         snprintf(line, sizeof(line), "PC: add %s", link_bt_name());
     } else if(step == StepPointer && app->pairing.asked) {
@@ -99,10 +97,10 @@ static void draw_help(Canvas* canvas, Duckwalk* app) {
     const char* lines[5] = {0};
     char pick[40];
     if(step == StepOnAir) {
-        lines[0] = "On the Flipper: Settings";
-        lines[1] = "> Bluetooth > ON.";
-        lines[2] = "Close PC Health or";
-        lines[3] = "Bluetooth Remote, then";
+        lines[0] = "Harold couldn't start";
+        lines[1] = "Bluetooth. Close apps";
+        lines[2] = "that use it (PC Health,";
+        lines[3] = "Bluetooth Remote) and";
         lines[4] = "open Duckwalk again.";
     } else if(step == StepConnected) {
         snprintf(pick, sizeof(pick), "> pick %s", link_bt_name());
@@ -134,7 +132,7 @@ void pairing_draw(Canvas* canvas, Duckwalk* app) {
         for(uint32_t i = 0; i < waves; i++) canvas_draw_str(canvas, 111 - i * 4, 9, "(");
     }
 
-    if(app->pairing.forgot_until && (int32_t)(app->pairing.forgot_until - furi_get_tick()) > 0) {
+    if(app->pairing.forgot_until && tick_before(app->pairing.forgot_until)) {
         canvas_set_font(canvas, FontSecondary);
         canvas_draw_str(canvas, 2, 24, "Forgot every computer.");
         canvas_draw_str(canvas, 2, 34, "Now remove Harold on the");
@@ -152,9 +150,9 @@ void pairing_draw(Canvas* canvas, Duckwalk* app) {
 void pairing_input(Duckwalk* app, const InputEvent* input) {
     PairingState* p = &app->pairing;
     if(input->key == InputKeyOk && input->type == InputTypeLong) {
-        link_bt_forget();
+        app->pending.forget = true;
         memset(p, 0, sizeof(*p));
-        p->forgot_until = furi_get_tick() + furi_ms_to_ticks(5000);
+        p->forgot_until = tick_in_ms(FORGOT_MS);
         return;
     }
     if(input->type != InputTypeShort) return;
@@ -175,9 +173,9 @@ void pairing_input(Duckwalk* app, const InputEvent* input) {
         if(step == StepPointer && p->asked) {
             p->pointer_ok = true;
             p->done_at = furi_get_tick();
-        } else if(step == StepPointer && !p->circle_step) {
-            p->circle_step = 1;
-            p->circle_tick = furi_get_tick();
+        } else if(step == StepPointer && !p->testing && !keep_awake_is_walking(&app->keep_awake)) {
+            keep_awake_play_circle(&app->keep_awake);
+            p->testing = keep_awake_is_walking(&app->keep_awake);
             p->asked = false;
             p->pointer_failed = false;
         }
@@ -193,31 +191,21 @@ void pairing_input(Duckwalk* app, const InputEvent* input) {
     }
 }
 
-static WalkPoint circle_point(uint8_t step) {
-    float a = 2.0f * (float)M_PI * step / CIRCLE_STEPS;
-    return (WalkPoint){(int16_t)lroundf(CIRCLE_R * sinf(a)), (int16_t)lroundf(CIRCLE_R * (1.0f - cosf(a)))};
-}
-
 void pairing_tick(Duckwalk* app) {
     PairingState* p = &app->pairing;
     if(app->screen != ScreenPairing) return;
 
-    /* The pointer test: one small circle, one step every WALK_STEP_MS. */
-    while(p->circle_step && (int32_t)(furi_get_tick() - p->circle_tick) >= 0) {
-        WalkPoint from = circle_point(p->circle_step - 1), to = circle_point(p->circle_step);
-        link_mouse_move(to.x - from.x, to.y - from.y);
-        p->circle_tick += furi_ms_to_ticks(WALK_STEP_MS);
-        if(++p->circle_step > CIRCLE_STEPS) {
-            p->circle_step = 0;
-            p->asked = true;
-        }
+    /* The pointer test: keep-awake plays the circle; ask once it's done. */
+    if(p->testing && !keep_awake_is_walking(&app->keep_awake)) {
+        p->testing = false;
+        p->asked = true;
     }
 
     if(!link_is_connected()) {
         p->pointer_ok = false;
         p->asked = false;
     }
-    if(p->pointer_ok && furi_get_tick() - p->done_at > furi_ms_to_ticks(DONE_MS)) {
+    if(p->pointer_ok && tick_reached(p->done_at + furi_ms_to_ticks(DONE_MS))) {
         app->screen = ScreenHome;
     }
 }
