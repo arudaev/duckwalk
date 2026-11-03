@@ -12,6 +12,7 @@ typedef enum {
     ScreenHome,
     ScreenSettings,
     ScreenRemote,
+    ScreenPreview,
 } Screen;
 
 typedef enum {
@@ -53,6 +54,7 @@ typedef struct {
     uint8_t settings_top;
     HomeAnim home;
     RemoteState remote;
+    uint32_t preview_started;
 } Duckwalk;
 
 /* Each screen draws itself and handles its own buttons. Both run with
@@ -69,6 +71,9 @@ void remote_input(Duckwalk* app, const InputEvent* input);
 
 /* Moves the pointer while arrows are held in Mouse; call every loop. */
 void remote_tick(Duckwalk* app);
+
+void preview_draw(Canvas* canvas, Duckwalk* app);
+void preview_input(Duckwalk* app, const InputEvent* input);
 
 /* Push the current settings into keep-awake. */
 void duckwalk_apply_settings(Duckwalk* app);

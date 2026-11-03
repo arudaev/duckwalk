@@ -57,6 +57,10 @@ void keep_awake_postpone(KeepAwake* ka) {
     if(!ka->step) schedule(ka);
 }
 
+void keep_awake_replan(KeepAwake* ka) {
+    if(!ka->step) walk_plan(&ka->path, ka->walk_length);
+}
+
 void keep_awake_walk_now(KeepAwake* ka) {
     if(ka->step || !usb_duck_is_connected()) return;
     ka->step = 1;

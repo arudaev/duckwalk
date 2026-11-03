@@ -29,6 +29,9 @@ static void draw_callback(Canvas* canvas, void* ctx) {
     case ScreenRemote:
         remote_draw(canvas, app);
         break;
+    case ScreenPreview:
+        preview_draw(canvas, app);
+        break;
     }
     furi_mutex_release(app->mutex);
 }
@@ -76,6 +79,9 @@ int32_t duckwalk_app(void* p) {
                 break;
             case ScreenRemote:
                 remote_input(app, &input);
+                break;
+            case ScreenPreview:
+                preview_input(app, &input);
                 break;
             }
             furi_mutex_release(app->mutex);

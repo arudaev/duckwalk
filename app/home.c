@@ -131,7 +131,7 @@ static void draw_status(Canvas* canvas, Duckwalk* app) {
     if(keep_awake_is_walking(ka)) {
         snprintf(line, sizeof(line), "Walking%.*s", (int)(furi_get_tick() / ms(400) % 4), "...");
     } else if(ka->mode == KeepAwakeOff) {
-        snprintf(line, sizeof(line), "Asleep. OK wakes him");
+        snprintf(line, sizeof(line), "Asleep, OK wakes");
     } else if(ka->paused) {
         snprintf(line, sizeof(line), "Off hours");
     } else {
@@ -159,6 +159,7 @@ void home_draw(Canvas* canvas, Duckwalk* app) {
                                                 "no USB";
     canvas_draw_str_aligned(canvas, 126, 10, AlignRight, AlignBottom, usb);
     draw_status(canvas, app);
+    canvas_draw_str_aligned(canvas, 126, 21, AlignRight, AlignBottom, "^ Preview");
 
     for(int32_t gx = 0; gx < 128; gx += 3) canvas_draw_dot(canvas, gx, GROUND_Y);
     canvas_draw_icon(canvas, x, HAROLD_Y, harold_frame(app));
@@ -195,6 +196,9 @@ void home_input(Duckwalk* app, const InputEvent* input) {
         app->screen = ScreenSettings;
     } else if(input->key == InputKeyLeft && input->type == InputTypeShort) {
         app->screen = ScreenRemote;
+    } else if(input->key == InputKeyUp && input->type == InputTypeShort) {
+        app->preview_started = furi_get_tick();
+        app->screen = ScreenPreview;
     } else if(input->key == InputKeyBack && input->type == InputTypeShort) {
         app->running = false;
     }

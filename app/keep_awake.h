@@ -46,6 +46,9 @@ uint32_t keep_awake_seconds_left(const KeepAwake* ka);
 /* Start the wait over, e.g. after the user sent input from the remote. */
 void keep_awake_postpone(KeepAwake* ka);
 
+/* Throw the planned walk away and plan another (not while walking). */
+void keep_awake_replan(KeepAwake* ka);
+
 /* Play the planned walk now, whatever the mode (Preview uses this). */
 void keep_awake_walk_now(KeepAwake* ka);
 
