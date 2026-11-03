@@ -43,6 +43,9 @@ void keep_awake_set_paused(KeepAwake* ka, bool paused);
 /* Seconds until the next nudge or walk (0 when off). */
 uint32_t keep_awake_seconds_left(const KeepAwake* ka);
 
+/* Start the wait over, e.g. after the user sent input from the remote. */
+void keep_awake_postpone(KeepAwake* ka);
+
 /* Play the planned walk now, whatever the mode (Preview uses this). */
 void keep_awake_walk_now(KeepAwake* ka);
 

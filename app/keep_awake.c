@@ -53,6 +53,10 @@ uint32_t keep_awake_seconds_left(const KeepAwake* ka) {
     return left > 0 ? (uint32_t)left / furi_kernel_get_tick_frequency() : 0;
 }
 
+void keep_awake_postpone(KeepAwake* ka) {
+    if(!ka->step) schedule(ka);
+}
+
 void keep_awake_walk_now(KeepAwake* ka) {
     if(ka->step || !usb_duck_is_connected()) return;
     ka->step = 1;

@@ -168,6 +168,7 @@ void home_draw(Canvas* canvas, Duckwalk* app) {
     if(before(app->home.quack_until)) draw_quack(canvas, x);
 
     canvas_set_font(canvas, FontSecondary);
+    canvas_draw_str(canvas, 2, 63, "< Remote");
     canvas_draw_str_aligned(canvas, 126, 63, AlignRight, AlignBottom, "Settings >");
 }
 
@@ -192,6 +193,8 @@ void home_input(Duckwalk* app, const InputEvent* input) {
         if(quack) notification_message(app->notifications, quack);
     } else if(input->key == InputKeyRight && input->type == InputTypeShort) {
         app->screen = ScreenSettings;
+    } else if(input->key == InputKeyLeft && input->type == InputTypeShort) {
+        app->screen = ScreenRemote;
     } else if(input->key == InputKeyBack && input->type == InputTypeShort) {
         app->running = false;
     }

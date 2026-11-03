@@ -225,6 +225,18 @@ bool usb_duck_mouse_move(int8_t dx, int8_t dy) {
     return duck_send(report, sizeof(report));
 }
 
+bool usb_duck_mouse_click(uint8_t button) {
+    uint8_t press[5] = {USB_DUCK_REPORT_MOUSE, button, 0, 0, 0};
+    uint8_t release[5] = {USB_DUCK_REPORT_MOUSE, 0, 0, 0, 0};
+    if(!duck_send(press, sizeof(press))) return false;
+    return duck_send(release, sizeof(release));
+}
+
+bool usb_duck_mouse_scroll(int8_t wheel) {
+    uint8_t report[5] = {USB_DUCK_REPORT_MOUSE, 0, 0, 0, (uint8_t)wheel};
+    return duck_send(report, sizeof(report));
+}
+
 bool usb_duck_consumer_tap(uint16_t usage) {
     uint8_t press[3] = {USB_DUCK_REPORT_CONSUMER, usage & 0xFF, usage >> 8};
     uint8_t release[3] = {USB_DUCK_REPORT_CONSUMER, 0, 0};

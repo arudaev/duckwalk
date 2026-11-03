@@ -26,6 +26,9 @@ static void draw_callback(Canvas* canvas, void* ctx) {
     case ScreenSettings:
         settings_draw(canvas, app);
         break;
+    case ScreenRemote:
+        remote_draw(canvas, app);
+        break;
     }
     furi_mutex_release(app->mutex);
 }
@@ -42,6 +45,7 @@ int32_t duckwalk_app(void* p) {
     app->notifications = furi_record_open(RECORD_NOTIFICATION);
     app->screen = ScreenHome;
     app->running = true;
+    app->remote.page = RemotePageMenu;
     settings_load(&app->settings);
     keep_awake_init(&app->keep_awake, 0, 0);
     duckwalk_apply_settings(app);
@@ -70,6 +74,9 @@ int32_t duckwalk_app(void* p) {
             case ScreenSettings:
                 settings_input(app, &input);
                 break;
+            case ScreenRemote:
+                remote_input(app, &input);
+                break;
             }
             furi_mutex_release(app->mutex);
         }
@@ -79,6 +86,7 @@ int32_t duckwalk_app(void* p) {
             duty_checked = furi_get_tick();
             keep_awake_set_paused(&app->keep_awake, !settings_on_duty(&app->settings));
         }
+        remote_tick(app);
         if(keep_awake_tick(&app->keep_awake)) home_on_move(app);
         furi_mutex_release(app->mutex);
         view_port_update(view_port);

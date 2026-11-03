@@ -11,7 +11,25 @@
 typedef enum {
     ScreenHome,
     ScreenSettings,
+    ScreenRemote,
 } Screen;
+
+typedef enum {
+    RemotePageMedia,
+    RemotePageSlides,
+    RemotePageMouse,
+    RemotePageCount,
+    RemotePageMenu = RemotePageCount,
+} RemotePage;
+
+typedef struct {
+    RemotePage page;
+    uint8_t selected; /* menu row */
+    uint8_t held; /* arrows held in Mouse, one bit each: up, down, left, right */
+    uint32_t held_since;
+    uint8_t lit; /* the label that flashes after a press */
+    uint32_t lit_until;
+} RemoteState;
 
 /* Harold's moods on the home screen; all times are ticks. */
 typedef struct {
@@ -34,6 +52,7 @@ typedef struct {
     uint8_t settings_selected;
     uint8_t settings_top;
     HomeAnim home;
+    RemoteState remote;
 } Duckwalk;
 
 /* Each screen draws itself and handles its own buttons. Both run with
@@ -44,6 +63,12 @@ void home_on_move(Duckwalk* app);
 
 void settings_draw(Canvas* canvas, Duckwalk* app);
 void settings_input(Duckwalk* app, const InputEvent* input);
+
+void remote_draw(Canvas* canvas, Duckwalk* app);
+void remote_input(Duckwalk* app, const InputEvent* input);
+
+/* Moves the pointer while arrows are held in Mouse; call every loop. */
+void remote_tick(Duckwalk* app);
 
 /* Push the current settings into keep-awake. */
 void duckwalk_apply_settings(Duckwalk* app);

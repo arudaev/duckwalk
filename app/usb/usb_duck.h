@@ -34,5 +34,14 @@ void usb_duck_set_rx_callback(UsbDuckRxCallback callback, void* ctx);
 
 bool usb_duck_is_connected(void);
 bool usb_duck_mouse_move(int8_t dx, int8_t dy);
+
+#define USB_DUCK_BUTTON_LEFT  (1 << 0)
+#define USB_DUCK_BUTTON_RIGHT (1 << 1)
+
+/* Press and release a mouse button. */
+bool usb_duck_mouse_click(uint8_t button);
+
+/* Positive scrolls up (back a slide), negative down. */
+bool usb_duck_mouse_scroll(int8_t wheel);
 bool usb_duck_consumer_tap(uint16_t usage);
 bool usb_duck_vendor_send(const uint8_t* data, size_t len);
