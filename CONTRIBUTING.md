@@ -25,6 +25,8 @@ cmake --build build/tests
 ctest --test-dir build/tests --output-on-failure
 ```
 
+To see every screen without a Flipper, render them with the [screen simulator](sim/README.md); CI does the same on every pull request.
+
 Before every push: `ufbt` builds without warnings, the host tests pass and `python scripts/check_text.py` reports no problems.
 
 ## How work flows

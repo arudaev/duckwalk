@@ -17,6 +17,22 @@ void furi_record_close(const char* name) {
     UNUSED(name);
 }
 
+/* Ticks */
+
+static uint32_t tick_now = 1000;
+
+uint32_t furi_get_tick(void) {
+    return tick_now;
+}
+
+uint32_t furi_kernel_get_tick_frequency(void) {
+    return 1000;
+}
+
+void shim_tick_set(uint32_t tick) {
+    tick_now = tick;
+}
+
 /* FuriString */
 
 struct FuriString {

@@ -20,6 +20,21 @@
 
 #define UNUSED(x) (void)(x)
 
+/* Logging goes nowhere on the host. */
+#define FURI_LOG_E(tag, ...) ((void)(tag))
+#define FURI_LOG_W(tag, ...) ((void)(tag))
+#define FURI_LOG_I(tag, ...) ((void)(tag))
+#define FURI_LOG_D(tag, ...) ((void)(tag))
+
+/* Ticks are milliseconds, as on the Flipper; tests set the clock. */
+uint32_t furi_get_tick(void);
+uint32_t furi_kernel_get_tick_frequency(void);
+#define furi_ms_to_ticks(ms) ((uint32_t)(ms))
+void shim_tick_set(uint32_t tick);
+
+/* Opaque on the host; the tested code only stores pointers to them. */
+typedef struct FuriMutex FuriMutex;
+
 #define RECORD_STORAGE "storage"
 void* furi_record_open(const char* name);
 void furi_record_close(const char* name);
