@@ -14,10 +14,10 @@ It is a Flipper app over USB: there is nothing to install on the computer, and n
 
 | On the Flipper | What happens on the computer |
 |---|---|
-| **Home** – Harold asleep or awake | Keep-awake on or off. In **Walk** mode the pointer takes a short, curved, randomised walk when you are away; in **Subtle** mode it moves one pixel and back |
-| **Right** – Settings | Mode, how often, how far, work hours only, sound and vibration |
-| **Left** – Remote | Play/pause, next and previous track, volume, presentation next and back, D-pad as a mouse |
-| **Up** – Preview | Harold acts out the next walk on the Flipper's screen before it happens |
+| **Home** – Harold asleep or awake; OK puts him to sleep or wakes him, holding OK makes him quack | Keep-awake on or off. In **Walk** mode the pointer takes a short, curved, randomised walk every few minutes and Harold walks along on the screen; in **Subtle** mode it moves one pixel and back |
+| **Right** – Settings | Mode, how often, how far, work hours only, sound and vibration. Saved on the SD card in `apps_data/duckwalk/settings.txt` |
+| **Left** – Remote | **Media:** play/pause, next and previous track, volume. **Slides:** next and back, by scrolling, which PowerPoint and most PDF viewers follow. **Mouse:** the D-pad moves the pointer, OK clicks, holding OK right-clicks |
+| **Up** – Preview | The next walk drawn to scale, with a small Harold tracing it. OK plays it now, Right plans a different one |
 | **Back** | Leaves the app; USB goes back to normal |
 
 Planned after 0.1: Bluetooth, so Duckwalk works unplugged like a Bluetooth mouse, and an optional desktop app where Harold walks along your taskbar and starts walks only when you are really away.
