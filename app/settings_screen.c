@@ -37,7 +37,8 @@ void duckwalk_check_stop_after(Duckwalk* app, bool pressed) {
         app->active_at = furi_get_tick();
         return;
     }
-    uint32_t idle_ms = (furi_get_tick() - app->active_at) * 1000 / furi_kernel_get_tick_frequency();
+    /* 64-bit: hours of ticks times 1000 overflow 32 bits after 71 minutes. */
+    uint32_t idle_ms = (uint32_t)((uint64_t)(furi_get_tick() - app->active_at) * 1000 / furi_kernel_get_tick_frequency());
     if(!settings_stop_due(&app->settings, idle_ms)) return;
     FURI_LOG_I(TAG, "Nobody around for a while: going to sleep");
     app->settings.values[SettingMode] = KeepAwakeOff;

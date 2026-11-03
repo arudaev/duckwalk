@@ -1,6 +1,7 @@
 /* Draws every Duckwalk screen in the states that matter and saves each as a
  * PNG, at the Flipper's 128x64 and four times larger, in the display's
- * orange and black. Exits non-zero if any text runs off the screen.
+ * orange and black. Exits non-zero if any text runs off the screen or a
+ * scene doesn't reach the state it sets up.
  *
  *   duckwalk_sim <output folder>
  */
@@ -35,6 +36,15 @@ static void fresh(void) {
     app.active_at = NOW;
     sim_link = (SimLink){.kind = LinkUsb, .connected = true, .on_air = true};
     helper_stop(); /* no PC helper unless a scene says so */
+}
+
+/* A scene that didn't reach its state fails the run, like text off the
+ * screen does. */
+static int unmet = 0;
+static void expect(bool ok, const char* what) {
+    if(ok) return;
+    fprintf(stderr, "%s\n", what);
+    unmet++;
 }
 
 /* Let time pass the way the main loop would. */
@@ -138,11 +148,12 @@ static void home_asleep(void) {
     run_for(600);
 }
 static void home_stopped(void) {
-    /* Stop after ran out: nobody pressed anything for hours. */
-    app.settings.values[SettingStopAfter] = StopAfter1h;
+    /* Stop after ran out: nobody pressed anything for the default 4 h,
+     * long enough to catch a 32-bit overflow in the idle time. */
     run_for(500);
-    app.active_at = furi_get_tick() - 3600u * 1000u;
+    app.active_at = furi_get_tick() - 4u * 3600u * 1000u;
     run_for(500);
+    expect(app.stopped, "home-stopped: Stop after didn't fire");
 }
 static void home_walking(void) {
     keep_awake_walk_now(&app.keep_awake);
@@ -350,5 +361,5 @@ int main(int argc, char** argv) {
         printf("%-26s ok\n", scenes[i].name);
     }
     printf("%d scenes, %d with text off the screen\n", (int)(sizeof(scenes) / sizeof(scenes[0])), problems);
-    return problems ? 1 : 0;
+    return problems || unmet ? 1 : 0;
 }
