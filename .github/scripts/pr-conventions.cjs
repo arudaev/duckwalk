@@ -3,14 +3,15 @@
 // Runs from the default branch under pull_request_target; never executes PR code.
 
 const TYPES = ['feat', 'fix', 'docs', 'refactor', 'test', 'chore', 'ci', 'perf', 'build', 'revert', 'art'];
-const TITLE = new RegExp(`^(${TYPES.join('|')})(\\([a-z0-9][a-z0-9/-]*\\))?!?: \\S.*$`);
+// Stacked PRs may start with their position: `[2/3] feat(app): ...`.
+const TITLE = new RegExp(`^(\\[\\d+/\\d+\\] )?(${TYPES.join('|')})(\\([a-z0-9][a-z0-9/-]*\\))?!?: \\S.*$`);
 const MAX_TITLE = 72;
 const BOTS = /\[bot\]$/;
 
 function checkTitle(title) {
   const problems = [];
   if (!TITLE.test(title || '')) {
-    problems.push(`Title must look like \`type(scope): summary\` with type one of ${TYPES.join(', ')}.`);
+    problems.push(`Title must look like \`type(scope): summary\` (optionally prefixed with \`[n/N] \` in a stack) with type one of ${TYPES.join(', ')}.`);
   }
   if ((title || '').length > MAX_TITLE) problems.push(`Title is ${title.length} characters; keep it at most ${MAX_TITLE}.`);
   if (/\.$/.test(title || '')) problems.push('Title must not end with a period.');
