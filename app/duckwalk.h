@@ -6,9 +6,11 @@
 #include <notification/notification.h>
 
 #include "keep_awake.h"
+#include "settings.h"
 
 typedef enum {
     ScreenHome,
+    ScreenSettings,
 } Screen;
 
 /* Harold's moods on the home screen; all times are ticks. */
@@ -28,6 +30,9 @@ typedef struct {
     bool running;
     Screen screen;
     KeepAwake keep_awake;
+    DuckwalkSettings settings;
+    uint8_t settings_selected;
+    uint8_t settings_top;
     HomeAnim home;
 } Duckwalk;
 
@@ -36,3 +41,9 @@ typedef struct {
 void home_draw(Canvas* canvas, Duckwalk* app);
 void home_input(Duckwalk* app, const InputEvent* input);
 void home_on_move(Duckwalk* app);
+
+void settings_draw(Canvas* canvas, Duckwalk* app);
+void settings_input(Duckwalk* app, const InputEvent* input);
+
+/* Push the current settings into keep-awake. */
+void duckwalk_apply_settings(Duckwalk* app);

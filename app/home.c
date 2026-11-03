@@ -20,11 +20,32 @@
 #define STRIDE_MS   150
 #define Z_CYCLE_MS  1800
 
+/* A two-note quack, with or without the buzz, as Settings say. */
 static const NotificationSequence sequence_quack = {
     &message_vibro_on,
     &message_note_f4,
     &message_delay_50,
     &message_vibro_off,
+    &message_note_d4,
+    &message_delay_100,
+    &message_sound_off,
+    NULL,
+};
+
+static const NotificationSequence sequence_quack_silent = {
+    &message_vibro_on,
+    &message_delay_50,
+    &message_vibro_off,
+    &message_delay_50,
+    &message_vibro_on,
+    &message_delay_50,
+    &message_vibro_off,
+    NULL,
+};
+
+static const NotificationSequence sequence_quack_still = {
+    &message_note_f4,
+    &message_delay_50,
     &message_note_d4,
     &message_delay_100,
     &message_sound_off,
@@ -110,7 +131,9 @@ static void draw_status(Canvas* canvas, Duckwalk* app) {
     if(keep_awake_is_walking(ka)) {
         snprintf(line, sizeof(line), "Walking%.*s", (int)(furi_get_tick() / ms(400) % 4), "...");
     } else if(ka->mode == KeepAwakeOff) {
-        snprintf(line, sizeof(line), "Asleep");
+        snprintf(line, sizeof(line), "Asleep. OK wakes him");
+    } else if(ka->paused) {
+        snprintf(line, sizeof(line), "Off hours");
     } else {
         uint32_t s = keep_awake_seconds_left(ka);
         snprintf(
@@ -145,23 +168,30 @@ void home_draw(Canvas* canvas, Duckwalk* app) {
     if(before(app->home.quack_until)) draw_quack(canvas, x);
 
     canvas_set_font(canvas, FontSecondary);
-    canvas_draw_str_aligned(
-        canvas,
-        64,
-        63,
-        AlignCenter,
-        AlignBottom,
-        ka->mode == KeepAwakeOff ? "OK wake  hold quack" : "OK sleep  hold quack");
+    canvas_draw_str_aligned(canvas, 126, 63, AlignRight, AlignBottom, "Settings >");
 }
 
 void home_input(Duckwalk* app, const InputEvent* input) {
     KeepAwake* ka = &app->keep_awake;
+    DuckwalkSettings* s = &app->settings;
     if(input->key == InputKeyOk && input->type == InputTypeShort) {
-        keep_awake_set_mode(ka, ka->mode == KeepAwakeOff ? KeepAwakeWalk : KeepAwakeOff);
+        s->values[SettingMode] = ka->mode == KeepAwakeOff ? s->awake_mode : KeepAwakeOff;
+        duckwalk_apply_settings(app);
         schedule_blink(&app->home);
     } else if(input->key == InputKeyOk && input->type == InputTypeLong) {
         app->home.quack_until = furi_get_tick() + ms(QUACK_MS);
-        notification_message(app->notifications, &sequence_quack);
+        bool sound = s->values[SettingSound], vibro = s->values[SettingVibro];
+        const NotificationSequence* quack = NULL;
+        if(sound && vibro) {
+            quack = &sequence_quack;
+        } else if(sound) {
+            quack = &sequence_quack_still;
+        } else if(vibro) {
+            quack = &sequence_quack_silent;
+        }
+        if(quack) notification_message(app->notifications, quack);
+    } else if(input->key == InputKeyRight && input->type == InputTypeShort) {
+        app->screen = ScreenSettings;
     } else if(input->key == InputKeyBack && input->type == InputTypeShort) {
         app->running = false;
     }

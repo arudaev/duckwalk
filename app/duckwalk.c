@@ -12,10 +12,8 @@
  * longer than that. */
 #define LOOP_MS WALK_STEP_MS
 
-/* Walk default: every one to three minutes, inside the few minutes of idle
- * time after which Teams marks you away. */
-#define WALK_MIN_S 60
-#define WALK_MAX_S 180
+/* How often the work-hours schedule is checked. */
+#define DUTY_CHECK_MS 1000
 
 static void draw_callback(Canvas* canvas, void* ctx) {
     Duckwalk* app = ctx;
@@ -24,6 +22,9 @@ static void draw_callback(Canvas* canvas, void* ctx) {
     switch(app->screen) {
     case ScreenHome:
         home_draw(canvas, app);
+        break;
+    case ScreenSettings:
+        settings_draw(canvas, app);
         break;
     }
     furi_mutex_release(app->mutex);
@@ -41,8 +42,9 @@ int32_t duckwalk_app(void* p) {
     app->notifications = furi_record_open(RECORD_NOTIFICATION);
     app->screen = ScreenHome;
     app->running = true;
-    keep_awake_init(&app->keep_awake, WALK_MIN_S, WALK_MAX_S);
-    keep_awake_set_mode(&app->keep_awake, KeepAwakeWalk);
+    settings_load(&app->settings);
+    keep_awake_init(&app->keep_awake, 0, 0);
+    duckwalk_apply_settings(app);
 
     FuriMessageQueue* queue = furi_message_queue_alloc(8, sizeof(InputEvent));
     ViewPort* view_port = view_port_alloc();
@@ -56,6 +58,7 @@ int32_t duckwalk_app(void* p) {
         furi_delay_ms(100);
     }
 
+    uint32_t duty_checked = 0;
     while(app->running) {
         InputEvent input;
         if(furi_message_queue_get(queue, &input, furi_ms_to_ticks(LOOP_MS)) == FuriStatusOk) {
@@ -64,17 +67,25 @@ int32_t duckwalk_app(void* p) {
             case ScreenHome:
                 home_input(app, &input);
                 break;
+            case ScreenSettings:
+                settings_input(app, &input);
+                break;
             }
             furi_mutex_release(app->mutex);
         }
 
         furi_mutex_acquire(app->mutex, FuriWaitForever);
+        if(furi_get_tick() - duty_checked >= furi_ms_to_ticks(DUTY_CHECK_MS)) {
+            duty_checked = furi_get_tick();
+            keep_awake_set_paused(&app->keep_awake, !settings_on_duty(&app->settings));
+        }
         if(keep_awake_tick(&app->keep_awake)) home_on_move(app);
         furi_mutex_release(app->mutex);
         view_port_update(view_port);
     }
 
     if(app->usb_ok) furi_hal_usb_set_config(usb_prev, NULL);
+    settings_save(&app->settings);
 
     gui_remove_view_port(gui, view_port);
     view_port_free(view_port);

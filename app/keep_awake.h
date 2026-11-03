@@ -23,6 +23,7 @@ typedef struct {
     WalkLength walk_length;
     uint32_t next_tick;
     uint32_t moves;
+    bool paused; /* outside the hours set in Settings */
     WalkPath path; /* the next walk, or the one playing */
     uint16_t step; /* next point to play; 0 when not walking */
     uint32_t step_tick;
@@ -30,6 +31,14 @@ typedef struct {
 
 void keep_awake_init(KeepAwake* ka, uint32_t min_s, uint32_t max_s);
 void keep_awake_set_mode(KeepAwake* ka, KeepAwakeMode mode);
+void keep_awake_set_interval(KeepAwake* ka, uint32_t min_s, uint32_t max_s);
+
+/* Changing the length plans a new walk, so Preview always shows what will
+ * actually play. */
+void keep_awake_set_walk_length(KeepAwake* ka, WalkLength length);
+
+/* While paused nothing is scheduled; resuming starts a fresh wait. */
+void keep_awake_set_paused(KeepAwake* ka, bool paused);
 
 /* Seconds until the next nudge or walk (0 when off). */
 uint32_t keep_awake_seconds_left(const KeepAwake* ka);

@@ -18,6 +18,7 @@ void keep_awake_init(KeepAwake* ka, uint32_t min_s, uint32_t max_s) {
     ka->max_s = max_s;
     ka->walk_length = WalkLengthMedium;
     ka->moves = 0;
+    ka->paused = false;
     ka->step = 0;
     walk_plan(&ka->path, ka->walk_length);
     schedule(ka);
@@ -26,6 +27,24 @@ void keep_awake_init(KeepAwake* ka, uint32_t min_s, uint32_t max_s) {
 void keep_awake_set_mode(KeepAwake* ka, KeepAwakeMode mode) {
     ka->mode = mode;
     if(mode != KeepAwakeOff) schedule(ka);
+}
+
+void keep_awake_set_interval(KeepAwake* ka, uint32_t min_s, uint32_t max_s) {
+    if(ka->min_s == min_s && ka->max_s == max_s) return;
+    ka->min_s = min_s;
+    ka->max_s = max_s;
+    schedule(ka);
+}
+
+void keep_awake_set_walk_length(KeepAwake* ka, WalkLength length) {
+    if(ka->walk_length == length) return;
+    ka->walk_length = length;
+    if(!ka->step) walk_plan(&ka->path, length);
+}
+
+void keep_awake_set_paused(KeepAwake* ka, bool paused) {
+    if(ka->paused && !paused) schedule(ka);
+    ka->paused = paused;
 }
 
 uint32_t keep_awake_seconds_left(const KeepAwake* ka) {
@@ -102,7 +121,7 @@ static bool walk_step(KeepAwake* ka) {
 
 bool keep_awake_tick(KeepAwake* ka) {
     if(ka->step) return walk_step(ka);
-    if(ka->mode == KeepAwakeOff) return false;
+    if(ka->mode == KeepAwakeOff || ka->paused) return false;
     if((int32_t)(furi_get_tick() - ka->next_tick) < 0) return false;
 
     if(ka->mode == KeepAwakeWalk) {
