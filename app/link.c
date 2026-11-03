@@ -56,6 +56,9 @@ static struct {
     int16_t owed_x;
     int16_t owed_y;
     bool failing;
+    /* The data channel */
+    LinkDataCallback data_callback;
+    void* data_ctx;
 } link;
 
 static void bt_status_changed(BtStatus status, void* ctx) {
@@ -63,7 +66,21 @@ static void bt_status_changed(BtStatus status, void* ctx) {
     link.bt_status = status;
 }
 
+/* USB interrupt context. */
+static void usb_data(const UsbDuckVendorPacket* packet, void* ctx) {
+    UNUSED(ctx);
+    LinkDataCallback callback = link.data_callback;
+    if(callback) callback(packet->data, link.data_ctx);
+}
+
+void link_set_data_callback(LinkDataCallback callback, void* ctx) {
+    link.data_callback = NULL;
+    link.data_ctx = ctx;
+    link.data_callback = callback;
+}
+
 static void usb_start(void) {
+    usb_duck_set_rx_callback(usb_data, NULL);
     link.usb_prev = furi_hal_usb_get_config();
     for(int i = 0; i < 20 && !(link.usb_ok = furi_hal_usb_set_config(&usb_duck, NULL)); i++) {
         furi_delay_ms(100);
@@ -76,6 +93,7 @@ static void usb_stop(void) {
         /* Synchronous: the composite HID's deinit has run when this returns. */
         furi_hal_usb_set_config(link.usb_prev, NULL);
         usb_duck_free();
+        usb_duck_set_rx_callback(NULL, NULL);
     }
     link.usb_ok = false;
 }

@@ -4,6 +4,7 @@
 
 #include "duckwalk.h"
 #include "duckwalk_icons.h"
+#include "helper.h"
 #include "link.h"
 #include "util.h"
 
@@ -143,6 +144,9 @@ static void draw_status(Canvas* canvas, Duckwalk* app) {
         snprintf(line, sizeof(line), "Asleep, OK wakes");
     } else if(ka->paused) {
         snprintf(line, sizeof(line), "Off hours");
+    } else if(ka->user_active) {
+        /* The PC helper saw the user's own mouse or keyboard. */
+        snprintf(line, sizeof(line), "You're working");
     } else {
         uint32_t s = keep_awake_seconds_left(ka);
         snprintf(
@@ -163,7 +167,10 @@ void home_draw(Canvas* canvas, Duckwalk* app) {
     canvas_set_font(canvas, FontPrimary);
     canvas_draw_str(canvas, 2, 10, "Duckwalk");
     canvas_set_font(canvas, FontSecondary);
-    canvas_draw_str_aligned(canvas, 126, 10, AlignRight, AlignBottom, link_status());
+    /* "+PC" when the PC helper is talking to us. */
+    char link_line[20];
+    snprintf(link_line, sizeof(link_line), "%s%s", link_status(), helper_present() ? "+PC" : "");
+    canvas_draw_str_aligned(canvas, 126, 10, AlignRight, AlignBottom, link_line);
     draw_status(canvas, app);
     canvas_draw_str_aligned(canvas, 126, 21, AlignRight, AlignBottom, "^ Preview");
 

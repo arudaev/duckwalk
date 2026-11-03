@@ -6,6 +6,8 @@
  */
 
 #include "duckwalk.h"
+#include "helper.h"
+#include "helper_protocol.h"
 #include "sim.h"
 
 #include <furi_hal_random.h>
@@ -31,12 +33,14 @@ static void fresh(void) {
     app.remote.page = RemotePageMenu;
     app.home.blink_at = NOW + 5000;
     sim_link = (SimLink){.kind = LinkUsb, .connected = true, .on_air = true};
+    helper_stop(); /* no PC helper unless a scene says so */
 }
 
 /* Let time pass the way the main loop would. */
 static void run_for(uint32_t ms) {
     for(uint32_t t = 0; t < ms; t += WALK_STEP_MS) {
         shim_tick_set(furi_get_tick() + WALK_STEP_MS);
+        keep_awake_set_user_active(&app.keep_awake, helper_user_active(30000));
         remote_tick(&app);
         pairing_tick(&app);
         if(keep_awake_tick(&app.keep_awake)) home_on_move(&app);
@@ -107,6 +111,12 @@ static void home_walking(void) {
 static void home_quack(void) {
     press(InputKeyOk, InputTypeLong);
     run_for(200);
+}
+static void home_working(void) {
+    /* The PC helper reports the user typing right now. */
+    uint8_t packet[HELPER_PACKET_LEN] = {HELPER_MAGIC, HELPER_VERSION, HELPER_MSG_IDLE};
+    helper_receive(packet, furi_get_tick());
+    run_for(500);
 }
 static void home_bluetooth(void) {
     sim_link = (SimLink){.kind = LinkBluetooth, .connected = false, .on_air = true};
@@ -189,6 +199,7 @@ static const struct {
     {"home-asleep", home_asleep},
     {"home-walking", home_walking},
     {"home-quack", home_quack},
+    {"home-working", home_working},
     {"home-bluetooth", home_bluetooth},
     {"settings", settings_top},
     {"settings-bottom", settings_bottom},

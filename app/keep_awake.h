@@ -24,6 +24,7 @@ typedef struct {
     uint32_t next_tick;
     uint32_t moves;
     bool paused; /* outside the hours set in Settings */
+    bool user_active; /* the PC helper sees the user working */
     WalkPath path; /* the next walk, or the one playing */
     uint16_t step; /* next point to play; 0 when not walking */
     uint32_t step_tick;
@@ -42,6 +43,10 @@ void keep_awake_set_paused(KeepAwake* ka, bool paused);
 
 /* Seconds until the next nudge or walk (0 when off). */
 uint32_t keep_awake_seconds_left(const KeepAwake* ka);
+
+/* While the user works, nothing is scheduled and a walk in progress stops
+ * on the spot; once they stop, a fresh wait starts. */
+void keep_awake_set_user_active(KeepAwake* ka, bool active);
 
 /* Start the wait over, e.g. after the user sent input from the remote. */
 void keep_awake_postpone(KeepAwake* ka);

@@ -57,6 +57,11 @@ bool link_consumer_tap(uint16_t usage) {
     return sim_link.connected;
 }
 
+void link_set_data_callback(LinkDataCallback callback, void* ctx) {
+    UNUSED(callback);
+    UNUSED(ctx);
+}
+
 void link_flush(void) {
 }
 

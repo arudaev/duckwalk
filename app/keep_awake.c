@@ -20,6 +20,7 @@ void keep_awake_init(KeepAwake* ka, uint32_t min_s, uint32_t max_s) {
     ka->walk_length = WalkLengthMedium;
     ka->moves = 0;
     ka->paused = false;
+    ka->user_active = false;
     ka->step = 0;
     walk_plan(&ka->path, ka->walk_length);
     schedule(ka);
@@ -52,6 +53,17 @@ uint32_t keep_awake_seconds_left(const KeepAwake* ka) {
     if(ka->mode == KeepAwakeOff) return 0;
     int32_t left = (int32_t)(ka->next_tick - furi_get_tick());
     return left > 0 ? (uint32_t)left / furi_kernel_get_tick_frequency() : 0;
+}
+
+void keep_awake_set_user_active(KeepAwake* ka, bool active) {
+    if(active == ka->user_active) return;
+    ka->user_active = active;
+    if(active && ka->step) {
+        /* Let go of the pointer: the user has it now. */
+        ka->step = 0;
+        walk_plan(&ka->path, ka->walk_length);
+    }
+    if(!active) schedule(ka);
 }
 
 void keep_awake_postpone(KeepAwake* ka) {
@@ -137,7 +149,7 @@ static bool walk_step(KeepAwake* ka) {
 
 bool keep_awake_tick(KeepAwake* ka) {
     if(ka->step) return walk_step(ka);
-    if(ka->mode == KeepAwakeOff || ka->paused) return false;
+    if(ka->mode == KeepAwakeOff || ka->paused || ka->user_active) return false;
     if(tick_before(ka->next_tick)) return false;
 
     if(ka->mode == KeepAwakeWalk) {

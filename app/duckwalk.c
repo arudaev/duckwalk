@@ -17,6 +17,7 @@
 #include <furi_hal.h>
 
 #include "duckwalk.h"
+#include "helper.h"
 #include "link.h"
 #include "util.h"
 
@@ -25,6 +26,10 @@
  * for the calm animations and lets the Flipper idle in between. */
 #define BUSY_LOOP_MS WALK_STEP_MS
 #define CALM_LOOP_MS 100
+
+/* With the PC helper running, Harold keeps his hands off the pointer for
+ * this long after the user's last own input. */
+#define USER_HOLD_MS 30000
 
 /* How often the work-hours schedule is checked. */
 #define DUTY_CHECK_MS 1000
@@ -118,6 +123,7 @@ int32_t duckwalk_app(void* p) {
     if(!settings_load(&app->settings)) app->screen = ScreenWelcome;
     keep_awake_init(&app->keep_awake, 0, 0);
     duckwalk_apply_settings(app);
+    helper_start();
     FURI_LOG_I(TAG, "Started, %s", app->screen == ScreenWelcome ? "first launch" : "settings loaded");
 
     FuriMessageQueue* queue = furi_message_queue_alloc(INPUT_QUEUE_LEN, sizeof(InputEvent));
@@ -140,6 +146,7 @@ int32_t duckwalk_app(void* p) {
             duty_checked = furi_get_tick();
             keep_awake_set_paused(&app->keep_awake, !settings_on_duty(&app->settings));
         }
+        keep_awake_set_user_active(&app->keep_awake, helper_user_active(USER_HOLD_MS));
         remote_tick(app);
         pairing_tick(app);
         if(keep_awake_tick(&app->keep_awake)) home_on_move(app);
@@ -156,6 +163,7 @@ int32_t duckwalk_app(void* p) {
     view_port_free(view_port);
     furi_record_close(RECORD_GUI);
 
+    helper_stop();
     link_stop();
     if(!app->skip_save) settings_save(&app->settings);
     FURI_LOG_I(TAG, "Stopped");
