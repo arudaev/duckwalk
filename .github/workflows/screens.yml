@@ -1,0 +1,42 @@
+name: Screens
+
+# Renders every Duckwalk screen with the simulator (sim/) and uploads the
+# PNGs, so a layout change can be reviewed without a Flipper. Fails if text
+# runs off the 128x64 screen.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    name: Screens
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get the firmware's u8g2 (release 1.5.1)
+        uses: actions/checkout@v4
+        with:
+          repository: flipperdevices/flipperzero-firmware
+          ref: 1.5.1
+          path: fw
+          sparse-checkout: lib/u8g2
+          submodules: false
+      - name: Build
+        run: |
+          sudo apt-get install -y --no-install-recommends zlib1g-dev
+          cmake -S sim -B build/sim -DU8G2_DIR=fw/lib/u8g2
+          cmake --build build/sim
+      - name: Render
+        run: |
+          mkdir -p build/screens
+          build/sim/duckwalk_sim build/screens
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: duckwalk-screens
+          path: build/screens

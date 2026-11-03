@@ -30,5 +30,9 @@ typedef struct {
 
 void walk_plan(WalkPath* path, WalkLength length);
 
+/* A circle of the given radius that starts and ends at the start, drawn in
+ * `steps` steps. The pairing screen's pointer test. */
+void walk_circle(WalkPath* path, int16_t radius, uint16_t steps);
+
 /* Widest distance from the start, for scaling the path onto the screen. */
 int16_t walk_reach(const WalkPath* path);

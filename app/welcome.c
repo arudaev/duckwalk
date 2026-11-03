@@ -8,7 +8,7 @@
 void welcome_draw(Canvas* canvas, Duckwalk* app) {
     UNUSED(app);
     bool blink = furi_get_tick() % furi_ms_to_ticks(3000) < furi_ms_to_ticks(150);
-    canvas_draw_icon(canvas, 2, 20, blink ? &I_harold_asleep_28x29 : &I_harold_idle_28x29);
+    canvas_draw_icon(canvas, 4, 22, blink ? &I_harold_blink_24x25 : &I_harold_idle_24x25);
 
     canvas_set_font(canvas, FontPrimary);
     canvas_draw_str(canvas, 36, 12, "Hi, I'm Harold!");
@@ -25,7 +25,12 @@ void welcome_draw(Canvas* canvas, Duckwalk* app) {
 void welcome_input(Duckwalk* app, const InputEvent* input) {
     if(input->type != InputTypeShort) return;
     LinkKind kind;
-    if(input->key == InputKeyLeft || input->key == InputKeyBack) {
+    if(input->key == InputKeyBack) {
+        /* Leaving without a choice: ask again next time. */
+        app->skip_save = true;
+        app->running = false;
+        return;
+    } else if(input->key == InputKeyLeft) {
         kind = LinkUsb;
     } else if(input->key == InputKeyRight) {
         kind = LinkBluetooth;
@@ -34,7 +39,7 @@ void welcome_input(Duckwalk* app, const InputEvent* input) {
     }
     app->settings.values[SettingConnection] = kind;
     duckwalk_apply_settings(app);
-    settings_save(&app->settings);
+    app->pending.save = true;
     if(kind == LinkBluetooth) {
         pairing_open(app);
     } else {

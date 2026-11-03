@@ -32,6 +32,10 @@ extern FuriHalUsbInterface usb_duck;
 typedef void (*UsbDuckRxCallback)(const UsbDuckVendorPacket* packet, void* ctx);
 void usb_duck_set_rx_callback(UsbDuckRxCallback callback, void* ctx);
 
+/* Free what the interface allocated. Call after switching USB back to
+ * another interface, never while usb_duck is active. */
+void usb_duck_free(void);
+
 bool usb_duck_is_connected(void);
 bool usb_duck_mouse_move(int8_t dx, int8_t dy);
 

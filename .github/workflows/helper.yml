@@ -1,0 +1,24 @@
+name: Helper
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Helper (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          cmake -S desktop/helper -B build/helper
+          cmake --build build/helper --config Release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: duckwalk-helper
+          path: build/helper/**/duckwalk-helper.exe

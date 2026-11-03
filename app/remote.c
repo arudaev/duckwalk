@@ -5,10 +5,12 @@
 #include "duckwalk.h"
 #include "duckwalk_icons.h"
 #include "link.h"
+#include "util.h"
 
 #include <hid_usage_consumer.h>
 
 #define FLASH_MS       150
+#define HELD_QUIET_MS  700
 #define MOUSE_MIN_STEP 2
 #define MOUSE_MAX_STEP 12
 #define MOUSE_RAMP_MS  1200
@@ -72,7 +74,7 @@ static void draw_menu(Canvas* canvas, Duckwalk* app) {
 static void draw_page(Canvas* canvas, Duckwalk* app) {
     RemoteState* r = &app->remote;
     const char* const* labels = page_labels[r->page];
-    bool flash = (int32_t)(r->lit_until - furi_get_tick()) > 0;
+    bool flash = tick_before(r->lit_until);
 
     canvas_set_font(canvas, FontPrimary);
     canvas_draw_str(canvas, 2, 10, page_names[r->page]);
@@ -153,9 +155,13 @@ static bool mouse_key(RemoteState* r, InputKey key, InputType type) {
     if(type == InputTypePress) {
         if(!r->held) r->held_since = furi_get_tick();
         r->held |= bit;
-        return true;
     }
-    if(type == InputTypeRelease) r->held &= ~bit;
+    if(type == InputTypePress || type == InputTypeLong || type == InputTypeRepeat) {
+        r->held_seen = furi_get_tick();
+        return type == InputTypePress;
+    }
+    /* Short arrives with the release, so either one ends the hold. */
+    r->held &= ~bit;
     return false;
 }
 
@@ -198,6 +204,12 @@ void remote_input(Duckwalk* app, const InputEvent* input) {
 void remote_tick(Duckwalk* app) {
     RemoteState* r = &app->remote;
     if(app->screen != ScreenRemote || r->page != RemotePageMouse || !r->held) return;
+    /* A held key repeats every few hundred milliseconds; if it went quiet,
+     * its release was lost (a full input queue) and the pointer must stop. */
+    if(tick_reached(r->held_seen + furi_ms_to_ticks(HELD_QUIET_MS))) {
+        r->held = 0;
+        return;
+    }
 
     uint32_t held = furi_get_tick() - r->held_since;
     if(held > MOUSE_RAMP_MS) held = MOUSE_RAMP_MS;

@@ -206,6 +206,13 @@ void usb_duck_set_rx_callback(UsbDuckRxCallback callback, void* ctx) {
     rx_callback = callback;
 }
 
+void usb_duck_free(void) {
+    if(tx_semaphore) {
+        furi_semaphore_free(tx_semaphore);
+        tx_semaphore = NULL;
+    }
+}
+
 bool usb_duck_is_connected(void) {
     return connected;
 }

@@ -55,6 +55,8 @@ static void add_point(WalkPath* path, Vec v) {
 
 void walk_plan(WalkPath* path, WalkLength length) {
     furi_check(length < WalkLengthCount);
+    /* The pause and the minimum steps per segment must fit in the budget. */
+    furi_check(walk_lengths[length].steps > 20 + 4 * WALK_MAX_WAYPOINTS);
     const float reach = walk_lengths[length].reach;
 
     /* Waypoints sit around the start at random distances, each one a random
@@ -97,6 +99,16 @@ void walk_plan(WalkPath* path, WalkLength length) {
         }
     }
     add_point(path, way[n - 1]);
+}
+
+void walk_circle(WalkPath* path, int16_t radius, uint16_t steps) {
+    furi_check(steps > 0 && steps < WALK_MAX_STEPS);
+    path->count = 0;
+    path->min_x = path->max_x = path->min_y = path->max_y = 0;
+    for(uint16_t k = 0; k <= steps; k++) {
+        float a = 2.0f * (float)M_PI * k / steps;
+        add_point(path, (Vec){radius * sinf(a), radius * (1.0f - cosf(a))});
+    }
 }
 
 int16_t walk_reach(const WalkPath* path) {

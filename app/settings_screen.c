@@ -8,9 +8,11 @@
 #define ROWS_TOP 13
 #define ROWS_VIS 5
 
+_Static_assert(SettingCount > ROWS_VIS, "the scroll bar divides by the rows out of view");
+
 void duckwalk_apply_settings(Duckwalk* app) {
     DuckwalkSettings* s = &app->settings;
-    link_start(s->values[SettingConnection]);
+    app->pending.link = true;
     uint32_t min_s, max_s;
     settings_interval(s->values[SettingInterval], &min_s, &max_s);
     keep_awake_set_interval(&app->keep_awake, min_s, max_s);
@@ -59,6 +61,9 @@ void settings_input(Duckwalk* app, const InputEvent* input) {
     uint8_t* selected = &app->settings_selected;
     uint8_t* value = &app->settings.values[*selected];
     uint8_t count = settings_value_count(*selected);
+    /* Each change of Connection restarts the link; holding a button must not
+     * flip it back and forth. */
+    bool change = input->type == InputTypeShort || *selected != SettingConnection;
 
     switch(input->key) {
     case InputKeyUp:
@@ -68,17 +73,20 @@ void settings_input(Duckwalk* app, const InputEvent* input) {
         *selected = (*selected + 1) % SettingCount;
         break;
     case InputKeyLeft:
+        if(!change) break;
         *value = (*value + count - 1) % count;
         duckwalk_apply_settings(app);
         break;
     case InputKeyRight:
+        if(!change) break;
         *value = (*value + 1) % count;
         duckwalk_apply_settings(app);
         break;
     case InputKeyBack:
         if(input->type == InputTypeShort) {
-            settings_save(&app->settings);
-            if(link_kind() == LinkBluetooth && !link_is_connected()) {
+            app->pending.save = true;
+            /* The link switches after this input, so ask the setting. */
+            if(app->settings.values[SettingConnection] == LinkBluetooth && !link_is_connected()) {
                 pairing_open(app);
             } else {
                 app->screen = ScreenHome;
