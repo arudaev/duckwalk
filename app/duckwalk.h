@@ -110,6 +110,8 @@ typedef struct {
     NotificationApp* notifications;
     bool running;
     bool skip_save; /* left from Welcome: nothing was chosen yet */
+    uint32_t active_at; /* the user last pressed a button or worked on the PC */
+    bool stopped; /* put to sleep by Stop after; cleared when woken */
     DuckwalkPending pending;
     Screen screen;
     KeepAwake keep_awake;
@@ -160,3 +162,8 @@ void pairing_tick(Duckwalk* app);
 /* Push the current settings into keep-awake, and ask the main loop to
  * switch the connection if it changed. */
 void duckwalk_apply_settings(Duckwalk* app);
+
+/* Stop after: puts Harold to sleep once nobody has been around for the
+ * set time. `pressed` is true when a button was just pressed; call every
+ * loop. */
+void duckwalk_check_stop_after(Duckwalk* app, bool pressed);

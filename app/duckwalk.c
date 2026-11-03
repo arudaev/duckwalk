@@ -122,6 +122,7 @@ int32_t duckwalk_app(void* p) {
     app->notifications = furi_record_open(RECORD_NOTIFICATION);
     app->screen = ScreenHome;
     app->running = true;
+    app->active_at = furi_get_tick();
     app->remote.page = RemotePageMenu;
     if(!settings_load(&app->settings)) app->screen = ScreenWelcome;
     keep_awake_init(&app->keep_awake, 0, 0);
@@ -145,6 +146,7 @@ int32_t duckwalk_app(void* p) {
 
         furi_mutex_acquire(app->mutex, FuriWaitForever);
         if(got) handle_input(app, &input);
+        duckwalk_check_stop_after(app, got);
         if(furi_get_tick() - duty_checked >= furi_ms_to_ticks(DUTY_CHECK_MS)) {
             duty_checked = furi_get_tick();
             keep_awake_set_paused(&app->keep_awake, !settings_on_duty(&app->settings));

@@ -437,6 +437,9 @@ static void draw_status(Canvas* canvas, const Duckwalk* app) {
                                           "Walking",
             (int)(furi_get_tick() / ms(400) % 4),
             "...");
+    } else if(ka->mode == KeepAwakeOff && app->stopped) {
+        /* Stop after: nobody was around, so the computer may lock. */
+        snprintf(line, sizeof(line), "You were away");
     } else if(ka->mode == KeepAwakeOff) {
         snprintf(line, sizeof(line), "Asleep, OK wakes");
     } else if(ka->paused) {

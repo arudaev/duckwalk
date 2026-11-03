@@ -32,6 +32,7 @@ static void fresh(void) {
     app.screen = ScreenHome;
     app.remote.page = RemotePageMenu;
     app.home.blink_at = NOW + 5000;
+    app.active_at = NOW;
     sim_link = (SimLink){.kind = LinkUsb, .connected = true, .on_air = true};
     helper_stop(); /* no PC helper unless a scene says so */
 }
@@ -44,6 +45,7 @@ static void run_for(uint32_t ms) {
         remote_tick(&app);
         pairing_tick(&app);
         preview_tick(&app);
+        duckwalk_check_stop_after(&app, false);
         if(keep_awake_tick(&app.keep_awake)) home_on_move(&app);
         home_tick(&app);
     }
@@ -134,6 +136,13 @@ static void home_hop(void) {
 static void home_asleep(void) {
     press(InputKeyOk, InputTypeShort);
     run_for(600);
+}
+static void home_stopped(void) {
+    /* Stop after ran out: nobody pressed anything for hours. */
+    app.settings.values[SettingStopAfter] = StopAfter1h;
+    run_for(500);
+    app.active_at = furi_get_tick() - 3600u * 1000u;
+    run_for(500);
 }
 static void home_walking(void) {
     keep_awake_walk_now(&app.keep_awake);
@@ -273,6 +282,7 @@ static const struct {
     {"home-typing", home_typing},
     {"home-hop", home_hop},
     {"home-asleep", home_asleep},
+    {"home-stopped", home_stopped},
     {"home-walking", home_walking},
     {"home-wandering", home_wandering},
     {"home-wander-homing", home_wander_homing},
