@@ -1,0 +1,108 @@
+#include "walk.h"
+
+#include <furi_hal_random.h>
+#include <math.h>
+
+#define WALK_MAX_WAYPOINTS 6
+
+typedef struct {
+    float x;
+    float y;
+} Vec;
+
+/* How far a walk reaches from the start, in mouse counts (pixels at the
+ * default Windows pointer speed), and how many 20 ms steps it lasts. */
+static const struct {
+    float reach;
+    uint16_t steps;
+} walk_lengths[WalkLengthCount] = {
+    [WalkLengthShort] = {60.0f, 90},
+    [WalkLengthMedium] = {140.0f, 150},
+    [WalkLengthLong] = {280.0f, 220},
+};
+
+static float random_float(float lo, float hi) {
+    return lo + (hi - lo) * (float)(furi_hal_random_get() % 10001) / 10000.0f;
+}
+
+/* Catmull-Rom: a curve through p1 and p2 that bends towards p0 and p3, so
+ * the path turns smoothly at every waypoint. */
+static Vec spline(Vec p0, Vec p1, Vec p2, Vec p3, float t) {
+    float t2 = t * t, t3 = t2 * t;
+    Vec v;
+    v.x = 0.5f * (2 * p1.x + (p2.x - p0.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 +
+                  (3 * p1.x - p0.x - 3 * p2.x + p3.x) * t3);
+    v.y = 0.5f * (2 * p1.y + (p2.y - p0.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 +
+                  (3 * p1.y - p0.y - 3 * p2.y + p3.y) * t3);
+    return v;
+}
+
+/* Slow in, slow out: the cursor eases to a stop at every waypoint, like a
+ * hand that moves, settles and moves again. */
+static float ease(float t) {
+    return t * t * (3.0f - 2.0f * t);
+}
+
+static void add_point(WalkPath* path, Vec v) {
+    if(path->count >= WALK_MAX_STEPS) return;
+    WalkPoint p = {(int16_t)lroundf(v.x), (int16_t)lroundf(v.y)};
+    path->points[path->count++] = p;
+    if(p.x < path->min_x) path->min_x = p.x;
+    if(p.x > path->max_x) path->max_x = p.x;
+    if(p.y < path->min_y) path->min_y = p.y;
+    if(p.y > path->max_y) path->max_y = p.y;
+}
+
+void walk_plan(WalkPath* path, WalkLength length) {
+    furi_check(length < WalkLengthCount);
+    const float reach = walk_lengths[length].reach;
+
+    /* Waypoints sit around the start at random distances, each one a random
+     * turn left or right from the last, so the walk loops back home. */
+    Vec way[WALK_MAX_WAYPOINTS];
+    size_t n = 0;
+    way[n++] = (Vec){0, 0};
+    size_t stops = 2 + furi_hal_random_get() % 2;
+    float heading = random_float(0, 2 * (float)M_PI);
+    for(size_t i = 0; i < stops; i++) {
+        float dist = random_float(0.45f, 1.0f) * reach;
+        way[n++] = (Vec){cosf(heading) * dist, sinf(heading) * dist};
+        heading += random_float(0.6f, 1.6f) * (furi_hal_random_get() % 2 ? 1.0f : -1.0f);
+    }
+    way[n++] = (Vec){random_float(-2, 2), random_float(-2, 2)};
+
+    size_t pause_at = 1 + furi_hal_random_get() % (n - 2);
+    uint16_t pause_steps = 8 + furi_hal_random_get() % 13;
+
+    float seg_len[WALK_MAX_WAYPOINTS - 1];
+    float total = 0;
+    for(size_t i = 0; i + 1 < n; i++) {
+        seg_len[i] = hypotf(way[i + 1].x - way[i].x, way[i + 1].y - way[i].y);
+        total += seg_len[i];
+    }
+    uint16_t move_steps = walk_lengths[length].steps - pause_steps;
+
+    path->count = 0;
+    path->min_x = path->max_x = path->min_y = path->max_y = 0;
+    for(size_t s = 0; s + 1 < n; s++) {
+        if(s == pause_at) {
+            for(uint16_t k = 0; k < pause_steps; k++) add_point(path, way[s]);
+        }
+        Vec p0 = way[s > 0 ? s - 1 : 0];
+        Vec p3 = way[s + 2 < n ? s + 2 : n - 1];
+        uint16_t steps = (uint16_t)lroundf(move_steps * seg_len[s] / total);
+        if(steps < 4) steps = 4;
+        for(uint16_t k = 0; k < steps; k++) {
+            add_point(path, spline(p0, way[s], way[s + 1], p3, ease((float)k / steps)));
+        }
+    }
+    add_point(path, way[n - 1]);
+}
+
+int16_t walk_reach(const WalkPath* path) {
+    int16_t r = path->max_x;
+    if(-path->min_x > r) r = -path->min_x;
+    if(path->max_y > r) r = path->max_y;
+    if(-path->min_y > r) r = -path->min_y;
+    return r;
+}
