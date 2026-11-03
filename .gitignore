@@ -2,6 +2,9 @@
 dist/
 .vscode/
 .ufbt/
+# Claude Code: local worktrees and per-user settings
+.claude/worktrees/
+.claude/settings.local.json
 # Python
 __pycache__/
 *.pyc
