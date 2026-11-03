@@ -15,9 +15,15 @@
 /* How often the work-hours schedule is checked. */
 #define DUTY_CHECK_MS 1000
 
+/* The GUI thread must never wait on the app. A Bluetooth call can stall
+ * the main loop while the firmware's pairing dialog waits for the user, and
+ * that dialog can only appear if the GUI keeps running. So a busy app skips
+ * a frame instead of blocking. */
+#define DRAW_WAIT_MS 10
+
 static void draw_callback(Canvas* canvas, void* ctx) {
     Duckwalk* app = ctx;
-    furi_mutex_acquire(app->mutex, FuriWaitForever);
+    if(furi_mutex_acquire(app->mutex, furi_ms_to_ticks(DRAW_WAIT_MS)) != FuriStatusOk) return;
     canvas_clear(canvas);
     switch(app->screen) {
     case ScreenHome:
@@ -43,7 +49,8 @@ static void draw_callback(Canvas* canvas, void* ctx) {
 }
 
 static void input_callback(InputEvent* input, void* ctx) {
-    furi_message_queue_put(ctx, input, FuriWaitForever);
+    /* Never block the input service; a full queue drops the press. */
+    furi_message_queue_put(ctx, input, 0);
 }
 
 int32_t duckwalk_app(void* p) {
