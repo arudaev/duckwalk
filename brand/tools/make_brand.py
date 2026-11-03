@@ -7,7 +7,7 @@ here is derived from that silhouette so the duck looks the same everywhere.
 
 Writes:
     app/images/harold_*.png   1-bit sprites for the Flipper (black = pixel on)
-    app/icon.png              10x10 1-bit app icon
+    app/icon.png              10x10 1-bit app icon (also images/harold_mini)
     brand/sprites-preview.png the sprites enlarged, for reviewing art changes
 
 The README banner (brand/banner.png) is a separate pen drawing, not made here.
@@ -77,6 +77,16 @@ def outline(grid, eye_closed=False):
     return out
 
 
+def open_beak(grid):
+    """Quack: the top half of the beak moves up a row, the bottom half down."""
+    beak = [(x, y) for y, row in enumerate(grid) for x, c in enumerate(row) if c == "K"]
+    mid = (min(y for _, y in beak) + max(y for _, y in beak) + 1) / 2
+    rows = [list(row.replace("K", ".")) for row in grid]
+    for x, y in beak:
+        rows[y - 1 if y < mid else y + 1][x] = "K"
+    return ["".join(row) for row in rows]
+
+
 def with_feet(bitmap, frame):
     """Add a row of feet under the body; two frames alternate the stride."""
     w = len(bitmap[0])
@@ -137,6 +147,7 @@ def main():
     pad = lambda bm: [[0] * len(bm[0])] + bm  # headroom so the walking bob keeps the head
     idle = pad(outline(big))
     asleep = pad(outline(big, eye_closed=True))
+    quack = pad(outline(open_beak(big)))
     walk = [with_feet(idle, 0), bob(with_feet(idle, 1))]
     walk_right = [mirror(f) for f in walk]
 
@@ -145,6 +156,7 @@ def main():
     sprites = {
         "harold_idle": with_feet(idle, 0),
         "harold_asleep": with_feet(asleep, 0),
+        "harold_quack": with_feet(quack, 0),
         "harold_walk_0": walk[0],
         "harold_walk_1": walk[1],
         "harold_walk_r_0": walk_right[0],
@@ -153,6 +165,8 @@ def main():
     for name, bm in sprites.items():
         to_image(bm).save(images / f"{name}_{len(bm[0])}x{len(bm)}.png")
     to_image(icon_bitmap()).save(ROOT / "app" / "icon.png")
+    # The icon doubles as the small Harold that traces a walk in Preview.
+    to_image(icon_bitmap()).save(images / "harold_mini_10x10.png")
 
     # Preview sheet: every sprite at 8x on the Flipper orange.
     pad, z = 16, 8
