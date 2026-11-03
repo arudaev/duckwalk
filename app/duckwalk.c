@@ -32,6 +32,12 @@ static void draw_callback(Canvas* canvas, void* ctx) {
     case ScreenPreview:
         preview_draw(canvas, app);
         break;
+    case ScreenPairing:
+        pairing_draw(canvas, app);
+        break;
+    case ScreenWelcome:
+        welcome_draw(canvas, app);
+        break;
     }
     furi_mutex_release(app->mutex);
 }
@@ -49,7 +55,7 @@ int32_t duckwalk_app(void* p) {
     app->screen = ScreenHome;
     app->running = true;
     app->remote.page = RemotePageMenu;
-    settings_load(&app->settings);
+    if(!settings_load(&app->settings)) app->screen = ScreenWelcome;
     keep_awake_init(&app->keep_awake, 0, 0);
     duckwalk_apply_settings(app);
 
@@ -78,6 +84,12 @@ int32_t duckwalk_app(void* p) {
             case ScreenPreview:
                 preview_input(app, &input);
                 break;
+            case ScreenPairing:
+                pairing_input(app, &input);
+                break;
+            case ScreenWelcome:
+                welcome_input(app, &input);
+                break;
             }
             furi_mutex_release(app->mutex);
         }
@@ -88,6 +100,7 @@ int32_t duckwalk_app(void* p) {
             keep_awake_set_paused(&app->keep_awake, !settings_on_duty(&app->settings));
         }
         remote_tick(app);
+        pairing_tick(app);
         if(keep_awake_tick(&app->keep_awake)) home_on_move(app);
         furi_mutex_release(app->mutex);
         view_port_update(view_port);

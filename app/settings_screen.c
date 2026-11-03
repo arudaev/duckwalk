@@ -78,7 +78,11 @@ void settings_input(Duckwalk* app, const InputEvent* input) {
     case InputKeyBack:
         if(input->type == InputTypeShort) {
             settings_save(&app->settings);
-            app->screen = ScreenHome;
+            if(link_kind() == LinkBluetooth && !link_is_connected()) {
+                pairing_open(app);
+            } else {
+                app->screen = ScreenHome;
+            }
         }
         break;
     default:

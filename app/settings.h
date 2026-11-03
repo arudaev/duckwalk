@@ -35,7 +35,8 @@ typedef struct {
 } DuckwalkSettings;
 
 void settings_defaults(DuckwalkSettings* settings);
-void settings_load(DuckwalkSettings* settings);
+/* Returns false when there was no settings file: the first launch. */
+bool settings_load(DuckwalkSettings* settings);
 void settings_save(const DuckwalkSettings* settings);
 
 const char* settings_label(Setting setting);

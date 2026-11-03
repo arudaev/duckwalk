@@ -61,14 +61,15 @@ static bool read_value(FlipperFormat* file, const char* key, Setting setting, Fu
     return false;
 }
 
-void settings_load(DuckwalkSettings* settings) {
+bool settings_load(DuckwalkSettings* settings) {
     settings_defaults(settings);
     Storage* storage = furi_record_open(RECORD_STORAGE);
     FlipperFormat* file = flipper_format_file_alloc(storage);
     FuriString* text = furi_string_alloc();
     uint32_t version = 0;
 
-    if(flipper_format_file_open_existing(file, SETTINGS_PATH) &&
+    bool found = flipper_format_file_open_existing(file, SETTINGS_PATH);
+    if(found &&
        flipper_format_read_header(file, text, &version) &&
        furi_string_equal_str(text, SETTINGS_TYPE) && version == SETTINGS_VERSION) {
         /* Any line that is missing or unreadable keeps its default. */
@@ -84,6 +85,7 @@ void settings_load(DuckwalkSettings* settings) {
     furi_string_free(text);
     flipper_format_free(file);
     furi_record_close(RECORD_STORAGE);
+    return found;
 }
 
 void settings_save(const DuckwalkSettings* settings) {

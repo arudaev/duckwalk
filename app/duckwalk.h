@@ -13,6 +13,8 @@ typedef enum {
     ScreenSettings,
     ScreenRemote,
     ScreenPreview,
+    ScreenPairing,
+    ScreenWelcome,
 } Screen;
 
 typedef enum {
@@ -54,6 +56,10 @@ typedef struct {
     HomeAnim home;
     RemoteState remote;
     uint32_t preview_started;
+    struct {
+        uint32_t connected_at;
+        uint32_t forgot_until;
+    } pairing;
 } Duckwalk;
 
 /* Each screen draws itself and handles its own buttons. Both run with
@@ -73,6 +79,16 @@ void remote_tick(Duckwalk* app);
 
 void preview_draw(Canvas* canvas, Duckwalk* app);
 void preview_input(Duckwalk* app, const InputEvent* input);
+
+void welcome_draw(Canvas* canvas, Duckwalk* app);
+void welcome_input(Duckwalk* app, const InputEvent* input);
+
+void pairing_open(Duckwalk* app);
+void pairing_draw(Canvas* canvas, Duckwalk* app);
+void pairing_input(Duckwalk* app, const InputEvent* input);
+
+/* Returns home a moment after the computer connects; call every loop. */
+void pairing_tick(Duckwalk* app);
 
 /* Push the current settings into keep-awake. */
 void duckwalk_apply_settings(Duckwalk* app);

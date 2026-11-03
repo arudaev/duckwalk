@@ -29,6 +29,13 @@ bool link_is_connected(void);
 /* A few words for the screen, e.g. "USB", "BT pairing". */
 const char* link_status(void);
 
+/* The name the computer lists when pairing, e.g. "Harold Rgudalap". */
+const char* link_bt_name(void);
+
+/* Forget every computer paired with Duckwalk and advertise again, so the
+ * next one can pair from scratch. */
+void link_bt_forget(void);
+
 bool link_mouse_move(int8_t dx, int8_t dy);
 bool link_mouse_click(uint8_t button);
 

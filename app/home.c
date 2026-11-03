@@ -167,6 +167,9 @@ void home_draw(Canvas* canvas, Duckwalk* app) {
 
     canvas_set_font(canvas, FontSecondary);
     canvas_draw_str(canvas, 2, 63, "< Remote");
+    if(link_kind() == LinkBluetooth && !link_is_connected()) {
+        canvas_draw_str_aligned(canvas, 64, 63, AlignCenter, AlignBottom, "v Pair");
+    }
     canvas_draw_str_aligned(canvas, 126, 63, AlignRight, AlignBottom, "Settings >");
 }
 
@@ -193,6 +196,8 @@ void home_input(Duckwalk* app, const InputEvent* input) {
         app->screen = ScreenSettings;
     } else if(input->key == InputKeyLeft && input->type == InputTypeShort) {
         app->screen = ScreenRemote;
+    } else if(input->key == InputKeyDown && input->type == InputTypeShort) {
+        if(link_kind() == LinkBluetooth) pairing_open(app);
     } else if(input->key == InputKeyUp && input->type == InputTypeShort) {
         app->preview_started = furi_get_tick();
         app->screen = ScreenPreview;

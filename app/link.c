@@ -120,6 +120,22 @@ const char* link_status(void) {
     }
 }
 
+const char* link_bt_name(void) {
+    static char name[24];
+    const char* flipper = furi_hal_version_get_name_ptr();
+    snprintf(name, sizeof(name), "%s %s", bt_params.device_name_prefix, flipper ? flipper : "");
+    return name;
+}
+
+void link_bt_forget(void) {
+    if(!link.started || link.kind != LinkBluetooth || !link.profile) return;
+    bt_disconnect(link.bt);
+    furi_delay_ms(200);
+    furi_hal_bt_stop_advertising();
+    bt_forget_bonded_devices(link.bt);
+    furi_hal_bt_start_advertising();
+}
+
 bool link_mouse_move(int8_t dx, int8_t dy) {
     if(!link_is_connected()) return false;
     if(link.kind == LinkUsb) return usb_duck_mouse_move(dx, dy);
