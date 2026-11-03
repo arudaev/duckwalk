@@ -296,7 +296,9 @@ static void draw_status(Canvas* canvas, const Duckwalk* app) {
             line,
             sizeof(line),
             "%s%.*s",
-            keep_awake_is_wandering(ka) ? "Wandering" : "Walking",
+            keep_awake_is_homing(ka)    ? "Going back" :
+            keep_awake_is_wandering(ka) ? "Wandering" :
+                                          "Walking",
             (int)(furi_get_tick() / ms(400) % 4),
             "...");
     } else if(ka->mode == KeepAwakeOff) {

@@ -130,6 +130,12 @@ static void home_wandering(void) {
     wander_mode();
     run_for(2500);
 }
+static void home_wander_homing(void) {
+    home_wandering();
+    app.settings.values[SettingMode] = KeepAwakeOff;
+    duckwalk_apply_settings(&app);
+    run_for(200);
+}
 static void preview_wandering(void) {
     home_wandering();
     press(InputKeyUp, InputTypeShort);
@@ -249,6 +255,7 @@ static const struct {
     {"home-asleep", home_asleep},
     {"home-walking", home_walking},
     {"home-wandering", home_wandering},
+    {"home-wander-homing", home_wander_homing},
     {"home-quack", home_quack},
     {"home-working", home_working},
     {"home-bluetooth", home_bluetooth},
