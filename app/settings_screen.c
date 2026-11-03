@@ -31,9 +31,11 @@ void duckwalk_check_stop_after(Duckwalk* app, bool pressed) {
     KeepAwake* ka = &app->keep_awake;
     if(pressed || ka->user_active) app->active_at = furi_get_tick();
     if(ka->mode != KeepAwakeOff) app->stopped = false;
-    /* Asleep or outside work hours, nothing to stop; and a night outside
-     * work hours mustn't count as being away when they start again. */
-    if(ka->mode == KeepAwakeOff || ka->paused) {
+    /* Asleep, outside work hours or still on the first launch's Welcome:
+     * nothing to stop (stopping would save settings, and Welcome would
+     * never show again). A night outside work hours mustn't count as being
+     * away when they start again. */
+    if(ka->mode == KeepAwakeOff || ka->paused || app->screen == ScreenWelcome) {
         app->active_at = furi_get_tick();
         return;
     }
