@@ -82,6 +82,16 @@ typedef struct {
     bool forget; /* forget every paired computer */
 } DuckwalkPending;
 
+/* Where a wander has been lately, for Preview to draw as a fading trail. */
+#define TRAIL_LEN 24
+
+typedef struct {
+    WalkPoint points[TRAIL_LEN];
+    uint8_t head; /* the next slot to write */
+    uint8_t count;
+    uint32_t at;
+} Trail;
+
 typedef struct {
     FuriMutex* mutex;
     NotificationApp* notifications;
@@ -96,6 +106,7 @@ typedef struct {
     HomeAnim home;
     RemoteState remote;
     uint32_t preview_started;
+    Trail trail;
     PairingState pairing;
 } Duckwalk;
 
@@ -119,6 +130,9 @@ void remote_tick(Duckwalk* app);
 
 void preview_draw(Canvas* canvas, Duckwalk* app);
 void preview_input(Duckwalk* app, const InputEvent* input);
+
+/* Records the wander's trail; call every loop. */
+void preview_tick(Duckwalk* app);
 
 void welcome_draw(Canvas* canvas, Duckwalk* app);
 void welcome_input(Duckwalk* app, const InputEvent* input);

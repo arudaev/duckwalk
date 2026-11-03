@@ -11,7 +11,7 @@
 #define SETTINGS_VERSION 1
 #define AWAKE_KEY        "Awake mode"
 
-static const char* const mode_names[] = {"Off", "Subtle", "Walk"};
+static const char* const mode_names[] = {"Off", "Subtle", "Walk", "Wander"};
 static const char* const connection_names[] = {"USB", "Bluetooth"};
 static const char* const interval_names[] = {"30-60 s", "1-3 min", "2-4 min"};
 static const char* const length_names[] = {"Short", "Medium", "Long"};

@@ -108,7 +108,7 @@ static bool at_desk(const Duckwalk* app) {
 static int32_t harold_x(const Duckwalk* app) {
     const KeepAwake* ka = &app->keep_awake;
     if(!keep_awake_is_walking(ka)) return HOME_X;
-    int16_t reach = walk_reach(&ka->path);
+    int16_t reach = keep_awake_reach(ka);
     if(reach < 1) reach = 1;
     return HOME_X + keep_awake_position(ka).x * WALK_SPAN / reach;
 }
@@ -292,7 +292,13 @@ static void draw_status(Canvas* canvas, const Duckwalk* app) {
     const KeepAwake* ka = &app->keep_awake;
     char line[24];
     if(keep_awake_is_walking(ka)) {
-        snprintf(line, sizeof(line), "Walking%.*s", (int)(furi_get_tick() / ms(400) % 4), "...");
+        snprintf(
+            line,
+            sizeof(line),
+            "%s%.*s",
+            keep_awake_is_wandering(ka) ? "Wandering" : "Walking",
+            (int)(furi_get_tick() / ms(400) % 4),
+            "...");
     } else if(ka->mode == KeepAwakeOff) {
         snprintf(line, sizeof(line), "Asleep, OK wakes");
     } else if(ka->paused) {
@@ -306,7 +312,7 @@ static void draw_status(Canvas* canvas, const Duckwalk* app) {
             line,
             sizeof(line),
             "%s in %lu:%02lu",
-            ka->mode == KeepAwakeWalk ? "Walk" : "Nudge",
+            ka->mode == KeepAwakeSubtle ? "Nudge" : ka->mode == KeepAwakeWalk ? "Walk" : "Wander",
             s / 60,
             s % 60);
     }

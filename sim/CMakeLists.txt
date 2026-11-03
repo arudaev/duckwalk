@@ -57,7 +57,7 @@ add_executable(duckwalk_sim
     ${SHIM}/shim.c
     ${APP}/home.c ${APP}/settings_screen.c ${APP}/remote.c ${APP}/preview.c
     ${APP}/pairing.c ${APP}/welcome.c
-    ${APP}/keep_awake.c ${APP}/walk.c ${APP}/settings.c ${APP}/helper.c)
+    ${APP}/keep_awake.c ${APP}/walk.c ${APP}/wander.c ${APP}/settings.c ${APP}/helper.c)
 target_include_directories(duckwalk_sim PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR} shim ${CMAKE_CURRENT_BINARY_DIR}/generated ${SHIM} ${APP})
 target_link_libraries(duckwalk_sim u8g2 ZLIB::ZLIB)

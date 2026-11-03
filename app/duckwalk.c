@@ -42,6 +42,9 @@
 
 #define INPUT_QUEUE_LEN 16
 
+/* The longest Harold takes to bring the pointer home when you leave. */
+#define LET_GO_MS 3000
+
 static void draw_callback(Canvas* canvas, void* ctx) {
     Duckwalk* app = ctx;
     if(furi_mutex_acquire(app->mutex, furi_ms_to_ticks(DRAW_WAIT_MS)) != FuriStatusOk) return;
@@ -151,11 +154,21 @@ int32_t duckwalk_app(void* p) {
         pairing_tick(app);
         if(keep_awake_tick(&app->keep_awake)) home_on_move(app);
         home_tick(app);
+        preview_tick(app);
         busy = keep_awake_is_walking(&app->keep_awake) || app->remote.held || link_busy();
         furi_mutex_release(app->mutex);
 
         run_pending(app);
         view_port_update(view_port);
+    }
+
+    /* A wander glides the pointer home before Harold lets go of it. */
+    uint32_t leaving = furi_get_tick();
+    while(!keep_awake_let_go(&app->keep_awake) &&
+          furi_get_tick() - leaving < furi_ms_to_ticks(LET_GO_MS)) {
+        keep_awake_tick(&app->keep_awake);
+        link_flush();
+        furi_delay_ms(WALK_STEP_MS);
     }
 
     /* The screen goes first, so nothing draws while the link is torn down. */

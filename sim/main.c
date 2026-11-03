@@ -43,6 +43,7 @@ static void run_for(uint32_t ms) {
         keep_awake_set_user_active(&app.keep_awake, helper_user_active(30000));
         remote_tick(&app);
         pairing_tick(&app);
+        preview_tick(&app);
         if(keep_awake_tick(&app.keep_awake)) home_on_move(&app);
         home_tick(&app);
     }
@@ -120,6 +121,19 @@ static void home_asleep(void) {
 static void home_walking(void) {
     keep_awake_walk_now(&app.keep_awake);
     run_for(1300);
+}
+static void wander_mode(void) {
+    app.settings.values[SettingMode] = KeepAwakeWander;
+    duckwalk_apply_settings(&app);
+}
+static void home_wandering(void) {
+    wander_mode();
+    run_for(2500);
+}
+static void preview_wandering(void) {
+    home_wandering();
+    press(InputKeyUp, InputTypeShort);
+    run_for(500);
 }
 static void home_quack(void) {
     press(InputKeyOk, InputTypeLong);
@@ -234,6 +248,7 @@ static const struct {
     {"home-bug-fixed", home_bug_fixed},
     {"home-asleep", home_asleep},
     {"home-walking", home_walking},
+    {"home-wandering", home_wandering},
     {"home-quack", home_quack},
     {"home-working", home_working},
     {"home-bluetooth", home_bluetooth},
@@ -244,6 +259,7 @@ static const struct {
     {"remote-slides", remote_slides},
     {"remote-mouse", remote_mouse},
     {"preview", preview},
+    {"preview-wandering", preview_wandering},
     {"pairing-waiting", pairing_waiting},
     {"pairing-not-on-air", pairing_not_on_air},
     {"pairing-not-on-air-help", pairing_not_on_air_help},

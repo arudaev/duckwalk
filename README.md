@@ -22,7 +22,7 @@ It works over USB or Bluetooth. The Flipper app needs nothing on the computer an
 
 | On the Flipper | What happens on the computer |
 |---|---|
-| **Home** – Harold at his desk, reading code and hunting bugs. OK puts him to sleep or wakes him; holding OK makes him quack | Keep-awake on or off. In **Walk** mode the pointer takes a short, curved, randomised walk every few minutes and Harold walks along on the screen; in **Subtle** mode it moves one pixel and back |
+| **Home** – Harold at his desk, reading code and hunting bugs. OK puts him to sleep or wakes him; holding OK makes him quack | Keep-awake on or off. In **Walk** mode the pointer takes a short, curved, randomised walk every few minutes and Harold walks along on the screen; in **Subtle** mode it moves one pixel and back; in **Wander** mode it drifts around without stopping and glides back to where it started when you turn it off |
 | **Right** – Settings | Mode, USB or Bluetooth, how often, how far, work hours only, sound and vibration |
 | **Left** – Remote | **Media:** play/pause, tracks, volume. **Slides:** next and back. **Mouse:** the D-pad moves the pointer, OK clicks |
 | **Up** – Preview | The next walk drawn to scale before it happens; OK plays it now |

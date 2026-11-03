@@ -37,10 +37,10 @@ The corner shows the connection: **USB**, **BT**, **BT pairing**, **no USB**. **
 
 | Setting | Choices |
 |---|---|
-| Mode | Walk (a short random walk), Subtle (one pixel out and back), Off |
+| Mode | Walk (a short random walk), Subtle (one pixel out and back), Wander (the pointer drifts around without stopping), Off |
 | Connection | USB or Bluetooth |
-| Every | 30–60 s, 1–3 min, 2–4 min between walks |
-| Walk length | Short, Medium, Long |
+| Every | 30–60 s, 1–3 min, 2–4 min between walks (Wander doesn't wait) |
+| Walk length | Short, Medium, Long: how far a walk or a wander strays |
 | Hours | Always, or Mon–Fri 8–18 only |
 | Sound, Vibration | For the quack |
 
