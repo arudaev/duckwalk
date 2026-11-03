@@ -102,10 +102,13 @@ bool link_is_connected(void) {
     return link.profile && link.bt_status == BtStatusConnected;
 }
 
-/* Advertising or connected, asked of the radio itself rather than the last
- * status message, which can be missed. */
+/* Advertising or connected, from the Bt service's status messages only.
+ * Never ask the HAL (furi_hal_bt_is_active and friends): the GAP layer holds
+ * its state lock while the firmware's pairing dialog waits for the user, so
+ * asking from the GUI thread deadlocks the dialog it is waiting for. */
 static bool bt_on_air(void) {
-    return link.profile && (link.bt_status == BtStatusConnected || furi_hal_bt_is_active());
+    return link.profile &&
+           (link.bt_status == BtStatusConnected || link.bt_status == BtStatusAdvertising);
 }
 
 const char* link_status(void) {
