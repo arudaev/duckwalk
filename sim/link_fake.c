@@ -20,13 +20,13 @@ bool link_is_connected(void) {
 }
 
 const char* link_status(void) {
-    if(sim_link.kind == LinkUsb) return sim_link.connected ? "USB" : "no USB";
+    if(sim_link.kind == LinkUsb) return !sim_link.on_air ? "USB busy" : sim_link.connected ? "USB" : "no USB";
     if(sim_link.connected) return "BT";
     return sim_link.on_air ? "BT pairing" : "BT starting";
 }
 
-bool link_bt_off(void) {
-    return sim_link.kind == LinkBluetooth && !sim_link.on_air;
+bool link_off(void) {
+    return !sim_link.on_air;
 }
 
 const char* link_bt_name(void) {

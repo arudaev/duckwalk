@@ -200,6 +200,26 @@ static void pairing_all_set(void) {
     pairing_ask();
     press(InputKeyOk, InputTypeShort);
 }
+static void pairing_usb_busy(void) {
+    sim_link = (SimLink){.kind = LinkUsb, .connected = false, .on_air = false};
+    pairing_open(&app);
+}
+static void pairing_usb_unplugged_help(void) {
+    sim_link = (SimLink){.kind = LinkUsb, .connected = false, .on_air = true};
+    pairing_open(&app);
+    press(InputKeyRight, InputTypeShort);
+}
+static void pairing_usb_all_set(void) {
+    sim_link = (SimLink){.kind = LinkUsb, .connected = true, .on_air = true};
+    pairing_open(&app);
+    press(InputKeyOk, InputTypeShort);
+    run_for(1200);
+    /* The PC helper is running and the user has been away a minute. */
+    uint8_t packet[HELPER_PACKET_LEN] = {HELPER_MAGIC, HELPER_VERSION, HELPER_MSG_IDLE};
+    helper_put_u32(packet + 3, 60000);
+    helper_receive(packet, furi_get_tick());
+    press(InputKeyOk, InputTypeShort);
+}
 static void welcome(void) {
     app.screen = ScreenWelcome;
 }
@@ -232,6 +252,9 @@ static const struct {
     {"pairing-ask", pairing_ask},
     {"pairing-failed", pairing_failed},
     {"pairing-all-set", pairing_all_set},
+    {"pairing-usb-busy", pairing_usb_busy},
+    {"pairing-usb-unplugged-help", pairing_usb_unplugged_help},
+    {"pairing-usb-all-set", pairing_usb_all_set},
     {"welcome", welcome},
 };
 

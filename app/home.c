@@ -347,9 +347,13 @@ void home_draw(Canvas* canvas, Duckwalk* app) {
 
     canvas_set_font(canvas, FontSecondary);
     canvas_draw_str(canvas, 2, 63, "< Remote");
-    if(link_kind() == LinkBluetooth && !link_is_connected()) {
-        canvas_draw_str_aligned(canvas, 64, 63, AlignCenter, AlignBottom, "v Pair");
-    }
+    /* Down checks the connection; it asks to pair while nothing is. */
+    bool unpaired = link_kind() == LinkBluetooth && !link_is_connected();
+    const char* down = unpaired ? "Pair" : "Link";
+    int32_t left = 64 - (canvas_string_width(canvas, down) + 7) / 2;
+    /* A drawn arrow: in this font a "v" reads as a "u". */
+    for(int32_t i = 0; i < 3; i++) canvas_draw_line(canvas, left + i, 58 + i, left + 4 - i, 58 + i);
+    canvas_draw_str(canvas, left + 7, 63, down);
     canvas_draw_str_aligned(canvas, 126, 63, AlignRight, AlignBottom, "Settings >");
 }
 
@@ -377,7 +381,7 @@ void home_input(Duckwalk* app, const InputEvent* input) {
     } else if(input->key == InputKeyLeft && input->type == InputTypeShort) {
         app->screen = ScreenRemote;
     } else if(input->key == InputKeyDown && input->type == InputTypeShort) {
-        if(link_kind() == LinkBluetooth) pairing_open(app);
+        pairing_open(app);
     } else if(input->key == InputKeyUp && input->type == InputTypeShort) {
         app->preview_started = furi_get_tick();
         app->screen = ScreenPreview;

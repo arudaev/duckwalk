@@ -88,7 +88,7 @@ stateDiagram-v2
     Home --> Settings: Right
     Home --> Remote: Left
     Home --> Preview: Up
-    Home --> Pairing: Down (Bluetooth)
+    Home --> Pairing: Down
     Settings --> Home: Back
     Settings --> Pairing: Back, Bluetooth not connected
     Remote --> Home: Back from the menu
