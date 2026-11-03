@@ -18,8 +18,8 @@
 #include <notification/notification_messages.h>
 
 /* Layout */
-#define HOME_X    44 /* Harold's seat at the desk */
-#define HAROLD_Y  24
+#define HOME_X    50 /* Harold's seat at the desk */
+#define HAROLD_Y  28 /* his flat bottom sits on the desk line */
 #define DESK_Y    52
 #define WALK_SPAN 36 /* how far he strays across the screen during a walk */
 #define LAPTOP_X  80
@@ -118,23 +118,24 @@ static const Icon* harold_frame(const Duckwalk* app) {
     const KeepAwake* ka = &app->keep_awake;
     bool stride = (furi_get_tick() / ms(STRIDE_MS)) % 2;
 
-    if(tick_before(anim->quack_until)) return &I_harold_quack_28x29;
+    if(tick_before(anim->quack_until)) return &I_harold_quack_24x25;
     if(keep_awake_is_walking(ka)) {
-        if(anim->facing_right) return stride ? &I_harold_walk_r_1_28x29 : &I_harold_walk_r_0_28x29;
-        return stride ? &I_harold_walk_1_28x29 : &I_harold_walk_0_28x29;
+        /* A rubber duck doesn't step, he bobs along. */
+        if(anim->facing_right) return stride ? &I_harold_bob_24x25 : &I_harold_idle_24x25;
+        return stride ? &I_harold_bob_l_24x25 : &I_harold_idle_l_24x25;
     }
-    if(ka->mode == KeepAwakeOff) return &I_harold_asleep_28x29;
-    if(tick_before(anim->waddle_until)) return stride ? &I_harold_walk_r_1_28x29 : &I_harold_walk_r_0_28x29;
+    if(ka->mode == KeepAwakeOff) return &I_harold_blink_24x25;
+    if(tick_before(anim->waddle_until)) return stride ? &I_harold_bob_24x25 : &I_harold_idle_24x25;
     /* The bug hunt: he turns round and quacks at you. */
-    if(anim->desk == DeskQuack) return &I_harold_quack_28x29;
+    if(anim->desk == DeskQuack) return &I_harold_quack_l_24x25;
     /* You're at the computer: he turns to watch you work. */
-    if(ka->user_active) return tick_before(anim->blink_until) ? &I_harold_asleep_28x29 : &I_harold_idle_28x29;
-    if(tick_before(anim->blink_until)) return &I_harold_blink_r_28x29;
-    if(tick_before(anim->look_until)) return &I_harold_idle_28x29;
+    if(ka->user_active) return tick_before(anim->blink_until) ? &I_harold_blink_l_24x25 : &I_harold_idle_l_24x25;
+    if(tick_before(anim->blink_until)) return &I_harold_blink_24x25;
+    if(tick_before(anim->look_until)) return &I_harold_idle_l_24x25;
     if(tick_before(anim->typing_until)) {
-        return (furi_get_tick() / ms(STRIDE_MS * 2)) % 2 ? &I_harold_walk_r_1_28x29 : &I_harold_walk_r_0_28x29;
+        return (furi_get_tick() / ms(STRIDE_MS * 2)) % 2 ? &I_harold_bob_24x25 : &I_harold_idle_24x25;
     }
-    return &I_harold_walk_r_0_28x29;
+    return &I_harold_idle_24x25;
 }
 
 void home_tick(Duckwalk* app) {
@@ -269,22 +270,22 @@ static void draw_zzz(Canvas* canvas, int32_t x) {
     canvas_set_font(canvas, FontSecondary);
     for(uint32_t i = 0; i < 3; i++) {
         uint32_t phase = (now + i * ms(Z_CYCLE_MS) / 3) % ms(Z_CYCLE_MS);
-        /* From beside his head up to just under the status line. */
-        int32_t rise = phase * 12 / ms(Z_CYCLE_MS);
-        canvas_draw_str(canvas, x + 28 + rise, HAROLD_Y + 18 - rise, rise > 7 ? "Z" : "z");
+        /* From just in front of his bill up and away over the laptop. */
+        int32_t rise = phase * 9 / ms(Z_CYCLE_MS);
+        canvas_draw_str(canvas, x + 25 + rise / 2, HAROLD_Y + 12 - rise, rise > 5 ? "Z" : "z");
     }
 }
 
 /* A speech bubble to Harold's left. */
 static void draw_bubble(Canvas* canvas, int32_t x, const char* text) {
-    int32_t bx = x - 38;
+    int32_t bx = x - 37;
     if(bx < 0) bx = 0;
     canvas_set_color(canvas, ColorWhite);
-    canvas_draw_box(canvas, bx, HAROLD_Y, 36, 13);
+    canvas_draw_box(canvas, bx, HAROLD_Y - 4, 36, 13);
     canvas_set_color(canvas, ColorBlack);
-    canvas_draw_rframe(canvas, bx, HAROLD_Y, 36, 13, 3);
+    canvas_draw_rframe(canvas, bx, HAROLD_Y - 4, 36, 13, 3);
     canvas_set_font(canvas, FontSecondary);
-    canvas_draw_str_aligned(canvas, bx + 18, HAROLD_Y + 10, AlignCenter, AlignBottom, text);
+    canvas_draw_str_aligned(canvas, bx + 18, HAROLD_Y + 6, AlignCenter, AlignBottom, text);
 }
 
 static void draw_status(Canvas* canvas, const Duckwalk* app) {

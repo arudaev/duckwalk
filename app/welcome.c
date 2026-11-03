@@ -8,7 +8,7 @@
 void welcome_draw(Canvas* canvas, Duckwalk* app) {
     UNUSED(app);
     bool blink = furi_get_tick() % furi_ms_to_ticks(3000) < furi_ms_to_ticks(150);
-    canvas_draw_icon(canvas, 2, 20, blink ? &I_harold_asleep_28x29 : &I_harold_idle_28x29);
+    canvas_draw_icon(canvas, 4, 22, blink ? &I_harold_blink_24x25 : &I_harold_idle_24x25);
 
     canvas_set_font(canvas, FontPrimary);
     canvas_draw_str(canvas, 36, 12, "Hi, I'm Harold!");
