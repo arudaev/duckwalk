@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions, ideas and feedback
+    url: https://github.com/arudaev/duckwalk/discussions
+    about: Ask a question, suggest something Harold could do, or tell us how it went.
+  - name: Report a security problem
+    url: https://github.com/arudaev/duckwalk/security/advisories/new
+    about: Report privately. Please do not open a public issue for vulnerabilities.

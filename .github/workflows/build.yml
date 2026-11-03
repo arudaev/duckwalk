@@ -1,0 +1,32 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (${{ matrix.channel }} SDK)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The Apps Catalog requires the app to build on the current release
+        # and release candidate.
+        channel: [release, rc]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build duckwalk.fap
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1.4
+        id: build
+        with:
+          app-dir: app
+          sdk-channel: ${{ matrix.channel }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: duckwalk-${{ matrix.channel }}-${{ steps.build.outputs.suffix }}
+          path: ${{ steps.build.outputs.fap-artifacts }}

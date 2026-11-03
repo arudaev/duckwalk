@@ -1,0 +1,8 @@
+# ufbt
+dist/
+.vscode/
+.ufbt/
+# Python
+__pycache__/
+*.pyc
+.venv/

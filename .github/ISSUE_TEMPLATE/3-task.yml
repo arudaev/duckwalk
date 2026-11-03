@@ -1,0 +1,31 @@
+name: Task
+description: Technical or delivery work without direct user-visible behaviour.
+title: "[M?-S?] "
+labels: [type:task, needs-triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is wrong or missing today, and what it costs.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] 
+        - [ ] 
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes and dependencies
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+    validations:
+      required: true

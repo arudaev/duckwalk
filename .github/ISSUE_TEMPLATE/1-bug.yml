@@ -1,0 +1,67 @@
+name: Bug report
+description: Duckwalk does something wrong, or doesn't do what it should.
+title: "Bug: "
+labels: [type:bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. The Flipper's firmware version and your computer's operating system matter most: USB and Bluetooth behave differently on each.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      placeholder: "Walk mode was on, but Teams showed me as away after 5 minutes."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Duckwalk
+        2. Right → Settings → Mode: Walk
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Flipper firmware
+      description: Settings → About, or qFlipper. Duckwalk supports the official firmware.
+      placeholder: "1.5.1 (official)"
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: Duckwalk version
+      placeholder: "0.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: connection
+    attributes:
+      label: Connection
+      options:
+        - USB
+        - Bluetooth
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Computer and operating system
+      placeholder: "Windows 11 24H2, Teams 25xxx"
+    validations:
+      required: true
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots or a short video

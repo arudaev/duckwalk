@@ -1,0 +1,15 @@
+App(
+    appid="duckwalk",
+    name="Duckwalk",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="duckwalk_app",
+    requires=["gui"],
+    stack_size=2 * 1024,
+    fap_category="USB",
+    fap_version="0.1",
+    fap_icon="icon.png",
+    fap_icon_assets="images",
+    fap_description="Harold, a rubber debugging duck, keeps your computer awake and works as its remote",
+    fap_author="arudaev",
+    fap_weburl="https://github.com/arudaev/duckwalk",
+)
