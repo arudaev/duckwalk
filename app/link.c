@@ -120,6 +120,11 @@ const char* link_status(void) {
     }
 }
 
+bool link_bt_off(void) {
+    return link.started && link.kind == LinkBluetooth &&
+           (!link.profile || link.bt_status == BtStatusOff);
+}
+
 const char* link_bt_name(void) {
     static char name[24];
     const char* flipper = furi_hal_version_get_name_ptr();

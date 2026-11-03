@@ -35,6 +35,14 @@ void pairing_draw(Canvas* canvas, Duckwalk* app) {
     }
 
     canvas_set_font(canvas, FontSecondary);
+    if(link_bt_off()) {
+        canvas_draw_str(canvas, 2, 21, "Bluetooth is off on the");
+        canvas_draw_str(canvas, 2, 30, "Flipper. Turn it on in");
+        canvas_draw_str(canvas, 2, 39, "Settings > Bluetooth,");
+        canvas_draw_str(canvas, 2, 48, "then open Duckwalk again.");
+        canvas_draw_str(canvas, 2, 63, "Back later");
+        return;
+    }
     if(connected) {
         canvas_draw_str_aligned(canvas, 64, 30, AlignCenter, AlignBottom, "Connected to");
     } else {

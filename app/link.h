@@ -29,6 +29,10 @@ bool link_is_connected(void);
 /* A few words for the screen, e.g. "USB", "BT pairing". */
 const char* link_status(void);
 
+/* True when Duckwalk is set to Bluetooth but the Flipper's own Bluetooth
+ * switch is off, so nothing can see it. */
+bool link_bt_off(void);
+
 /* The name the computer lists when pairing, e.g. "Harold Rgudalap". */
 const char* link_bt_name(void);
 
