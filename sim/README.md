@@ -1,4 +1,6 @@
-# Screen simulator
+# 06 · Screen simulator
+
+[← Developer guide](../docs/development.md) · [Docs home](../docs/README.md) · [Next: Issues, branches and PRs →](../docs/contributing/README.md)
 
 Renders every Duckwalk screen on a computer, from the app's own draw code, so you can check a layout change and put real screenshots in a pull request without a Flipper. CI runs it on every pull request and uploads the pictures as the `duckwalk-screens` artifact.
 
@@ -29,3 +31,7 @@ On Windows, use MinGW gcc (`-DCMAKE_C_COMPILER=gcc`); it brings zlib.
 ## Add a scene
 
 Write a setup function in `main.c` that gets the app into the state (press buttons with `press()`, let time pass with `run_for()`, set the connection with `sim_link`) and add it to `scenes[]`.
+
+---
+
+[← Developer guide](../docs/development.md) · [Docs home](../docs/README.md) · [Next: Issues, branches and PRs →](../docs/contributing/README.md)

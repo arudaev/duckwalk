@@ -1,5 +1,7 @@
 # 0001 – Telling Duckwalk's input apart from the user's
 
+[← Brand](../brand.md) · [Docs home](../README.md)
+
 Spike for issue #14, 3 November 2026. Windows 11 (Surface, ARM64), Duckwalk on official firmware 1.5.1.
 
 ## Question
@@ -37,3 +39,7 @@ Go. A small helper on the computer, in C on plain Win32, watches Raw Input, igno
 - **Bluetooth needs a data channel first.** The firmware's HID profile has no serial service, so over Bluetooth the helper has nothing to send through. A custom profile with HID and serial is the open half of spike #12.
 - **Other systems need their own input APIs:** macOS (IOHIDManager or CGEventTap with device info) and Linux (evdev). Not started.
 - **Software input counts as the user.** Remote desktop sessions and automation tools look like someone at the computer. That is the safe side: Harold waits.
+
+---
+
+[← Brand](../brand.md) · [Docs home](../README.md)

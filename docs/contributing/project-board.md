@@ -1,4 +1,6 @@
-# Project board
+# 08 · Project board
+
+[← Issues, branches and PRs](README.md) · [Docs home](../README.md) · [Next: Brand →](../brand.md)
 
 [Duckwalk](https://github.com/users/arudaev/projects/9) tracks the work in this repository. Issues describe what will be delivered; pull requests are the review queue. Epics and blocked issues stay off the daily board.
 
@@ -47,3 +49,7 @@ The board uses GitHub's built-in project workflows:
 | Completed work ages | Stays visible (auto-archive is off) |
 
 Ready, Blocked, Priority, Size, Design review and accepting an epic are the maintainer's decisions. The board never closes issues or merges pull requests.
+
+---
+
+[← Issues, branches and PRs](README.md) · [Docs home](../README.md) · [Next: Brand →](../brand.md)

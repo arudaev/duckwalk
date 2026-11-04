@@ -1,4 +1,6 @@
-# Contributor guide
+# 07 · Issues, branches and pull requests
+
+[← Screen simulator](../../sim/README.md) · [Docs home](../README.md) · [Next: Project board →](project-board.md)
 
 ## Issues
 
@@ -45,3 +47,7 @@ Two workflows run on every PR:
 - **Harold** is a yellow rubber duck with an orange beak, from the game VOYAGER // 56K. On the Flipper he is 1-bit pixel art drawn from the original 16 px sprite; keep his silhouette and proportions.
 - **Colour:** the Flipper's orange (`#FF8200`) as the one flat colour field, dark ink, white space. No gradients, no generated imagery.
 - **Voice:** calm and direct. Say what the thing does and who it helps; say plainly what is finished and what is not. No hype, no emoji decoration. En dashes (–), never em dashes.
+
+---
+
+[← Screen simulator](../../sim/README.md) · [Docs home](../README.md) · [Next: Project board →](project-board.md)

@@ -1,4 +1,6 @@
-# Architecture
+# 04 · Architecture
+
+[← Contributing](../CONTRIBUTING.md) · [Docs home](README.md) · [Next: Developer guide →](development.md)
 
 How the Duckwalk app is put together. Read this before changing anything that runs on more than one thread, or anything that talks to the computer.
 
@@ -120,3 +122,7 @@ A walk is planned before it plays, so Preview shows the path that will really pl
 Over USB, Duckwalk's HID interface has a third collection: 63-byte vendor reports in both directions. The PC helper writes the user's idle time into it once a second; the format is in [`app/helper_protocol.h`](../app/helper_protocol.h). Over Bluetooth the same packets go to a service of Duckwalk's own (`ble_duck.c`): one write-only characteristic, 63 bytes, writable only by the paired computer. The firmware's serial service would have done, but its two 486-byte buffers don't fit beside the HID service. The profile wraps the firmware's HID profile, so its mouse and media functions work unchanged, and Windows picks the new service up without pairing again.
 
 How the helper tells Duckwalk's own input from yours is written up in [decision 0001](decisions/0001-tell-duckwalk-from-the-user.md).
+
+---
+
+[← Contributing](../CONTRIBUTING.md) · [Docs home](README.md) · [Next: Developer guide →](development.md)
