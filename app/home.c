@@ -8,6 +8,9 @@
  * breathes slowly and the z's float. During a walk or a wander he leaves the
  * desk and moves in step with the cursor. A long OK makes him quack.
  *
+ * With Sound on Lively he is heard too: the bug hunt, his hops and his
+ * footsteps on a walk, but only while you can see him.
+ *
  * home_tick moves the scene on; home_draw only draws it. */
 
 #include "duckwalk.h"
@@ -17,7 +20,6 @@
 #include "util.h"
 
 #include <furi_hal_random.h>
-#include <notification/notification_messages.h>
 
 /* Layout, left to right: plant, mug, Harold, laptop. */
 #define HOME_X     56 /* Harold's seat at the desk */
@@ -52,41 +54,10 @@
 #define ROUTINE_MAX_MS 5000
 #define Z_CYCLE_MS 1800
 #define SPOT_MS    1200
+#define FOOTSTEP_MS 300
 #define FIXED_MS   1400
 #define BUG_MIN_MS 10000
 #define BUG_MAX_MS 25000
-
-/* A two-note quack, with or without the buzz, as Settings say. */
-static const NotificationSequence sequence_quack = {
-    &message_vibro_on,
-    &message_note_f4,
-    &message_delay_50,
-    &message_vibro_off,
-    &message_note_d4,
-    &message_delay_100,
-    &message_sound_off,
-    NULL,
-};
-
-static const NotificationSequence sequence_quack_silent = {
-    &message_vibro_on,
-    &message_delay_50,
-    &message_vibro_off,
-    &message_delay_50,
-    &message_vibro_on,
-    &message_delay_50,
-    &message_vibro_off,
-    NULL,
-};
-
-static const NotificationSequence sequence_quack_still = {
-    &message_note_f4,
-    &message_delay_50,
-    &message_note_d4,
-    &message_delay_100,
-    &message_sound_off,
-    NULL,
-};
 
 static uint32_t ms(uint32_t milliseconds) {
     return furi_ms_to_ticks(milliseconds);
@@ -238,6 +209,21 @@ static void draw_harold(Canvas* canvas, int32_t x, Frame frame) {
     canvas_draw_icon(canvas, x, y, sprites[frame.pose][frame.left]);
 }
 
+/* Harold's own sounds, only while he is on screen. */
+static void lively(Duckwalk* app, Sound sound) {
+    if(app->screen == ScreenHome || app->screen == ScreenPreview) duckwalk_sound(app, sound);
+}
+
+/* Footsteps while a walk plays, left and right. A wander is quiet: it goes
+ * on for as long as the mode is on. */
+static void footsteps(Duckwalk* app) {
+    HomeAnim* anim = &app->home;
+    if(!keep_awake_is_playing(&app->keep_awake) || !tick_reached(anim->step_at)) return;
+    anim->step_left = !anim->step_left;
+    lively(app, anim->step_left ? SoundStepLeft : SoundStepRight);
+    anim->step_at = tick_in_ms(FOOTSTEP_MS);
+}
+
 void home_tick(Duckwalk* app) {
     HomeAnim* anim = &app->home;
     KeepAwake* ka = &app->keep_awake;
@@ -251,6 +237,7 @@ void home_tick(Duckwalk* app) {
     } else {
         anim->last_x = 0;
     }
+    footsteps(app);
 
     /* Blink every few seconds. */
     if(tick_reached(anim->blink_at)) {
@@ -276,6 +263,7 @@ void home_tick(Duckwalk* app) {
         schedule_routine(anim);
     } else if(tick_reached(anim->routine_at)) {
         start_routine(anim);
+        if(anim->routine == RoutineHop) lively(app, SoundHop);
     }
 
     /* The bug hunt: spot it, quack at it, fix it. */
@@ -291,18 +279,21 @@ void home_tick(Duckwalk* app) {
             anim->desk = DeskSpotted;
             anim->bug_row = 2 + furi_hal_random_get() % 3;
             anim->desk_until = tick_in_ms(SPOT_MS);
+            lively(app, SoundBugSpotted);
         }
         break;
     case DeskSpotted:
         if(tick_reached(anim->desk_until)) {
             anim->desk = DeskQuack;
             anim->desk_until = tick_in_ms(QUACK_MS);
+            lively(app, SoundBugQuack);
         }
         break;
     case DeskQuack:
         if(tick_reached(anim->desk_until)) {
             anim->desk = DeskFixed;
             anim->desk_until = tick_in_ms(FIXED_MS);
+            lively(app, SoundBugFixed);
         }
         break;
     case DeskFixed:
@@ -512,18 +503,10 @@ void home_input(Duckwalk* app, const InputEvent* input) {
         s->values[SettingMode] = ka->mode == KeepAwakeOff ? s->awake_mode : KeepAwakeOff;
         duckwalk_apply_settings(app);
         schedule_blink(&app->home);
+        duckwalk_sound(app, ka->mode == KeepAwakeOff ? SoundSleep : SoundWake);
     } else if(input->key == InputKeyOk && input->type == InputTypeLong) {
         app->home.quack_until = tick_in_ms(QUACK_MS);
-        bool sound = s->values[SettingSound], vibro = s->values[SettingVibro];
-        const NotificationSequence* quack = NULL;
-        if(sound && vibro) {
-            quack = &sequence_quack;
-        } else if(sound) {
-            quack = &sequence_quack_still;
-        } else if(vibro) {
-            quack = &sequence_quack_silent;
-        }
-        if(quack) notification_message(app->notifications, quack);
+        duckwalk_sound(app, SoundQuack);
     } else if(input->key == InputKeyRight && input->type == InputTypeShort) {
         app->screen = ScreenSettings;
     } else if(input->key == InputKeyLeft && input->type == InputTypeShort) {
@@ -542,5 +525,6 @@ void home_input(Duckwalk* app, const InputEvent* input) {
 void home_on_move(Duckwalk* app) {
     if(!keep_awake_is_walking(&app->keep_awake)) {
         app->home.waddle_until = tick_in_ms(WADDLE_MS);
+        lively(app, SoundNudge);
     }
 }

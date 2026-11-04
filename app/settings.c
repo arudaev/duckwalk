@@ -1,6 +1,7 @@
 #include "settings.h"
 #include "keep_awake.h"
 #include "link.h"
+#include "sounds.h"
 
 #include <furi_hal_rtc.h>
 #include <storage/storage.h>
@@ -17,6 +18,8 @@ static const char* const interval_names[] = {"30-60 s", "1-3 min", "2-4 min"};
 static const char* const length_names[] = {"Short", "Medium", "Long"};
 static const char* const hours_names[] = {"Always", "Mon-Fri 8-18"};
 static const char* const switch_names[] = {"Off", "On"};
+/* An old file's "Sound: On" isn't a name here, so it loads as the default, Cues. */
+static const char* const sound_names[] = {"Off", "Cues", "Lively"};
 static const char* const stop_names[] = {"1 h", "2 h", "4 h", "8 h", "Never"};
 
 static const struct {
@@ -31,7 +34,7 @@ static const struct {
     [SettingLength] = {"Walk length", length_names, WalkLengthCount, WalkLengthMedium},
     [SettingHours] = {"Hours", hours_names, HoursCount, HoursAlways},
     [SettingStopAfter] = {"Stop after", stop_names, StopAfterCount, StopAfter4h},
-    [SettingSound] = {"Sound", switch_names, 2, 1},
+    [SettingSound] = {"Sound", sound_names, SoundLevelCount, SoundLevelCues},
     [SettingVibro] = {"Vibration", switch_names, 2, 1},
 };
 

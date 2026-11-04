@@ -47,6 +47,7 @@ void duckwalk_check_stop_after(Duckwalk* app, bool pressed) {
     duckwalk_apply_settings(app);
     app->pending.save = true;
     app->stopped = true;
+    duckwalk_sound(app, SoundStopped);
 }
 
 void settings_draw(Canvas* canvas, Duckwalk* app) {

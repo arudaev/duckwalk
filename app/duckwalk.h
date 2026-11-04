@@ -3,10 +3,10 @@
 #include <furi.h>
 #include <gui/gui.h>
 #include <input/input.h>
-#include <notification/notification.h>
 
 #include "keep_awake.h"
 #include "settings.h"
+#include "sounds.h"
 
 typedef enum {
     ScreenHome,
@@ -74,6 +74,8 @@ typedef struct {
     uint32_t desk_until;
     uint32_t bug_at;
     uint8_t bug_row;
+    uint32_t step_at; /* the next footstep during a walk */
+    bool step_left;
 } HomeAnim;
 
 /* The Bluetooth pairing checklist (pairing.c). */
@@ -107,11 +109,13 @@ typedef struct {
 
 typedef struct {
     FuriMutex* mutex;
-    NotificationApp* notifications;
     bool running;
     bool skip_save; /* left from Welcome: nothing was chosen yet */
     uint32_t active_at; /* the user last pressed a button or worked on the PC */
     bool stopped; /* put to sleep by Stop after; cleared when woken */
+    bool link_seen; /* the connection as last read */
+    uint32_t link_seen_at; /* when that last changed */
+    bool link_told; /* the connection as the last link sound told it */
     DuckwalkPending pending;
     Screen screen;
     KeepAwake keep_awake;
@@ -162,6 +166,9 @@ void pairing_tick(Duckwalk* app);
 /* Push the current settings into keep-awake, and ask the main loop to
  * switch the connection if it changed. */
 void duckwalk_apply_settings(Duckwalk* app);
+
+/* Plays a sound as the Sound and Vibration settings allow (sounds.h). */
+void duckwalk_sound(Duckwalk* app, Sound sound);
 
 /* Stop after: puts Harold to sleep once nobody has been around for the
  * set time. `pressed` is true when a button was just pressed; call every

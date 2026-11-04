@@ -47,9 +47,26 @@ The corner shows the connection: **USB**, **BT**, **BT pairing**, **no USB**. **
 | Walk length | Short, Medium, Long: how far a walk or a wander strays |
 | Hours | Always, or Mon–Fri 8–18 only |
 | Stop after | 1 h, 2 h, 4 h (default), 8 h, Never: Harold goes to sleep when nobody has pressed a button on the Flipper (or, with the PC helper, used the computer) for that long, so a computer you walked away from still locks. The home screen then says **You were away**; **OK** wakes him. Without the helper only the Flipper's buttons count, even while you work at the computer. For a whole day away, choose **Never** |
-| Sound, Vibration | For the quack |
+| Sound | Off, Cues (default), Lively: see [Sounds](#sounds) |
+| Vibration | On or Off: a buzz for the two warnings, Stop after and a lost connection |
 
 Up and Down choose, Left and Right change. Settings are saved on the SD card in `apps_data/duckwalk/settings.txt`.
+
+## Sounds
+
+| Sound | When | Heard on |
+|---|---|---|
+| Quack quack | You hold OK | Cues, Lively |
+| Three notes up or down | OK wakes Harold or puts him to sleep | Cues, Lively |
+| A yawn, and a buzz | Stop after ran out and Harold went to sleep | Cues, Lively |
+| Two notes down, and a buzz | The computer went away for more than 3 seconds, while Harold is awake | Cues, Lively |
+| Two notes up | It came back | Cues, Lively |
+| "Huh?", a quack, a ding | The bug hunt: he spots a bug, quacks at it and fixes it | Lively |
+| Boing | A happy little hop | Lively |
+| Pit-pat | His footsteps during a walk (a wander stays quiet) | Lively |
+| Tick | Subtle's one pixel | Lively |
+
+Harold's own sounds play only while he is on screen. The Flipper's volume and its mute (stealth mode) apply to all of them; the Flipper's own vibration setting can switch the buzz off too.
 
 ## Remote
 
