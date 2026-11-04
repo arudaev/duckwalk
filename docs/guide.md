@@ -56,7 +56,7 @@ Up and Down choose, Left and Right change. Settings are saved on the SD card in 
 
 | Sound | When | Heard on |
 |---|---|---|
-| Quack quack | You hold OK | Cues, Lively |
+| A quack, modelled on a recorded duck | You hold OK | Cues, Lively |
 | Three notes up or down | OK wakes Harold or puts him to sleep | Cues, Lively |
 | A yawn, and a buzz | Stop after ran out and Harold went to sleep | Cues, Lively |
 | Two notes down, and a buzz | The computer went away for more than 3 seconds, while Harold is awake | Cues, Lively |

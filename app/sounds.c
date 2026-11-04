@@ -1,10 +1,10 @@
 /* Harold's sounds, played on the Flipper's speaker.
  *
- * The speaker plays one square-wave tone at a time, so every sound is a list
- * of short tones. A duck's quack is a nasal, falling sweep: here the pitch
- * falls while it jumps up and down a little every few milliseconds, which
- * gives the rasp, and a bright click at the start is the "qu". Melodies use
- * plain notes.
+ * The speaker plays one tone at a time as a train of narrow pulses, so every
+ * sound is a list of short tones. The quack follows a recorded duck: a low,
+ * buzzy voice around 150 Hz that rises to 180 Hz and falls away, about 170 ms
+ * long. A pulse train that low is mostly harmonics, which is what makes it
+ * sound nasal rather than like a beep. Melodies use plain notes.
  *
  * The tones are built into notification sequences once, at start, and stay
  * put until the app ends: the notification service plays a sequence later,
@@ -102,11 +102,39 @@ static void sweep(Builder* b, float from, float to, uint32_t ms, float volume, f
     }
 }
 
-/* One quack around `pitch` hertz. */
-static void quack(Builder* b, float pitch, uint32_t ms, float volume) {
-    tone(b, pitch * 1.6f, 5, volume * 0.7f);
-    sweep(b, pitch * 1.15f, pitch * 0.75f, ms, volume, pitch * 0.07f);
-    tone(b, pitch * 0.68f, 12, volume * 0.35f);
+/* The recorded quack's pitch and loudness, point by point. Loudness is the
+ * speaker's volume, whose pulse width grows with its cube; 0.8 at the peak
+ * leaves room for the fade at full volume. */
+static const struct {
+    uint16_t ms;
+    uint16_t hz;
+    float volume;
+} quack_points[] = {
+    {0, 150, 0.20f},
+    {15, 145, 0.68f},
+    {30, 146, 0.80f},
+    {55, 166, 0.78f},
+    {85, 177, 0.66f},
+    {115, 181, 0.46f},
+    {140, 160, 0.38f},
+    {170, 139, 0.22f},
+};
+
+#define QUACK_STEP_MS 5
+
+/* One quack, `pitch` times the recorded pitch, `length` times as long. */
+static void quack(Builder* b, float pitch, float length, float volume) {
+    const size_t n = sizeof(quack_points) / sizeof(quack_points[0]);
+    uint32_t end = quack_points[n - 1].ms;
+    size_t k = 0;
+    for(uint32_t t = 0; t < end; t += QUACK_STEP_MS) {
+        while(t >= quack_points[k + 1].ms) k++;
+        float a = (float)(t - quack_points[k].ms) / (quack_points[k + 1].ms - quack_points[k].ms);
+        float hz = quack_points[k].hz + (quack_points[k + 1].hz - quack_points[k].hz) * a;
+        float v = quack_points[k].volume + (quack_points[k + 1].volume - quack_points[k].volume) * a;
+        uint32_t ms = (uint32_t)(QUACK_STEP_MS * length + 0.5f);
+        tone(b, hz * pitch, ms ? ms : 1, v * volume);
+    }
 }
 
 /* Notes */
@@ -124,9 +152,7 @@ static void quack(Builder* b, float pitch, uint32_t ms, float volume) {
 static void build(Builder* b, Sound sound) {
     switch(sound) {
     case SoundQuack:
-        quack(b, 780, 110, 1.0f);
-        rest(b, 70);
-        quack(b, 720, 85, 0.9f);
+        quack(b, 1.0f, 1.0f, 1.0f);
         break;
     case SoundWake:
         tone(b, C6, 45, 0.7f);
@@ -160,7 +186,8 @@ static void build(Builder* b, Sound sound) {
         tone(b, 1000, 30, 0.3f);
         break;
     case SoundBugQuack:
-        quack(b, 820, 90, 0.6f);
+        /* At the bug: a little higher, quicker and quieter. */
+        quack(b, 1.12f, 0.8f, 0.85f);
         break;
     case SoundBugFixed:
         tone(b, G6, 45, 0.5f);
