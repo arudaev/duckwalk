@@ -25,7 +25,9 @@ Real Flipper screens stay orange with black pixels in both themes and are never 
 
 - Ink outlines with a slight wobble (the `wobble` SVG filter), filled with paper, no gradients or shadows.
 - **The Flipper** is qFlipper's drawing (`flipper.svg`, GPL-3.0, by Flipper Devices), re-coloured: body in `paper`, outlines in `ink`. The original is kept in `site/flipper-qflipper.svg`. Its screen sits at x 93, y 26, 128 × 64 in the 360 × 156 drawing.
+  The screen window is lit `#ff8200` (the screens' own orange) with a dark bezel in both themes, like the device. Screens are pixel-sharp only at 2x or more and scale smoothly below, so no pixels drop out.
 - **The laptop** is our own line drawing; its screen is the demo canvas.
+- **Pointers** such as the "Try it" arrow are one continuous pen line (`site/doodle-arrow.png`, used as a mask so it takes the ink colour).
 - **Harold** in the drawings is the duck from the banner (`site/harold-walk.png`); on the Flipper he is the app's pixel sprite.
 - Movement is a dotted line, like the banner's path.
 
