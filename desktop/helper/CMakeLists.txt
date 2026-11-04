@@ -3,7 +3,8 @@
 #   cmake -S desktop/helper -B build/helper
 #   cmake --build build/helper
 #
-# MinGW gcc or Visual Studio both work.
+# Visual Studio builds reach Duckwalk over USB and Bluetooth; MinGW gcc
+# builds over USB only.
 
 cmake_minimum_required(VERSION 3.16)
 project(duckwalk_helper C)
@@ -17,6 +18,10 @@ endif()
 add_executable(duckwalk-helper helper.c)
 target_compile_definitions(duckwalk-helper PRIVATE UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS)
 target_link_libraries(duckwalk-helper user32 setupapi)
+# Bluetooth needs the Windows SDK's GATT API; MinGW builds are USB only.
+if(MSVC)
+    target_link_libraries(duckwalk-helper bluetoothapis)
+endif()
 if(MSVC)
     target_compile_options(duckwalk-helper PRIVATE /W4)
 else()

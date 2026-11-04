@@ -45,6 +45,7 @@ flowchart LR
 | `walk.c` | Plans a walk: a smooth curve through random waypoints that ends where it started |
 | `link.c` | The connection: starts USB or Bluetooth, queues reports and sends them, carries dropped moves into the next report |
 | `usb/usb_duck.c` | One USB HID interface with three parts: mouse, media keys and a 63-byte data channel |
+| `ble_duck.c` | The Bluetooth profile: the firmware's HID mouse and media keys, plus a one-characteristic service the PC helper writes to |
 | `helper.c`, `helper_protocol.h` | Packets from the PC helper; the protocol both sides compile |
 | `settings.c` | Reading and writing `settings.txt`, defaults line by line |
 | `util.h` | The log tag and tick helpers that survive the counter wrapping |
@@ -116,6 +117,6 @@ A walk is planned before it plays, so Preview shows the path that will really pl
 
 ## The data channel
 
-Over USB, Duckwalk's HID interface has a third collection: 63-byte vendor reports in both directions. The PC helper writes the user's idle time into it once a second; the format is in [`app/helper_protocol.h`](../app/helper_protocol.h). Over Bluetooth there is no data channel yet: the firmware's HID profile has no serial service (spike #12).
+Over USB, Duckwalk's HID interface has a third collection: 63-byte vendor reports in both directions. The PC helper writes the user's idle time into it once a second; the format is in [`app/helper_protocol.h`](../app/helper_protocol.h). Over Bluetooth the same packets go to a service of Duckwalk's own (`ble_duck.c`): one write-only characteristic, 63 bytes, writable only by the paired computer. The firmware's serial service would have done, but its two 486-byte buffers don't fit beside the HID service. The profile wraps the firmware's HID profile, so its mouse and media functions work unchanged, and Windows picks the new service up without pairing again.
 
 How the helper tells Duckwalk's own input from yours is written up in [decision 0001](decisions/0001-tell-duckwalk-from-the-user.md).
