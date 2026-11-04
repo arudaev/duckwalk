@@ -6,7 +6,8 @@
  * with the device it came from. Events from Duckwalk's own devices are
  * ignored; everything else counts as you. Once a second, and straight away
  * when you are active, the helper writes how long you have been idle into
- * Duckwalk's USB data channel (app/helper_protocol.h).
+ * Duckwalk's data channel (app/helper_protocol.h): over USB, or over
+ * Bluetooth when Duckwalk is paired that way.
  *
  * Plain Win32 and C, no dependencies. Nothing leaves the computer except
  * that one number, and only to the Flipper. */
@@ -14,10 +15,18 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <setupapi.h>
+/* The Bluetooth GATT API is in the Windows SDK; MinGW builds go without. */
+#if defined(__has_include)
+#if __has_include(<bluetoothleapis.h>)
+#include <bluetoothleapis.h>
+#define HAVE_BLE 1
+#endif
+#endif
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
 
@@ -41,6 +50,13 @@
 #define RETRY_OPEN_MS  2000
 
 static const GUID hid_interface = {0x4D1E55B2, 0xF16F, 0x11CF, {0x88, 0xCB, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30}};
+#ifdef HAVE_BLE
+/* Over Bluetooth: Duckwalk's own service and the characteristic the packets
+ * go to (app/ble_duck.c). Windows lists each service of a paired device as a
+ * device interface named after its UUID. */
+static const GUID ble_service = {0x15f18352, 0x9e6d, 0x4ff4, {0x9f, 0x45, 0xcd, 0x15, 0x8a, 0x70, 0x94, 0x1c}};
+static const GUID ble_packet = {0x15f18352, 0x9e6d, 0x4ff4, {0x9f, 0x45, 0xcd, 0x15, 0x8a, 0x70, 0x94, 0x1d}};
+#endif
 
 static bool verbose = false;
 static HANDLE duckwalk = INVALID_HANDLE_VALUE;
@@ -171,6 +187,90 @@ static void send_idle(ULONGLONG now) {
     sent_at = now;
 }
 
+#ifdef HAVE_BLE
+/* Duckwalk over Bluetooth. A write can stall for seconds while Harold is out
+ * of range, so a thread of its own does them and input keeps flowing. */
+
+static volatile ULONGLONG ble_user_at;
+static HANDLE ble_wake;
+static volatile bool ble_connected = false;
+
+static HANDLE open_ble(BTH_LE_GATT_CHARACTERISTIC* packet) {
+    HANDLE service = INVALID_HANDLE_VALUE;
+    HDEVINFO set = SetupDiGetClassDevsW(&ble_service, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+    if(set == INVALID_HANDLE_VALUE) return service;
+    SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof(iface)};
+    for(DWORD i = 0; service == INVALID_HANDLE_VALUE && SetupDiEnumDeviceInterfaces(set, NULL, &ble_service, i, &iface); i++) {
+        DWORD size = 0;
+        SetupDiGetDeviceInterfaceDetailW(set, &iface, NULL, 0, &size, NULL);
+        SP_DEVICE_INTERFACE_DETAIL_DATA_W* detail = malloc(size);
+        if(!detail) break;
+        detail->cbSize = sizeof(*detail);
+        if(SetupDiGetDeviceInterfaceDetailW(set, &iface, detail, size, NULL, NULL)) {
+            service = CreateFileW(detail->DevicePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                  NULL, OPEN_EXISTING, 0, NULL);
+        }
+        free(detail);
+        if(service == INVALID_HANDLE_VALUE) continue;
+        BTH_LE_GATT_CHARACTERISTIC chars[4];
+        USHORT count = 0;
+        bool found = false;
+        if(SUCCEEDED(BluetoothGATTGetCharacteristics(service, NULL, 4, chars, &count, BLUETOOTH_GATT_FLAG_NONE))) {
+            for(USHORT c = 0; c < count && !found; c++) {
+                if(!chars[c].CharacteristicUuid.IsShortUuid &&
+                   IsEqualGUID(&chars[c].CharacteristicUuid.Value.LongUuid, &ble_packet)) {
+                    *packet = chars[c];
+                    found = true;
+                }
+            }
+        }
+        if(!found) {
+            CloseHandle(service);
+            service = INVALID_HANDLE_VALUE;
+        }
+    }
+    SetupDiDestroyDeviceInfoList(set);
+    return service;
+}
+
+static DWORD WINAPI ble_thread(LPVOID arg) {
+    (void)arg;
+    HANDLE service = INVALID_HANDLE_VALUE;
+    BTH_LE_GATT_CHARACTERISTIC packet;
+    struct {
+        ULONG size;
+        UCHAR data[HELPER_PACKET_LEN];
+    } value = {.size = HELPER_PACKET_LEN};
+    for(;;) {
+        WaitForSingleObject(ble_wake, HELPER_HEARTBEAT_MS);
+        if(duckwalk != INVALID_HANDLE_VALUE) continue; /* USB is doing it */
+        if(service == INVALID_HANDLE_VALUE) {
+            service = open_ble(&packet);
+            if(service == INVALID_HANDLE_VALUE) continue;
+        }
+        memset(value.data, 0, sizeof(value.data));
+        value.data[0] = HELPER_MAGIC;
+        value.data[1] = HELPER_VERSION;
+        value.data[2] = HELPER_MSG_IDLE;
+        ULONGLONG idle = GetTickCount64() - ble_user_at;
+        helper_put_u32(&value.data[3], idle > 0xFFFFFFFFu ? 0xFFFFFFFFu : (uint32_t)idle);
+        HRESULT result = BluetoothGATTSetCharacteristicValue(service, &packet, (PBTH_LE_GATT_CHARACTERISTIC_VALUE)&value,
+                                                             0, BLUETOOTH_GATT_FLAG_WRITE_WITHOUT_RESPONSE);
+        if(SUCCEEDED(result) != ble_connected) {
+            ble_connected = SUCCEEDED(result);
+            printf(ble_connected ? "Connected to Duckwalk over Bluetooth.\n"
+                                 : "Lost Duckwalk over Bluetooth (out of range, or closed). Waiting for it...\n");
+            fflush(stdout);
+        }
+        if(FAILED(result)) {
+            CloseHandle(service);
+            service = INVALID_HANDLE_VALUE;
+            Sleep(RETRY_OPEN_MS);
+        }
+    }
+}
+#endif
+
 /* Input */
 
 static void on_input(HRAWINPUT input) {
@@ -185,6 +285,10 @@ static void on_input(HRAWINPUT input) {
     }
     ULONGLONG now = GetTickCount64();
     user_at = now;
+#ifdef HAVE_BLE
+    ble_user_at = now;
+    SetEvent(ble_wake);
+#endif
     if(now - sent_at >= SEND_ACTIVE_MS) send_idle(now);
 }
 
@@ -201,7 +305,13 @@ static LRESULT CALLBACK window_proc(HWND window, UINT msg, WPARAM wparam, LPARAM
         send_idle(GetTickCount64());
         if(verbose) {
             printf("\ridle %5llu s, Duckwalk %s, %lu of its own moves ignored   ",
-                   (GetTickCount64() - user_at) / 1000, duckwalk != INVALID_HANDLE_VALUE ? "connected" : "not found", ignored);
+                   (GetTickCount64() - user_at) / 1000,
+                   duckwalk != INVALID_HANDLE_VALUE ? "on USB"
+#ifdef HAVE_BLE
+                   : ble_connected ? "on Bluetooth"
+#endif
+                   : "not found",
+                   ignored);
             fflush(stdout);
         }
         return 0;
@@ -249,7 +359,14 @@ int main(int argc, char** argv) {
     printf("Duckwalk helper: Harold now waits while you use your own mouse or keyboard.\n"
            "Leave this window open (or minimised). Ctrl+C stops it.\n");
     open_duckwalk();
+#ifdef HAVE_BLE
+    ble_user_at = user_at;
+    ble_wake = CreateEventW(NULL, FALSE, FALSE, NULL);
+    CreateThread(NULL, 0, ble_thread, NULL, 0, NULL);
+    if(duckwalk == INVALID_HANDLE_VALUE) printf("Duckwalk isn't connected over USB; looking for it over Bluetooth too...\n");
+#else
     if(duckwalk == INVALID_HANDLE_VALUE) printf("Duckwalk isn't connected over USB yet; waiting for it...\n");
+#endif
     SetTimer(window, 1, HELPER_HEARTBEAT_MS, NULL);
 
     MSG msg;
