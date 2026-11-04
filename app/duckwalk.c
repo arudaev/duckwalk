@@ -100,6 +100,28 @@ static void handle_input(Duckwalk* app, const InputEvent* input) {
     }
 }
 
+void duckwalk_sound(Duckwalk* app, Sound sound) {
+    sounds_play(sound, app->settings.values[SettingSound], app->settings.values[SettingVibro]);
+}
+
+/* A lost connection is told once it has stayed lost for this long, so a
+ * Bluetooth link that flickers at the edge of its range stays quiet. */
+#define LINK_SETTLE_MS 3000
+
+/* Tells the user when the computer goes away and comes back, while Harold
+ * is awake; asleep, nobody is counting on the link. */
+static void check_link(Duckwalk* app) {
+    bool now = link_is_connected();
+    if(now != app->link_seen) {
+        app->link_seen = now;
+        app->link_seen_at = furi_get_tick();
+    }
+    if(now == app->link_told) return;
+    if(!now && furi_get_tick() - app->link_seen_at < furi_ms_to_ticks(LINK_SETTLE_MS)) return;
+    app->link_told = now;
+    if(app->keep_awake.mode != KeepAwakeOff) duckwalk_sound(app, now ? SoundLinkBack : SoundLinkLost);
+}
+
 /* Slow work the screens asked for, done without the app lock. */
 static void run_pending(Duckwalk* app) {
     furi_mutex_acquire(app->mutex, FuriWaitForever);
@@ -119,13 +141,14 @@ int32_t duckwalk_app(void* p) {
     Duckwalk* app = malloc(sizeof(Duckwalk));
     memset(app, 0, sizeof(Duckwalk));
     app->mutex = furi_mutex_alloc(FuriMutexTypeNormal);
-    app->notifications = furi_record_open(RECORD_NOTIFICATION);
+    sounds_init();
     app->screen = ScreenHome;
     app->running = true;
     app->active_at = furi_get_tick();
     /* Deadlines start now, not at 0: a Flipper up for over 24.8 days would
      * read a 0 as still to come. */
-    app->home.quack_until = app->home.waddle_until = app->active_at;
+    app->home.quack_until = app->home.waddle_until = app->home.step_at = app->active_at;
+    app->link_seen_at = app->active_at;
     app->remote.lit_until = app->trail.at = app->active_at;
     app->remote.page = RemotePageMenu;
     if(!settings_load(&app->settings)) app->screen = ScreenWelcome;
@@ -151,6 +174,7 @@ int32_t duckwalk_app(void* p) {
         furi_mutex_acquire(app->mutex, FuriWaitForever);
         if(got) handle_input(app, &input);
         duckwalk_check_stop_after(app, got);
+        check_link(app);
         if(furi_get_tick() - duty_checked >= furi_ms_to_ticks(DUTY_CHECK_MS)) {
             duty_checked = furi_get_tick();
             keep_awake_set_paused(&app->keep_awake, !settings_on_duty(&app->settings));
@@ -192,7 +216,7 @@ int32_t duckwalk_app(void* p) {
     FURI_LOG_I(TAG, "Stopped");
 
     furi_message_queue_free(queue);
-    furi_record_close(RECORD_NOTIFICATION);
+    sounds_free();
     furi_mutex_free(app->mutex);
     free(app);
     return 0;

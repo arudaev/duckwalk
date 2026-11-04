@@ -52,7 +52,7 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/generated/icons_list.c "${ICONS_C}${ICONS
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${IMAGES})
 
 add_executable(duckwalk_sim
-    main.c canvas.c icons.c png.c link_fake.c notification_fake.c
+    main.c canvas.c icons.c png.c link_fake.c sounds_fake.c
     ${CMAKE_CURRENT_BINARY_DIR}/generated/icons_list.c
     ${SHIM}/shim.c
     ${APP}/home.c ${APP}/settings_screen.c ${APP}/remote.c ${APP}/preview.c
