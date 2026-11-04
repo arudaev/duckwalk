@@ -67,6 +67,8 @@ void keep_awake_set_interval(KeepAwake* ka, uint32_t min_s, uint32_t max_s) {
 void keep_awake_set_walk_length(KeepAwake* ka, WalkLength length) {
     if(ka->walk_length == length) return;
     ka->walk_length = length;
+    /* A wander never ends in Wander mode, so it takes the new reach now. */
+    if(ka->wandering) wander_set_length(&ka->wander, length);
     if(!ka->step) plan(ka);
 }
 

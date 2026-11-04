@@ -69,6 +69,13 @@ void wander_start(Wander* w, WalkLength length) {
     pick_target(w);
 }
 
+void wander_set_length(Wander* w, WalkLength length) {
+    furi_check(length < WalkLengthCount);
+    w->range = wander_ranges[length];
+    /* Head somewhere in the new reach now, at a pace that fits it. */
+    if(!w->homing) pick_target(w);
+}
+
 void wander_go_home(Wander* w) {
     if(w->homing) return;
     w->homing = true;

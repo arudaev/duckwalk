@@ -5,6 +5,7 @@
 #include "keep_awake.h"
 
 #include <furi_hal_random.h>
+#include <stdlib.h>
 
 extern int fake_link_x;
 extern int fake_link_y;
@@ -83,6 +84,25 @@ int main(void) {
     CHECK(!keep_awake_is_walking(&ka) && fake_link_x == 0 && fake_link_y == 0, "paused away from the start");
     run_for(&ka, 5000);
     CHECK(!keep_awake_is_walking(&ka), "wandered while paused");
+
+    /* A new walk length takes hold mid-wander, and it still ends at the
+     * start. */
+    wander_mode(&ka);
+    keep_awake_set_walk_length(&ka, WalkLengthShort);
+    run_for(&ka, 1000);
+    int16_t short_reach = wander_reach(&ka.wander);
+    keep_awake_set_walk_length(&ka, WalkLengthLong);
+    CHECK(wander_reach(&ka.wander) > short_reach, "reach didn't grow with the walk length");
+    int farthest = 0;
+    for(int i = 0; i < 60000 / WALK_STEP_MS; i++) {
+        run_for(&ka, WALK_STEP_MS);
+        int d = abs(fake_link_x) > abs(fake_link_y) ? abs(fake_link_x) : abs(fake_link_y);
+        if(d > farthest) farthest = d;
+    }
+    CHECK(farthest > short_reach, "stayed within the short reach (%d) after Long", farthest);
+    keep_awake_set_mode(&ka, KeepAwakeSubtle);
+    run_for(&ka, WANDER_HOME_STEPS * WALK_STEP_MS);
+    CHECK(fake_link_x == 0 && fake_link_y == 0, "ended at (%d,%d) after a length change", fake_link_x, fake_link_y);
 
     return check_result("keep_awake");
 }

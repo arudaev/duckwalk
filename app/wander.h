@@ -31,6 +31,9 @@ typedef struct {
 
 void wander_start(Wander* wander, WalkLength length);
 
+/* A new reach for a wander under way, from where it is now. */
+void wander_set_length(Wander* wander, WalkLength length);
+
 /* The move for the next step, in whole counts. Rounding is carried, so the
  * moves always add up to the position. */
 WalkPoint wander_step(Wander* wander);
