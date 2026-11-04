@@ -45,8 +45,7 @@ docs/           these pages; screens/ holds the simulator's renders
 
 | Milestone | What it brings | |
 |---|---|---|
-| **M1** v0.1 | The first release: Harold, Walk, Subtle and Wander keep-awake over USB or Bluetooth, Settings with Stop after, Remote, Preview, the connection check; Apps Catalog listing | [milestone](https://github.com/arudaev/duckwalk/milestone/2) |
-| **M2** v0.2 | The PC helper over Bluetooth, so Harold pauses while you work without a cable | [milestone](https://github.com/arudaev/duckwalk/milestone/3) |
+| **M1** v0.1 | The first release: Harold, Walk, Subtle and Wander keep-awake over USB or Bluetooth, Settings with Stop after, Remote, Preview, the connection check, the PC helper over USB or Bluetooth; Apps Catalog listing | [milestone](https://github.com/arudaev/duckwalk/milestone/2) |
 | **M3** v0.3 | The desktop side: Wander that knows the screen edges, then Harold on the computer screen | [milestone](https://github.com/arudaev/duckwalk/milestone/4) |
 | **M4** | Harold's extra jobs | [milestone](https://github.com/arudaev/duckwalk/milestone/5) |
 
