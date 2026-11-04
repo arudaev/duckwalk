@@ -36,7 +36,10 @@ void helper_stop(void) {
 }
 
 bool helper_present(void) {
-    return heard && tick_before(heard_at + furi_ms_to_ticks(HELPER_TIMEOUT_MS));
+    /* Forget a quiet helper for good: after 24.8 days the tick difference
+     * would wrap and make it look present again. */
+    if(heard && tick_reached(heard_at + furi_ms_to_ticks(HELPER_TIMEOUT_MS))) heard = false;
+    return heard;
 }
 
 bool helper_user_active(uint32_t hold_ms) {
