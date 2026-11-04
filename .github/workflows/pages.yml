@@ -1,0 +1,41 @@
+name: Pages
+
+# Publishes site/ to https://arudaev.github.io/duckwalk/ with the
+# simulator's screenshots next to it.
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", "docs/screens/**", "app/icon.png", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble the site
+        run: |
+          mkdir -p _site/screens
+          cp -r site/. _site/
+          cp docs/screens/*@4x.png _site/screens/
+          cp app/icon.png _site/icon.png
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - uses: actions/deploy-pages@v4
+        id: deployment

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duckwalk</title>
+<meta name="description" content="Harold, a rubber debugging duck on your Flipper Zero, keeps your computer awake and works as its remote.">
+<meta property="og:title" content="Duckwalk">
+<meta property="og:description" content="Harold, a rubber debugging duck on your Flipper Zero, keeps your computer awake and works as its remote.">
+<meta property="og:image" content="https://arudaev.github.io/duckwalk/banner.jpg">
+<link rel="icon" href="icon.png">
+<style>
+  :root {
+    --orange: #ff8200;
+    --orange-soft: #fff1e0;
+    --ink: #1d1a17;
+    --muted: #5c554d;
+    --paper: #fffdf9;
+    --card: #ffffff;
+    --line: #eadfce;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --orange-soft: #2c2016;
+      --ink: #f3ece3;
+      --muted: #b9ae9f;
+      --paper: #161310;
+      --card: #201c18;
+      --line: #3a3229;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 0 16px 64px; }
+  a { color: inherit; text-decoration-color: var(--orange); text-underline-offset: 3px; }
+  a:hover { color: var(--orange); }
+  .hero { text-align: center; padding-top: 24px; }
+  .hero img { width: 100%; max-width: 720px; height: auto; border-radius: 12px; }
+  h1 { font-size: clamp(2.4rem, 7vw, 3.6rem); line-height: 1.1; margin: 24px 0 8px; letter-spacing: -0.02em; }
+  .tagline { font-size: 1.2rem; color: var(--muted); margin: 0 auto 24px; max-width: 34em; }
+  .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .button {
+    display: inline-block; padding: 12px 22px; border-radius: 999px; font-weight: 600;
+    text-decoration: none; border: 2px solid var(--orange);
+  }
+  .button.primary { background: var(--orange); color: #1d1a17; }
+  .button.primary:hover { color: #1d1a17; filter: brightness(1.08); }
+  h2 { font-size: 1.6rem; margin: 56px 0 16px; }
+  .screens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 40px; }
+  .screens figure { margin: 0; }
+  .screens img { width: 100%; height: auto; image-rendering: pixelated; border-radius: 8px; display: block; }
+  .screens figcaption { font-size: 0.9rem; color: var(--muted); text-align: center; margin-top: 6px; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 1.1rem; }
+  .card p { margin: 0; color: var(--muted); }
+  .keys { display: grid; grid-template-columns: max-content 1fr; gap: 10px 18px; margin: 0; }
+  .keys dt { font-weight: 700; }
+  .keys dd { margin: 0; color: var(--muted); }
+  kbd {
+    display: inline-block; min-width: 2.4em; text-align: center; padding: 1px 8px;
+    border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 6px;
+    background: var(--card); font: 600 0.9rem system-ui, sans-serif;
+  }
+  ol li { margin-bottom: 8px; }
+  code { background: var(--orange-soft); padding: 1px 6px; border-radius: 4px; font-size: 0.92em; }
+  .note { background: var(--orange-soft); border-radius: 12px; padding: 16px 20px; }
+  .note p { margin: 0; }
+  footer { border-top: 1px solid var(--line); margin-top: 64px; padding-top: 20px; color: var(--muted); font-size: 0.92rem; }
+  @media (max-width: 640px) {
+    .screens, .cards { grid-template-columns: 1fr; }
+    .screens { max-width: 420px; margin-left: auto; margin-right: auto; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="hero">
+    <img src="banner.jpg" width="960" height="640" alt="A pen drawing of Harold, a yellow rubber duck, nudging a mouse pointer along a dotted path from a Flipper Zero to a laptop">
+    <h1>Duckwalk</h1>
+    <p class="tagline">Harold, a rubber debugging duck on your Flipper Zero, keeps your computer awake while you step away, and works as its remote.</p>
+    <div class="actions">
+      <a class="button primary" href="#install">Install</a>
+      <a class="button" href="https://github.com/arudaev/duckwalk">Source on GitHub</a>
+    </div>
+  </header>
+
+  <section class="screens" aria-label="Duckwalk on the Flipper's screen">
+    <figure><img src="screens/home-awake@4x.png" width="512" height="256" alt="Harold at his desk, reading code on his laptop"><figcaption>At his desk</figcaption></figure>
+    <figure><img src="screens/home-wandering@4x.png" width="512" height="256" alt="Harold drifting along while the pointer wanders"><figcaption>Wandering</figcaption></figure>
+    <figure><img src="screens/home-bug-quack@4x.png" width="512" height="256" alt="Harold quacking at a bug in the code"><figcaption>Found a bug</figcaption></figure>
+  </section>
+
+  <h2>What Harold does</h2>
+  <p>When you step away, he moves the mouse pointer so the lock timer, the screen saver and your "away" status still see someone at the desk, then puts it back where it was. Over USB or Bluetooth, with no drivers and nothing to install on the computer.</p>
+  <div class="cards">
+    <div class="card"><h3>Walk</h3><p>A short, curved, random walk every few minutes. Never the same path twice.</p></div>
+    <div class="card"><h3>Subtle</h3><p>One pixel out and back. Invisible while you work.</p></div>
+    <div class="card"><h3>Wander</h3><p>The pointer drifts around without stopping, and glides back to where it started when you turn it off.</p></div>
+  </div>
+
+  <h2>It knows when to stop</h2>
+  <p><strong>Work hours only</strong> keeps him to Monday to Friday, 8 to 18. <strong>Stop after</strong> puts him to sleep when nobody has been around for 1 to 8 hours, so a computer you walked away from still locks.</p>
+  <p>With the optional <a href="https://github.com/arudaev/duckwalk/blob/main/desktop/helper/README.md">PC helper</a> running on Windows, Harold lets go of the pointer the moment you touch your own mouse or keyboard, over USB or Bluetooth.</p>
+
+  <h2>On the Flipper</h2>
+  <dl class="keys">
+    <dt><kbd>OK</kbd></dt><dd>Wake Harold or put him to sleep. Hold to quack.</dd>
+    <dt><kbd>→</kbd></dt><dd>Settings: mode, USB or Bluetooth, how often, how far, work hours, Stop after.</dd>
+    <dt><kbd>←</kbd></dt><dd>Remote: play, pause, volume and tracks; next and previous slide; a D-pad mouse.</dd>
+    <dt><kbd>↑</kbd></dt><dd>Preview the next walk, drawn to scale. OK plays it now.</dd>
+    <dt><kbd>↓</kbd></dt><dd>Connection check: shows whether the Flipper or the computer needs attention.</dd>
+    <dt><kbd>Back</kbd></dt><dd>Leave Duckwalk. USB and Bluetooth go back to normal.</dd>
+  </dl>
+  <p>The <a href="https://github.com/arudaev/duckwalk/blob/main/docs/guide.md">user guide</a> shows every screen.</p>
+
+  <h2 id="install">Install</h2>
+  <ol>
+    <li><strong>From the Flipper app</strong> (once Duckwalk is listed): open the Flipper mobile app or <a href="https://lab.flipper.net/apps">Flipper Lab</a>, go to <strong>USB</strong> and install <strong>Duckwalk</strong>.</li>
+    <li><strong>From a release:</strong> download <code>duckwalk.fap</code> from the <a href="https://github.com/arudaev/duckwalk/releases">releases page</a> and copy it to <code>apps/USB/</code> on the Flipper's SD card with qFlipper.</li>
+    <li><strong>On first launch</strong> Harold asks how to reach your computer: <kbd>←</kbd> for USB, <kbd>→</kbd> for Bluetooth. Bluetooth walks you through pairing on the Flipper's screen.</li>
+  </ol>
+  <p>Needs official Flipper firmware 1.5 or newer. Tested on Windows 11; reports from macOS and Linux are welcome.</p>
+
+  <h2>Before you use it at work</h2>
+  <div class="note"><p>A keep-awake tool can be against your employer's rules. Duckwalk makes your computer look attended; whether that is acceptable where you work is your decision. It only moves the pointer. It never types, and it clicks or presses media keys only when you use the remote.</p></div>
+
+  <footer>
+    <p>Duckwalk is free software under the <a href="https://github.com/arudaev/duckwalk/blob/main/LICENSE">GPL-3.0</a>. Harold is the duck from <a href="https://arudaev.github.io">VOYAGER // 56K</a>. This page has no tracking and no cookies.</p>
+  </footer>
+</main>
+</body>
+</html>
