@@ -32,7 +32,7 @@
   :root[data-theme="dark"] { --paper: #17140f; --ink: #efe8dc; --soft: #a99f91; --faint: #2c2720; --orange: #f08024; }
 
   * { box-sizing: border-box; }
-  html, body { background: var(--paper); }
+  html, body { background: var(--paper); overflow-x: clip; }
   body { margin: 0; color: var(--ink); font: 18px/1.55 var(--sans); }
   a { color: var(--ink); text-decoration-color: var(--orange); text-decoration-thickness: 2px; text-underline-offset: 3px; }
   a:hover { color: var(--orange); }
@@ -56,18 +56,20 @@
   h1 { font: clamp(40px, 9vw, 72px)/1 var(--pixel); margin: 0 0 14px; }
   .line { font-size: clamp(19px, 2.6vw, 22px); margin: 0 auto; max-width: 30em; }
   .line b { font-weight: 600; background: var(--duck); color: #1f1b16; padding: 0 4px; border-radius: 3px; }
-  .stage { position: relative; max-width: 780px; margin: 30px auto 0; }
-  .blob { position: absolute; left: 34%; top: -20%; width: 72%; height: 118%; z-index: 0; }
+  .stage { position: relative; max-width: min(780px, max(320px, calc((100svh - 370px) * 1.56))); margin: 18px auto 0; }
+  .blob { position: absolute; left: 36%; top: 15%; width: 64%; height: 83%; z-index: 0; }
   .blob path { fill: var(--orange); }
   #flipper { position: relative; z-index: 1; display: block; width: 100%; height: auto; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
-  #flipper .fb { fill: var(--paper); }
-  #flipper .fl { fill: var(--ink); }
-  #lcd { image-rendering: pixelated; }
+  .fb { fill: var(--paper); }
+  .fl { fill: var(--ink); }
+  .glass { fill: #ff8200; stroke: #1f1b16; stroke-width: 3; stroke-linejoin: round; }   /* the lit screen window, the same orange as the screens */
+  .lcd-crisp { image-rendering: pixelated; }
   .key { cursor: pointer; fill: var(--orange); fill-opacity: 0; outline: none; transition: fill-opacity .08s; }
   .key:hover { fill-opacity: .25; }
   .key:focus-visible { fill-opacity: .4; }
   .key.down { fill-opacity: .7; }
   .hint { color: var(--soft); margin: 14px 0 0; font-size: 16px; }
+  @media (hover: none) { .keys-hint { display: none; } }
 
   .actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin: 26px 0 0; }
   .button { font: 16px/1 var(--pixel); padding: 13px 20px; border: 2px solid var(--ink); border-radius: 10px; color: var(--ink); text-decoration: none; background: var(--paper); }
@@ -86,7 +88,17 @@
   .trail { display: block; width: 100%; height: 60px; }
   .trail path { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-dasharray: 2 9; stroke-linecap: round; }
 
-  section { padding: 56px 0 0; }
+  section { padding: 72px 0 0; }
+  .try { position: absolute; right: 3%; bottom: calc(82% + 4px); margin: 0; z-index: 2; text-align: right; font: 15px/1.3 var(--pixel); pointer-events: none; }
+  .arrow { fill: var(--ink); pointer-events: none; }
+  .chips { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 16px 0 0; }
+  .chips span { font: 13px/1 var(--pixel); border: 2px solid var(--ink); border-radius: 999px; padding: 7px 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px 36px; max-width: 880px; margin: 0 auto; }
+  .card { margin: 0; text-align: center; }
+  .mini { display: block; width: 100%; max-width: 400px; height: auto; margin: 0 auto 10px; }
+  .card figcaption { font-size: 16px; color: var(--soft); max-width: 22em; margin: 0 auto; }
+  .card strong { display: block; font: 16px/1.3 var(--pixel); color: var(--ink); margin: 0 0 4px; }
+
   h2 { font: clamp(24px, 4vw, 32px)/1.1 var(--pixel); margin: 0 0 18px; text-align: center; }
 
   /* The laptop */
@@ -112,6 +124,10 @@
   footer a { color: var(--soft); }
 
   @media (max-width: 560px) {
+    .walker { padding-right: 96px; }
+    .walker img { width: 120px; }
+    .grid { gap: 30px; }
+    .try { font-size: 11px; }
     .links { gap: 12px; }
     .links .gh { display: none; }
   }
@@ -119,21 +135,11 @@
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <filter id="wobble"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="1.6"/></filter>
+  <filter id="wobble" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="1.6" xChannelSelector="R" yChannelSelector="G"/></filter>
 </svg>
-<div class="wrap">
-  <nav>
-    <a class="brand" href="#top"><img src="harold.png" alt="">Duckwalk</a>
-    <span class="links"><a href="#install">Install</a><a class="gh" href="https://github.com/arudaev/duckwalk">GitHub</a><button class="theme" id="theme" type="button" aria-label="Switch light or dark">Dark</button></span>
-  </nav>
-
-  <header class="hero" id="top">
-    <h1>Duckwalk</h1>
-    <p class="line"><b>Harold</b>, a rubber debugging duck on your Flipper, keeps your computer awake while you step away.</p>
-    <div class="stage">
-      <svg class="blob" viewBox="0 0 600 360" preserveAspectRatio="none" aria-hidden="true"><path d="M70,300 C10,250 40,150 130,120 C200,95 230,60 330,40 C440,18 560,60 585,170 C605,265 540,330 430,340 C320,350 140,355 70,300 Z"/></svg>
-      <svg id="flipper" viewBox="-6 -6 372 168" role="group" aria-label="A Flipper Zero running Duckwalk. Its buttons work.">
-        <g class="pen" transform="translate(-2)">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="fz" viewBox="-6 -6 372 168">
+    <g class="pen" transform="translate(-2)">
           <path class="fb" d="m 303.3,1.2 c 0,0 -219.9,0 -229.7,0 -9.8,0 -17,10.3 -17,10.3 0,0 -49.3,63.9 -51.4,66.8 -3,4 -2.1,14.1 0,17 5.9,8 34.5,47.1 35.8,48.8 1.4,1.7 7.7,11.1 16.5,11.1 8.8,0 278.7,0 283.5,0 8.7,0 19.6,-20.2 19.6,-25.2 0,-5 -0.3,-58.9 -0.3,-64.5 0,-3.7 -2.6,-8.4 -5.1,-11.5 C 352.9,51.2 319.9,10 317,6.5 314.5,3.6 308.8,1.2 303.3,1.2 Z"/>
           <path class="fl" d="m 304,3 c 4.5,0 10,3.3 12,5.7 2.9,3.4 35.3,44 38,47.4 3.1,3.9 4.9,7.5 4.9,9.7 v 64.5 c 0,4 -10.8,22.7 -17.2,22.7 H 57.1 c -4.5,0 -9.3,-3.4 -14.5,-10 -0.2,-0.2 -0.3,-0.4 -0.4,-0.5 -0.7,-0.9 -10.1,-13.7 -18.4,-25 C 16.5,107.6 9,97.4 6.3,93.7 5,92 4.1,83.3 6.3,80.4 8.4,77.6 57.4,14.3 57.9,13.7 L 58,13.6 58.1,13.5 C 58.1,13.4 65.2,3 73.3,3 H 304 m 0,-3 C 304,0 83.3,0 73.3,0 63.4,0 55.5,11.8 55.5,11.8 c 0,0 -49.4,63.9 -51.6,66.8 -2.9,4 -2.1,14.1 0,17 6,8 34.6,47.1 36,48.8 1.4,1.7 8.5,11.7 17.3,11.7 8.8,0 279.9,0 284.7,0 8.8,0 20.2,-20.8 20.2,-25.7 0,-4.9 0,-58.9 0,-64.5 0,-3.7 -3.1,-8.4 -5.6,-11.5 C 354.2,51.6 321.3,10.4 318.4,6.9 315.9,3.9 309.6,0 304,0 Z"/>
           <path class="fl" d="m 148.1,128.1 h 2.9 v 3.9 h -1 v 2 h -1 v 2 h -1 v 2 h -1 v 2 h 14 v 0.9 h -1 v 1 h -1 v 1 h -17 v -2 h 1 v -2 h 1.1 v -2 h 0.9 v -2 h 1 v -2 h 1 v -2 h 1 c 0,0.1 0,-2.8 0.1,-2.8 z"/>
@@ -154,10 +160,29 @@
           <path class="fl" d="M 329.5,98 H 277 c -22.4,0 -40,-17.1 -40,-39 0,-22 17.9,-40 40,-40 11.1,0 21.7,4.6 29.3,12.8 l 33.9,40.8 c 4,4.3 3.9,8.7 3.9,11.3 v 0.6 C 344,90.7 336.1,98 329.5,98 Z M 277,19.9 c -21.5,0 -39.1,17.6 -39.1,39.1 0,21.3 17.2,38 39,38 h 52.5 c 6,0 13.6,-7 13.6,-12.6 v -0.6 c 0,-2.5 0,-6.5 -3.7,-10.6 L 305.4,32.4 C 298.1,24.5 287.8,19.9 277,19.9 Z"/>
           <path class="fl" d="m 240.5,98 c -1.9,0 -3.5,-1.6 -3.5,-3.5 0,-1.9 1.6,-3.5 3.5,-3.5 1.9,0 3.5,1.6 3.5,3.5 0,1.9 -1.6,3.5 -3.5,3.5 z m 0,-6 c -1.4,0 -2.5,1.1 -2.5,2.5 0,1.4 1.1,2.5 2.5,2.5 1.4,0 2.5,-1.1 2.5,-2.5 0,-1.4 -1.1,-2.5 -2.5,-2.5 z"/>
           <path class="fl" d="M 341.5,120 H 72.3 c -9.1,0 -12.5,-3.8 -17.7,-9.5 L 54,109.8 C 49.1,104.3 42.3,96.3 38.2,91 34.4,86.1 35.9,83.7 38.8,79 L 39,78.7 C 40.6,76.2 50.1,62.7 59.3,49.6 68.5,36.6 78,23.1 79.8,20.3 84.5,13.1 90.5,10 100,10 h 199.6 c 3.6,0 8.8,1.7 12,5.5 l 0.8,0.9 c 20.6,24.6 32.3,38.7 34.9,41.9 4.2,5.3 4.8,7.7 4.8,11.4 v 39.7 c -0.1,5 -4.4,10.6 -10.6,10.6 z M 100,11 C 90.9,11 85.1,13.9 80.8,20.8 79,23.6 69.4,37.1 60.2,50.2 51,63.3 41.5,76.8 39.9,79.3 l -0.2,0.3 c -3,4.7 -4.1,6.5 -0.7,10.8 4,5.2 10.8,13.2 15.7,18.7 l 0.6,0.7 c 5.1,5.7 8.3,9.3 16.9,9.3 h 269.2 c 5.6,0 9.5,-5.1 9.5,-9.7 V 69.7 c 0,-3.6 -0.7,-5.7 -4.6,-10.8 C 343.8,55.7 332.1,41.6 311.5,17 l -0.8,-0.9 C 307.8,12.6 302.8,11 299.5,11 Z"/>
-          <path class="fl" d="M 222.7,95 H 95.3 C 92.9,95 91,93.1 91,90.7 V 26.3 C 91,23.9 92.9,22 95.3,22 h 127.4 c 2.4,0 4.3,1.9 4.3,4.3 v 64.4 c 0,2.4 -1.9,4.3 -4.3,4.3 z"/>
+          <path class="glass" d="M 222.7,95 H 95.3 C 92.9,95 91,93.1 91,90.7 V 26.3 C 91,23.9 92.9,22 95.3,22 h 127.4 c 2.4,0 4.3,1.9 4.3,4.3 v 64.4 c 0,2.4 -1.9,4.3 -4.3,4.3 z"/>
           <polygon class="fl" points="118,137 117,137 117,139 116,139 116,142 115,142 115,144 114,144 114,146 117,146 117,144 118,144 118,142 119,142 119,139 120,139 120,137 134,137 134,136 135,136 135,135 136,135 136,134 122.9,134 123,133 124,133 124,131 142,131 142,130 143,130 143,129 144,129 144,128 121,128 121,131 120,131 120,133 119,133 119,135 118,135"/>
         </g>
+  </symbol>
+</svg>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="#top"><img src="harold.png" alt="">Duckwalk</a>
+    <span class="links"><a href="#install">Install</a><a class="gh" href="https://github.com/arudaev/duckwalk">GitHub</a><button class="theme" id="theme" type="button" aria-label="Switch light or dark">Dark</button></span>
+  </nav>
+
+  <header class="hero" id="top">
+    <h1>Duckwalk</h1>
+    <p class="line"><b>Harold</b>, a rubber debugging duck on your Flipper, keeps your computer awake while you step away.</p>
+    <p class="chips"><span>USB</span><span>Bluetooth</span><span>Nothing to install</span></p>
+    <div class="stage">
+      <p class="try" aria-hidden="true">Try it!<br>Press the buttons</p>
+      <svg class="blob" viewBox="0 0 600 360" preserveAspectRatio="none" aria-hidden="true"><path d="M70,300 C10,250 40,150 130,120 C200,95 230,60 330,40 C440,18 560,60 585,170 C605,265 540,330 430,340 C320,350 140,355 70,300 Z"/></svg>
+      <svg id="flipper" viewBox="-6 -76 372 238" role="group" aria-label="A Flipper Zero running Duckwalk. Its buttons work.">
+        <mask id="arrow-mask" style="mask-type: alpha" maskUnits="userSpaceOnUse" x="258" y="-40" width="80" height="80"><image href="doodle-arrow.png" x="266" y="-33" width="64" height="63"/></mask>
+        <use href="#fz" x="-6" y="-6" width="372" height="168"/>
         <image id="lcd" x="93" y="26" width="128" height="64" href="screens/home-awake@4x.png" preserveAspectRatio="none"/>
+        <rect class="arrow" x="258" y="-40" width="80" height="80" mask="url(#arrow-mask)"/>
         <path class="key" data-key="up" tabindex="0" role="button" aria-label="Up" d="M266.4,50.4 L249.4,33.4 A35,35 0 0 1 299.6,33.4 L282.6,50.4 A11.5,11.5 0 0 0 266.4,50.4 Z"/>
         <path class="key" data-key="right" tabindex="0" role="button" aria-label="Right" d="M282.6,50.4 L299.6,33.4 A35,35 0 0 1 299.6,83.6 L282.6,66.6 A11.5,11.5 0 0 0 282.6,50.4 Z"/>
         <path class="key" data-key="down" tabindex="0" role="button" aria-label="Down" d="M282.6,66.6 L299.6,83.6 A35,35 0 0 1 249.4,83.6 L266.4,66.6 A11.5,11.5 0 0 0 282.6,66.6 Z"/>
@@ -166,7 +191,7 @@
         <circle class="key" data-key="back" tabindex="0" role="button" aria-label="Back" cx="326.5" cy="82.5" r="12"/>
       </svg>
     </div>
-    <p class="hint">Press its buttons. Hold OK to quack.</p>
+    <p class="hint"><span class="keys-hint">Arrow keys work too. </span>Hold OK to quack.</p>
     <div class="actions">
       <a class="button primary" href="#install">Get it</a>
       <a class="button" href="https://github.com/arudaev/duckwalk">Source</a>
@@ -177,6 +202,36 @@
       <img class="on-dark" src="harold-walk-dark.png" width="236" height="121" alt="">
     </div>
   </header>
+
+  <section id="features">
+    <h2>Not just a jiggler</h2>
+    <div class="grid">
+      <figure class="card">
+        <svg class="mini" viewBox="-6 -6 372 168" role="img" aria-label="Duckwalk on a Flipper: USB or Bluetooth"><use href="#fz" x="-6" y="-6" width="372" height="168"/><image x="93" y="26" width="128" height="64" preserveAspectRatio="none" data-screens="pairing-usb-all-set home-bluetooth pairing-all-set" href="screens/pairing-usb-all-set@4x.png"/></svg>
+        <figcaption><strong>USB or Bluetooth</strong>Plug it in, or pair it.</figcaption>
+      </figure>
+      <figure class="card">
+        <svg class="mini" viewBox="-6 -6 372 168" role="img" aria-label="Duckwalk on a Flipper: Walks like a person"><use href="#fz" x="-6" y="-6" width="372" height="168"/><image x="93" y="26" width="128" height="64" preserveAspectRatio="none" data-screens="home-walking preview home-wandering" href="screens/home-walking@4x.png"/></svg>
+        <figcaption><strong>Walks like a person</strong>Random paths, always back to the start.</figcaption>
+      </figure>
+      <figure class="card">
+        <svg class="mini" viewBox="-6 -6 372 168" role="img" aria-label="Duckwalk on a Flipper: Lets go when you're back"><use href="#fz" x="-6" y="-6" width="372" height="168"/><image x="93" y="26" width="128" height="64" preserveAspectRatio="none" data-screens="home-working home-awake" href="screens/home-working@4x.png"/></svg>
+        <figcaption><strong>Lets go when you're back</strong>Move your mouse and he stops.</figcaption>
+      </figure>
+      <figure class="card">
+        <svg class="mini" viewBox="-6 -6 372 168" role="img" aria-label="Duckwalk on a Flipper: Knows when to stop"><use href="#fz" x="-6" y="-6" width="372" height="168"/><image x="93" y="26" width="128" height="64" preserveAspectRatio="none" data-screens="settings settings-bottom home-stopped" href="screens/settings@4x.png"/></svg>
+        <figcaption><strong>Knows when to stop</strong>Work hours and a timer, so your PC still locks.</figcaption>
+      </figure>
+      <figure class="card">
+        <svg class="mini" viewBox="-6 -6 372 168" role="img" aria-label="Duckwalk on a Flipper: A remote, too"><use href="#fz" x="-6" y="-6" width="372" height="168"/><image x="93" y="26" width="128" height="64" preserveAspectRatio="none" data-screens="remote-menu remote-media remote-slides remote-mouse" href="screens/remote-menu@4x.png"/></svg>
+        <figcaption><strong>A remote, too</strong>Media, slides and a mouse.</figcaption>
+      </figure>
+      <figure class="card">
+        <svg class="mini" viewBox="-6 -6 372 168" role="img" aria-label="Duckwalk on a Flipper: Harold has a life"><use href="#fz" x="-6" y="-6" width="372" height="168"/><image x="93" y="26" width="128" height="64" preserveAspectRatio="none" data-screens="home-typing home-sip home-bug-quack home-asleep" href="screens/home-typing@4x.png"/></svg>
+        <figcaption><strong>Harold has a life</strong>He types, sips coffee, hunts bugs and naps.</figcaption>
+      </figure>
+    </div>
+  </section>
 
   <section id="modes">
     <h2>Three ways to walk</h2>
@@ -300,6 +355,31 @@
     el.classList.add("down"); setTimeout(() => el.classList.remove("down"), 140);
     press(key);
   });
+
+
+  /* ---------- The small Flippers ---------- */
+  const minis = [...document.querySelectorAll(".mini image")];
+  const visible = new Set();
+  const seen = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting ? visible.add(e.target) : visible.delete(e.target)));
+  minis.forEach((img) => { seen.observe(img.closest("svg")); img.dataset.screens.split(" ").forEach((n) => { new Image().src = shot(n); }); });
+  let beat = 0;
+  if (!reduce) setInterval(() => {
+    beat++;
+    minis.forEach((img, i) => {
+      if (!visible.has(img.closest("svg"))) return;
+      const list = img.dataset.screens.split(" ");
+      img.setAttribute("href", shot(list[(beat + i) % list.length]));
+    });
+  }, 1800);
+
+  /* Real screens are 128 x 64: keep pixels crisp only when each one gets 2 x 2 or more. */
+  const lcds = [document.getElementById("lcd"), ...minis];
+  const fit = () => lcds.forEach((img) => {
+    const svg = img.ownerSVGElement, units = svg.viewBox.baseVal.width;
+    img.classList.toggle("lcd-crisp", svg.getBoundingClientRect().width / units >= 2);
+  });
+  new ResizeObserver(fit).observe(document.body);
+  fit();
 
   /* ---------- The laptop screen ---------- */
   const canvas = document.getElementById("screen");
