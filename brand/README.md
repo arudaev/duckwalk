@@ -2,13 +2,13 @@
 
 | File | What it is |
 |---|---|
-| `banner.png` | README banner, 1536×1024: a pen drawing of Harold nudging the pointer from the Flipper to a laptop |
-| `social-preview.png` | The same drawing cropped to 1280×640 for GitHub's social preview |
+| `banner.png` | README banner, 1536×768: a pen drawing of the Flipper, its screen showing Harold's empty desk, and Harold outside it pushing the pointer |
+| `social-preview.png` | The same drawing at 1280×640 with the tagline, for GitHub's social preview |
 | `source/harold-16.png` | Harold's original 16 px sprite from VOYAGER // 56K; every Flipper sprite is derived from it |
 | `sprites-preview.png` | All Flipper sprites at 8× on the Flipper's orange, for reviewing art changes |
 | `tools/make_brand.py` | Draws `app/images/harold_*.png` and `app/icon.png` from the source sprite |
 
-The banner was drawn with an image model, using the author's own pen drawings and the Flipper's outline as references, then checked by hand for errors (the D-pad's OK button was added) and saved without metadata.
+The banner was drawn with an image model. The references were the author's own pen drawings for the style, a photo of the real Flipper running Duckwalk, and Duckwalk's home screen with Harold taken out. Each draft started from those references, never from an earlier draft; the chosen one was checked by hand, cropped to 2:1 and saved from its pixels only, without metadata. The only lettering in the drawing is the name; the social preview's tagline is real text.
 
 **Harold:** a yellow rubber duck with an orange beak and a dot eye. On the Flipper he is 1-bit: an ink outline with a solid beak and eye, 28×29 px. Keep his silhouette when drawing new frames, and regenerate with `python brand/tools/make_brand.py`.
 

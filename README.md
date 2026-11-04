@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="brand/banner.png" alt="Duckwalk: a pen drawing of Harold, a yellow rubber duck, nudging a mouse pointer along a dotted path from a Flipper Zero to a laptop" width="100%">
+  <img src="brand/banner.png" alt="Duckwalk: a pen drawing of a Flipper Zero whose screen shows an empty desk, while Harold, a yellow rubber duck, has walked out of it and pushes a mouse pointer along the desk" width="100%">
 </p>
 
 # Duckwalk
