@@ -3,7 +3,7 @@
 | File | What it is |
 |---|---|
 | `banner.png` | README banner, 1536×1024: a pen drawing of Harold nudging the pointer from the Flipper to a laptop |
-| `social-preview.png` | The same drawing cropped to 1280×640 for GitHub's social preview |
+| `social-preview.png` | The same drawing cropped to 1280×640 for GitHub's social preview and the website's link preview (copied to `site/`) |
 | `source/harold-16.png` | Harold's original 16 px sprite from VOYAGER // 56K; every Flipper sprite is derived from it |
 | `sprites-preview.png` | All Flipper sprites at 8× on the Flipper's orange, for reviewing art changes |
 | `tools/make_brand.py` | Draws `app/images/harold_*.png` and `app/icon.png` from the source sprite |
