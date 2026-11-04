@@ -30,7 +30,8 @@ What Duckwalk is and how to install it: the [README](../README.md).
 | **07** | [Issues, branches and PRs](contributing/README.md) | Which labels, milestones and commit conventions do we use? |
 | **08** | [Project board](contributing/project-board.md) | How is the work tracked? |
 | **09** | [Brand](brand.md) | Which colours, type and drawings do we use? |
-| **10** | [Decisions](decisions/0001-tell-duckwalk-from-the-user.md) | Why are things the way they are? |
+| **10** | [Sound design](sound-design.md) | Which sounds does Duckwalk need, and what can the Flipper's speaker play? |
+| **11** | [Decisions](decisions/0001-tell-duckwalk-from-the-user.md) | Why are things the way they are? |
 
 ## Where things are
 
