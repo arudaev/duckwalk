@@ -78,3 +78,11 @@ Every pull request runs:
 | Helper (Windows) | Builds `duckwalk-helper.exe` and uploads it |
 | Text hygiene | No invisible characters, no em dashes, no stock phrasing (`scripts/check_text.py`) |
 | PR conventions | Conventional Commits title, a linked issue, labels by path |
+
+## Releasing
+
+1. Raise `fap_version` in `app/application.fam` and add the version to `app/docs/changelog.md`. The catalog wants `major.minor`, higher than the last one it has.
+2. Write the release notes in `docs/releases/v<version>.md` and merge both through a pull request.
+3. The author tags `main`, for example `git tag v0.1 && git push origin v0.1`.
+4. The Release workflow checks that the tag matches `fap_version`, builds `duckwalk.fap` and the helper for x64 and ARM64, and leaves a draft release with them attached.
+5. The author reads the draft and publishes it, then updates the catalog manifest's `commit_sha` (issue #10).

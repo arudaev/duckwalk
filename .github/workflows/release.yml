@@ -1,0 +1,75 @@
+name: Release
+
+# Pushing a tag like v0.1 builds the app and the helper and leaves a draft
+# release with them attached. The author reads it and publishes it.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    name: App
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build duckwalk.fap
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1.4
+        id: build
+        with:
+          app-dir: app
+          sdk-channel: release
+      - name: Check the tag matches fap_version
+        run: |
+          version=$(sed -n 's/.*fap_version="\([^"]*\)".*/\1/p' app/application.fam)
+          test "v$version" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME, but fap_version is $version"; exit 1; }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: ${{ steps.build.outputs.fap-artifacts }}
+
+  helper:
+    name: Helper (${{ matrix.arch }})
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x64, ARM64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          cmake -S desktop/helper -B build/helper -A ${{ matrix.arch }}
+          cmake --build build/helper --config Release
+      - name: Name it for its architecture
+        shell: bash
+        run: |
+          arch=$(echo "${{ matrix.arch }}" | tr 'A-Z' 'a-z')
+          cp build/helper/Release/duckwalk-helper.exe "duckwalk-helper-$arch.exe"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: helper-${{ matrix.arch }}
+          path: duckwalk-helper-*.exe
+
+  draft:
+    name: Draft release
+    needs: [app, helper]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create the draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes="docs/releases/$GITHUB_REF_NAME.md"
+          test -f "$notes" || { echo "Write $notes first"; exit 1; }
+          gh release create "$GITHUB_REF_NAME" --draft --title "Duckwalk $GITHUB_REF_NAME" \
+            --notes-file "$notes" dist/*.fap dist/duckwalk-helper-*.exe
