@@ -68,6 +68,15 @@ int main(void) {
     CHECK(!helper_present(), "present after the timeout");
     CHECK(!helper_user_active(30000), "active without a helper");
 
+    /* Still gone a month later, past the 24.8 days where tick differences
+     * wrap. */
+    bool back = false;
+    for(int hour = 0; hour < 30 * 24; hour++) {
+        shim_tick_set(t += 3600000);
+        back |= helper_present();
+    }
+    CHECK(!back, "a helper gone for weeks came back by itself");
+
     /* Keep-awake: a walk in progress stops when the user starts working,
      * nothing starts while they work, and walks resume after. */
     static KeepAwake ka;

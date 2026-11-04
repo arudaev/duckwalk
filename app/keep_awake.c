@@ -206,6 +206,7 @@ static bool walk_step(KeepAwake* ka) {
 static bool wander_tick(KeepAwake* ka) {
     if(!link_is_connected()) {
         drop_wander(ka);
+        schedule(ka);
         return false;
     }
     /* The mode ended or work hours are over: glide home, then stop. */
@@ -233,7 +234,12 @@ bool keep_awake_tick(KeepAwake* ka) {
     if(tick_before(ka->next_tick)) return false;
 
     if(ka->mode == KeepAwakeWander) {
-        if(!link_is_connected()) return false;
+        /* Keep the deadline fresh while the link is down: one older than
+         * 24.8 days would read as still to come. */
+        if(!link_is_connected()) {
+            schedule(ka);
+            return false;
+        }
         wander_start(&ka->wander, ka->walk_length);
         ka->wandering = true;
         ka->step_tick = furi_get_tick();

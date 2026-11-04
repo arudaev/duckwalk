@@ -8,6 +8,7 @@
 
 extern int fake_link_x;
 extern int fake_link_y;
+extern bool fake_link_connected;
 
 static uint32_t now = 100000;
 
@@ -83,6 +84,20 @@ int main(void) {
     CHECK(!keep_awake_is_walking(&ka) && fake_link_x == 0 && fake_link_y == 0, "paused away from the start");
     run_for(&ka, 5000);
     CHECK(!keep_awake_is_walking(&ka), "wandered while paused");
+
+    /* The PC is away for a month: Wander picks up again when it is back,
+     * even after the tick difference wraps at 24.8 days. */
+    wander_mode(&ka);
+    run_for(&ka, 1000);
+    fake_link_connected = false;
+    for(int hour = 0; hour < 30 * 24; hour++) {
+        now += 3600000;
+        shim_tick_set(now);
+        keep_awake_tick(&ka);
+    }
+    fake_link_connected = true;
+    run_for(&ka, 200);
+    CHECK(keep_awake_is_wandering(&ka), "didn't wander again after a month without the PC");
 
     return check_result("keep_awake");
 }

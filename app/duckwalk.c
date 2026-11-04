@@ -123,6 +123,10 @@ int32_t duckwalk_app(void* p) {
     app->screen = ScreenHome;
     app->running = true;
     app->active_at = furi_get_tick();
+    /* Deadlines start now, not at 0: a Flipper up for over 24.8 days would
+     * read a 0 as still to come. */
+    app->home.quack_until = app->home.waddle_until = app->active_at;
+    app->remote.lit_until = app->trail.at = app->active_at;
     app->remote.page = RemotePageMenu;
     if(!settings_load(&app->settings)) app->screen = ScreenWelcome;
     keep_awake_init(&app->keep_awake, 0, 0);
