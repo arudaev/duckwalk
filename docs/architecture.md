@@ -107,9 +107,9 @@ flowchart TD
     mode -->|Walk| play["Play the planned walk<br/>one step every 20 ms"]
     mode -->|Wander| wander["Wander: steer for a random spot,<br/>a new one before it's reached"]
     wander -->|mode off, work hours over, leaving the app| home["Glide back to the start"] --> wait
-    wander -->|user active (PC helper)| stop
+    wander -->|"user active (PC helper)"| stop
     play -->|last step| plan["Plan the next walk"] --> wait
-    play -->|user active (PC helper)| stop["Let go of the pointer"] --> hold
+    play -->|"user active (PC helper)"| stop["Let go of the pointer"] --> hold
     wait -->|user active| hold["Hold: nothing moves<br/>until 30 s after the user's last input"] -->|user away| wait
 ```
 
