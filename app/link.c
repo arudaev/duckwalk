@@ -1,4 +1,5 @@
 #include "link.h"
+#include "ble_duck.h"
 #include "util.h"
 #include "usb/usb_duck.h"
 
@@ -73,6 +74,13 @@ static void usb_data(const UsbDuckVendorPacket* packet, void* ctx) {
     if(callback) callback(packet->data, link.data_ctx);
 }
 
+/* Bluetooth thread: the same packets over the helper's serial channel. */
+static void bt_data(const uint8_t* data, void* ctx) {
+    UNUSED(ctx);
+    LinkDataCallback callback = link.data_callback;
+    if(callback) callback(data, link.data_ctx);
+}
+
 void link_set_data_callback(LinkDataCallback callback, void* ctx) {
     link.data_callback = NULL;
     link.data_ctx = ctx;
@@ -108,7 +116,8 @@ static void bt_start(void) {
     /* Subscribe first: the service only reports changes, and advertising
      * starts as soon as the profile does. */
     bt_set_status_changed_callback(link.bt, bt_status_changed, NULL);
-    link.profile = bt_profile_start(link.bt, ble_profile_hid, (void*)&bt_params);
+    ble_duck_set_data_callback(bt_data, NULL);
+    link.profile = bt_profile_start(link.bt, ble_duck, (void*)&bt_params);
     if(link.profile) furi_hal_bt_start_advertising();
     FURI_LOG_I(TAG, "Bluetooth HID %s", link.profile ? "started" : "failed to start");
 }
@@ -117,6 +126,8 @@ static void bt_stop(void) {
     bt_set_status_changed_callback(link.bt, NULL, NULL);
     bt_disconnect(link.bt);
     furi_delay_ms(200);
+    ble_duck_stop();
+    ble_duck_set_data_callback(NULL, NULL);
     bt_keys_storage_set_default_path(link.bt);
     bt_profile_restore_default(link.bt);
     furi_record_close(RECORD_BT);
