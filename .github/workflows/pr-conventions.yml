@@ -11,9 +11,10 @@ permissions:
   issues: write
   pull-requests: write
 
-concurrency:
-  group: pr-conventions-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+# No concurrency group: opening a PR with labels, a milestone and an assignee
+# fires several events at once, and cancelling runs left "cancelled" as the
+# newest result of a required check, which blocked merges. The check takes
+# seconds and is safe to repeat, so every run finishes.
 
 jobs:
   conventions:
