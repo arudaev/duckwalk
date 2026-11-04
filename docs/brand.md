@@ -1,4 +1,6 @@
-# Brand
+# 09 · Brand
+
+[← Project board](contributing/project-board.md) · [Docs home](README.md) · [Next: Decisions →](decisions/0001-tell-duckwalk-from-the-user.md)
 
 Duckwalk follows its author's pen-and-paper style and keeps the Flipper's own orange: thin, slightly wobbly ink lines on white paper, generous white space, and one flat orange field. Harold brings the only other colour, his yellow. The [banner](../brand/banner.png) is the reference for everything we draw or publish.
 
@@ -37,3 +39,7 @@ Real Flipper screens stay orange with black pixels in both themes and are never 
 - **Nothing overlaps.** Check every page at 375 px and at desktop width, light and dark, on localhost, before a pull request.
 - **No generated images without real references**, and no metadata or watermarks in what ships.
 - **Not affiliated.** Flipper Zero is a trademark of Flipper Devices Inc. We show the device to show where Harold runs, never their logo on its own.
+
+---
+
+[← Project board](contributing/project-board.md) · [Docs home](README.md) · [Next: Decisions →](decisions/0001-tell-duckwalk-from-the-user.md)

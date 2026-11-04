@@ -1,4 +1,6 @@
-# Developer guide
+# 05 · Developer guide
+
+[← Architecture](architecture.md) · [Docs home](README.md) · [Next: Screen simulator →](../sim/README.md)
 
 Everything you need to change Duckwalk and see the result: on a Flipper, on your computer without one, and in CI.
 
@@ -86,3 +88,7 @@ Every pull request runs:
 3. The author tags `main`, for example `git tag v0.1 && git push origin v0.1`.
 4. The Release workflow checks that the tag matches `fap_version`, builds `duckwalk.fap` and the helper for x64 and ARM64, and leaves a draft release with them attached.
 5. The author reads the draft and publishes it, then updates the catalog manifest's `commit_sha` (issue #10).
+
+---
+
+[← Architecture](architecture.md) · [Docs home](README.md) · [Next: Screen simulator →](../sim/README.md)

@@ -1,6 +1,8 @@
 # Duckwalk docs
 
-Start here. Every page about Duckwalk is linked from this one.
+[← Duckwalk](../README.md) · [Start: User guide →](guide.md)
+
+Start here. Every page about Duckwalk is linked from this one, in reading order, and each page links back here and on to the next.
 
 <p align="center">
   <img src="screens/home-awake@4x.png" width="32%" alt="Harold at his desk, reading code on his laptop">
@@ -10,23 +12,25 @@ Start here. Every page about Duckwalk is linked from this one.
 
 ## I want to use Duckwalk
 
-| | |
-|---|---|
-| [**User guide**](guide.md) | Every screen and button, connecting over USB or Bluetooth, and what Harold is doing |
-| [**PC helper**](../desktop/helper/README.md) | The small Windows program that makes Harold stop while you work |
-| [README](../README.md) | What Duckwalk is, installing it, and the honest limits |
+| Order | Page | Question answered |
+|---|---|---|
+| **01** | [User guide](guide.md) | What does every screen and button do, and how do I connect over USB or Bluetooth? |
+| **02** | [PC helper](../desktop/helper/README.md) | How does Harold know I'm back at the computer? |
+
+What Duckwalk is and how to install it: the [README](../README.md).
 
 ## I want to work on Duckwalk
 
-| | |
-|---|---|
-| [**Contributing**](../CONTRIBUTING.md) | Set up in five minutes, how work flows, the rules that keep `main` releasable |
-| [**Architecture**](architecture.md) | How the app is put together: files, threads, the link to the computer, the data channel |
-| [**Developer guide**](development.md) | Build, run on a Flipper, debug over the CLI, host tests, the screen simulator, Bluetooth |
-| [Screen simulator](../sim/README.md) | Render every screen on your computer, no Flipper needed |
-| [Issues, branches and stacked PRs](contributing/README.md) | Labels, milestones, commit and PR conventions |
-| [Project board](contributing/project-board.md) | The board's views, fields and automation |
-| [Decisions](decisions/) | Spike results and why things are the way they are |
+| Order | Page | Question answered |
+|---|---|---|
+| **03** | [Contributing](../CONTRIBUTING.md) | How do I set up, and what keeps `main` releasable? |
+| **04** | [Architecture](architecture.md) | How is the app put together: files, threads, the link to the computer? |
+| **05** | [Developer guide](development.md) | How do I build, run, debug and test it? |
+| **06** | [Screen simulator](../sim/README.md) | How do I see every screen without a Flipper? |
+| **07** | [Issues, branches and PRs](contributing/README.md) | Which labels, milestones and commit conventions do we use? |
+| **08** | [Project board](contributing/project-board.md) | How is the work tracked? |
+| **09** | [Brand](brand.md) | Which colours, type and drawings do we use? |
+| **10** | [Decisions](decisions/0001-tell-duckwalk-from-the-user.md) | Why are things the way they are? |
 
 ## Where things are
 

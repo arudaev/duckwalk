@@ -1,4 +1,6 @@
-# Duckwalk helper (Windows)
+# 02 · PC helper (Windows)
+
+[← User guide](../../docs/guide.md) · [Docs home](../../docs/README.md) · [Next: Contributing →](../../CONTRIBUTING.md)
 
 A small program for your computer that tells Duckwalk when **you** are using your mouse or keyboard. With it running, Harold lets go of the pointer the moment you touch your own mouse, keyboard or touchpad, stays away for 30 seconds after your last input, and walks only while you are really away.
 
@@ -35,3 +37,7 @@ cmake --build build/helper
 ```
 
 CI builds it on Windows for every pull request and uploads `duckwalk-helper.exe`.
+
+---
+
+[← User guide](../../docs/guide.md) · [Docs home](../../docs/README.md) · [Next: Contributing →](../../CONTRIBUTING.md)

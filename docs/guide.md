@@ -1,4 +1,6 @@
-# User guide
+# 01 · User guide
+
+[Docs home](README.md) · [Next: PC helper →](../desktop/helper/README.md)
 
 Duckwalk turns a Flipper Zero into Harold, a rubber debugging duck who keeps your computer awake. When you step away, he walks the mouse pointer on a short, random path, so Teams, the screen saver and the lock timer see someone at the desk. The same Flipper works as a remote for the computer.
 
@@ -90,3 +92,7 @@ When the Flipper asks you to confirm a code, check it matches the one on the com
 ## Before you use it at work
 
 A keep-awake tool can be against your employer's rules. Duckwalk makes your computer look attended; whether that is acceptable where you work is your decision.
+
+---
+
+[Docs home](README.md) · [Next: PC helper →](../desktop/helper/README.md)
