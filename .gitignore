@@ -12,3 +12,8 @@ __pycache__/
 # Host builds (tests, simulator)
 build/
 fw/
+
+# soak logs and the logger binary (scripts/soak)
+soak_pc.exe
+pc-*.csv
+flipper-*.csv
