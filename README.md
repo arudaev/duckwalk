@@ -6,30 +6,35 @@
 
 **A Flipper Zero app that keeps your computer awake, with a rubber debugging duck in charge.**
 
+[Website](https://arudaev.github.io/duckwalk/) · [Install](#install) · [User guide](docs/guide.md) · [All docs](docs/README.md)
+
 Harold lives on your desk. When you step away, he moves the mouse pointer so Teams, the screen saver and the lock timer still see someone there, and he puts it back where it was. Over USB or Bluetooth, no drivers, nothing to install on the computer. The same Flipper is a media, slides and mouse remote.
 
 <p align="center">
-  <img src="docs/screens/home-awake@4x.png" width="32%" alt="Harold at his desk, reading code on his laptop">
-  <img src="docs/screens/home-wandering@4x.png" width="32%" alt="Harold drifting along while the pointer wanders">
-  <img src="docs/screens/home-bug-quack@4x.png" width="32%" alt="Harold quacking at a bug in the code">
+  <img src="docs/readme/harold.png" width="560" alt="Duckwalk on a Flipper Zero: Harold at his desk types, sips coffee, hops, finds a bug and quacks at it, fixes it, walks the pointer and falls asleep">
 </p>
 
-> **Status: v0.1 is nearly ready.** It works on official firmware 1.5.1 with Windows 11, over USB and Bluetooth. Until it is in the Flipper Apps Catalog, build it from source (below). Progress: [v0.1 milestone](https://github.com/arudaev/duckwalk/milestone/2).
+> [!NOTE]
+> **v0.1 is nearly ready.** It works on official firmware 1.5.1 with Windows 11, over USB and Bluetooth. Until it is in the Flipper Apps Catalog, build it from source (below). Progress: [v0.1 milestone](https://github.com/arudaev/duckwalk/milestone/2).
 
 ## Why Duckwalk
 
-- **Three ways to stay awake.** **Walk** takes a short, curved, random walk every few minutes. **Subtle** moves one pixel out and back, invisible while you work. **Wander** drifts the pointer around without stopping and glides it back to where it started when you turn it off.
+- **Three ways to stay awake.** **Walk** takes a short, curved, random walk every few minutes. **Subtle** moves one pixel out and back, invisible while you work. **Wander** drifts the pointer around without stopping and glides it back to where it started when you turn it off. [See them move.](https://arudaev.github.io/duckwalk/#modes)
 - **Never the same path twice**, so it does not look like a jiggler.
+- **USB or Bluetooth.** Plug it in, or pair it and keep it in your pocket. A connection check shows whether the Flipper or the computer needs attention.
 - **Stops when you want it to.** Work hours only (Mon–Fri 8–18), and **Stop after** puts Harold to sleep when nobody has been around for 1 to 8 hours, so a PC you walked away from still locks.
-- **Lets go while you work.** With the optional [PC helper](desktop/helper/README.md) on Windows, Harold pauses the moment you touch your own mouse or keyboard.
+- **Lets go while you work.** With the optional [PC helper](desktop/helper/README.md) on Windows, Harold pauses the moment you touch your own mouse or keyboard, over USB or Bluetooth.
 - **A remote too.** Play, pause, volume and tracks; next and previous slide; a D-pad mouse.
 - **Harold is good company.** He reads code, types, sips coffee, hunts bugs and quacks at them.
 
 ## Install
 
-Once v0.1 is out: open the Flipper mobile app or [Flipper Lab](https://lab.flipper.net/apps), go to **USB**, and install **Duckwalk**.
+Once v0.1 is out: open the Flipper mobile app or [Flipper Lab](https://lab.flipper.net/apps), go to **USB**, and install **Duckwalk**. It needs the official firmware, 1.5 or newer.
 
-Until then, build it. You need Python 3.8+ and a Flipper on the official firmware.
+<details>
+<summary>Until then, build it from source</summary>
+
+You need Python 3.8+ and a Flipper on the official firmware.
 
 ```bash
 python -m pip install --upgrade ufbt
@@ -37,6 +42,8 @@ git clone https://github.com/arudaev/duckwalk.git
 cd duckwalk/app
 ufbt launch      # builds it and starts it on a connected Flipper (close qFlipper first)
 ```
+
+</details>
 
 On the first launch Harold asks how to reach the computer: **Left** for USB, **Right** for Bluetooth. Bluetooth walks you through pairing on the Flipper's screen.
 
@@ -55,13 +62,14 @@ For a whole day away, set **Stop after** to **Never**. The [user guide](docs/gui
 
 ## How it works
 
-Most Flipper apps that talk to a computer turn the USB port into a single device, so a jiggler and a PC monitor cannot run at once. Over USB, Duckwalk is one device with three parts: a mouse, media keys and a small data channel, all standard USB HID. Over Bluetooth it uses the Flipper firmware's own HID profile and pairs like any Bluetooth mouse, and the USB port stays free for charging and qFlipper.
+Most Flipper apps that talk to a computer turn the USB port into a single device, so a jiggler and a PC monitor cannot run at once. Over USB, Duckwalk is one device with three parts: a mouse, media keys and a small data channel, all standard USB HID. Over Bluetooth it pairs like any Bluetooth mouse, using the firmware's HID profile plus one small data service of Duckwalk's own, and the USB port stays free for charging and qFlipper.
 
-The lock timer and "away" status follow the computer's idle timer, and any mouse input resets it. The [PC helper](desktop/helper/README.md) uses Windows Raw Input to tell your own devices from Duckwalk's and sends one number over the data channel: how long you have been idle. The [architecture page](docs/architecture.md) has the diagrams.
+The lock timer and "away" status follow the computer's idle timer, and any mouse input resets it. The [PC helper](desktop/helper/README.md) uses Windows Raw Input to tell your own devices from Duckwalk's and sends one number over the data channel, on USB or Bluetooth: how long you have been idle. The [architecture page](docs/architecture.md) has the diagrams.
 
 ## Before you use it at work
 
-A keep-awake tool can be against your employer's rules. Duckwalk makes your computer look attended; whether that is acceptable where you work is your decision. It only moves the pointer. It never types, and it clicks or presses media keys only when you use the remote.
+> [!CAUTION]
+> A keep-awake tool can be against your employer's rules. Duckwalk makes your computer look attended; whether that is acceptable where you work is your decision. It only moves the pointer. It never types, and it clicks or presses media keys only when you use the remote.
 
 ## Docs and help
 
@@ -78,6 +86,7 @@ Testing on other computers, bug reports and art are all welcome. Start with [CON
 
 - Harold is the duck from [VOYAGER // 56K](https://arudaev.github.io), a small sailing game by the same author.
 - The USB interface follows the structure of the Flipper Zero firmware's own HID driver ([flipperdevices/flipperzero-firmware](https://github.com/flipperdevices/flipperzero-firmware), GPL-3.0).
+- The Flipper drawing in the animation and on the website is adapted from [qFlipper](https://github.com/flipperdevices/qFlipper) (GPL-3.0). Flipper Zero is a trademark of Flipper Devices Inc.; Duckwalk is not affiliated with them.
 
 ## Licence
 
