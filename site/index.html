@@ -3,406 +3,243 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Duckwalk: a debugging duck that keeps your computer awake</title>
-<meta name="description" content="Duckwalk turns a Flipper Zero into Harold, a rubber debugging duck who keeps your computer awake while you step away, and works as its remote.">
+<title>Duckwalk</title>
+<meta name="description" content="Harold, a rubber debugging duck on your Flipper Zero, keeps your computer awake while you step away.">
 <meta property="og:title" content="Duckwalk">
-<meta property="og:description" content="Step away. Harold keeps watch. A Flipper Zero app that keeps your computer awake.">
+<meta property="og:description" content="Harold, a rubber debugging duck on your Flipper Zero, keeps your computer awake while you step away.">
 <meta property="og:image" content="https://arudaev.github.io/duckwalk/hero.jpg">
-<meta name="theme-color" content="#ff8200">
+<meta name="color-scheme" content="light dark">
 <link rel="icon" href="harold.png">
+<script>
+  // Apply a saved theme before the first paint.
+  try { const t = localStorage.getItem("duckwalk-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
 <style>
+  @font-face { font-family: "Silkscreen"; src: url("fonts/silkscreen.woff2") format("woff2"); font-display: swap; }
   :root {
-    --orange: #ff8200;
-    --orange-deep: #e0561f;
-    --lcd: #fe8a2c;
-    --ink: #1c1915;
-    --muted: #5f574d;
-    --paper: #fbf8f3;
-    --card: #ffffff;
-    --line: #e8ded0;
-    --soft: #fff0de;
-    --desk: #f2ece4;
-    --shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.08);
+    --paper: #fdfcf8;
+    --ink: #1f1b16;
+    --soft: #6b6359;
+    --faint: #e7e1d6;
+    --orange: #fe8a2c;
+    --duck: #ffd23f;
+    --pixel: "Silkscreen", "Courier New", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
-      --ink: #f4ede4;
-      --muted: #b6ab9c;
-      --paper: #13110f;
-      --card: #1d1a17;
-      --line: #342d26;
-      --soft: #2a1e13;
-      --desk: #221e1a;
-      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
-    }
+    :root:not([data-theme="light"]) { --paper: #17140f; --ink: #efe8dc; --soft: #a99f91; --faint: #2c2720; --orange: #f08024; }
   }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; scroll-padding-top: 72px; }
-  body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  a { color: inherit; text-decoration-color: var(--orange); text-underline-offset: 3px; }
-  a:hover { color: var(--orange); }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
-  .pixel { image-rendering: pixelated; }
+  :root[data-theme="dark"] { --paper: #17140f; --ink: #efe8dc; --soft: #a99f91; --faint: #2c2720; --orange: #f08024; }
 
-  /* Navigation */
-  nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
-  nav .wrap { display: flex; align-items: center; gap: 20px; height: 60px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; text-decoration: none; font-size: 1.1rem; }
-  .brand img { width: 30px; height: 31px; background: var(--lcd); border-radius: 7px; padding: 3px; }
-  nav .links { display: flex; gap: 18px; margin-left: auto; font-size: .95rem; }
-  nav .links a { text-decoration: none; color: var(--muted); }
-  nav .links a:hover { color: var(--ink); }
-  .button { display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: 999px; font-weight: 650; text-decoration: none; border: 2px solid var(--orange); cursor: pointer; font-size: 1rem; background: none; color: inherit; }
-  .button.primary { background: var(--orange); color: #1c1915; }
-  .button.primary:hover { color: #1c1915; filter: brightness(1.07); }
-  nav .button { padding: 7px 16px; font-size: .95rem; }
+  * { box-sizing: border-box; }
+  html, body { background: var(--paper); }
+  body { margin: 0; color: var(--ink); font: 18px/1.55 var(--sans); }
+  a { color: var(--ink); text-decoration-color: var(--orange); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+  a:hover { color: var(--orange); }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+
+  nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font: 18px var(--pixel); color: var(--ink); }
+  .brand img { width: 28px; height: 29px; image-rendering: pixelated; }
+  :root[data-theme="dark"] .brand img { filter: invert(1); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .brand img { filter: invert(1); } }
+  .links { display: flex; align-items: center; gap: 18px; }
+  .links a { text-decoration: none; font: 14px var(--pixel); }
+  .theme { font: 14px var(--pixel); color: var(--ink); background: none; border: 2px solid var(--ink); border-radius: 8px; padding: 6px 9px; cursor: pointer; }
+  .theme:hover { border-color: var(--orange); color: var(--orange); }
+
+  /* Pen lines: a touch of wobble, like the drawings */
+  .pen { filter: url(#wobble); }
 
   /* Hero */
-  .hero { background: #13110f; color: #fff; padding: 56px 0 64px; }
-  .hero .wrap { display: grid; grid-template-columns: 1fr 1.05fr; gap: 48px; align-items: center; }
-  .hero-photo { width: 100%; height: auto; display: block; border-radius: 22px; box-shadow: 0 20px 50px rgba(0,0,0,.45); }
-  .pill { display: inline-block; background: rgba(255,130,0,.18); border: 1px solid rgba(255,130,0,.5); color: #ffc58c; padding: 4px 12px; border-radius: 999px; font-size: .85rem; font-weight: 600; }
-  h1 { font-size: clamp(2.5rem, 5.6vw, 4.1rem); line-height: 1.04; margin: 18px 0 16px; letter-spacing: -.025em; }
-  h1 span { color: var(--orange); }
-  .hero p.lead { font-size: 1.15rem; color: #e2d9cd; margin: 0 0 26px; }
-  .actions { display: flex; gap: 12px; flex-wrap: wrap; }
-  .hero .button:not(.primary) { color: #fff; }
-  .ticks { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 22px; font-size: .9rem; color: #cfc5b8; padding: 0; list-style: none; }
-  .ticks li::before { content: "✓ "; color: var(--orange); font-weight: 800; }
+  .hero { position: relative; text-align: center; padding: 40px 0 0; }
+  h1 { font: clamp(40px, 9vw, 72px)/1 var(--pixel); margin: 0 0 14px; }
+  .line { font-size: clamp(19px, 2.6vw, 22px); margin: 0 auto; max-width: 30em; }
+  .line b { font-weight: 600; background: var(--duck); color: #1f1b16; padding: 0 4px; border-radius: 3px; }
+  .stage { position: relative; max-width: 780px; margin: 30px auto 0; }
+  .blob { position: absolute; left: 34%; top: -20%; width: 72%; height: 118%; z-index: 0; }
+  .blob path { fill: var(--orange); }
+  #flipper { position: relative; z-index: 1; display: block; width: 100%; height: auto; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+  #flipper .fb { fill: var(--paper); }
+  #flipper .fl { fill: var(--ink); }
+  #lcd { image-rendering: pixelated; }
+  .key { cursor: pointer; fill: var(--orange); fill-opacity: 0; outline: none; transition: fill-opacity .08s; }
+  .key:hover { fill-opacity: .25; }
+  .key:focus-visible { fill-opacity: .4; }
+  .key.down { fill-opacity: .7; }
+  .hint { color: var(--soft); margin: 14px 0 0; font-size: 16px; }
 
-  section { padding: 84px 0 0; }
-  .eyebrow { color: var(--orange-deep); font-weight: 700; font-size: .85rem; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 8px; }
-  @media (prefers-color-scheme: dark) { .eyebrow { color: var(--orange); } }
-  h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.12; margin: 0 0 14px; letter-spacing: -.02em; }
-  .intro { color: var(--muted); max-width: 640px; margin: 0 0 32px; font-size: 1.08rem; }
+  .actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin: 26px 0 0; }
+  .button { font: 16px/1 var(--pixel); padding: 13px 20px; border: 2px solid var(--ink); border-radius: 10px; color: var(--ink); text-decoration: none; background: var(--paper); }
+  .button.primary { background: var(--orange); color: #1f1b16; border-color: #1f1b16; }
+  .button:hover { color: var(--ink); transform: translateY(-1px); }
+  .button.primary:hover { color: #1f1b16; }
 
-  /* The Flipper */
-  .try { display: grid; grid-template-columns: 1.25fr 1fr; gap: 40px; align-items: center; }
-  .flipper { width: 100%; height: auto; display: block; filter: drop-shadow(0 18px 30px rgba(0,0,0,.18)); touch-action: manipulation; user-select: none; -webkit-user-select: none; }
-  .flipper .key { cursor: pointer; }
-  .flipper .key:hover .face { filter: brightness(1.1); }
-  .flipper .key.down .face { filter: brightness(.8); }
-  .flipper .key:focus { outline: none; }
-  .flipper .key:focus-visible .face { stroke: #1c1915; stroke-width: 3; }
-  .screen-note { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px 24px; box-shadow: var(--shadow); min-height: 210px; }
-  .screen-note h3 { margin: 0 0 6px; font-size: 1.2rem; }
-  .screen-note p { margin: 0 0 10px; color: var(--muted); }
-  .hint { font-size: .9rem; color: var(--muted); margin-top: 14px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-  .chip { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 5px 12px; font-size: .88rem; cursor: pointer; }
-  .chip:hover { border-color: var(--orange); }
-  kbd { display: inline-block; min-width: 1.9em; text-align: center; padding: 0 6px; border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 6px; background: var(--card); font: 600 .85rem system-ui, sans-serif; }
+  .walker { position: relative; max-width: 640px; margin: 56px auto 0; padding-right: 130px; }
+  .walker img { position: absolute; right: 0; bottom: 2px; width: 170px; height: auto; animation: waddle 1.2s ease-in-out infinite; transform-origin: 50% 100%; }
+  .walker .on-dark { display: none; }
+  :root[data-theme="dark"] .walker .on-light { display: none; }
+  :root[data-theme="dark"] .walker .on-dark { display: block; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .walker .on-light { display: none; } :root:not([data-theme="light"]) .walker .on-dark { display: block; } }
+  @keyframes waddle { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg) translateY(-2px); } }
+  @media (prefers-reduced-motion: reduce) { .walker img { animation: none; } }
+  .trail { display: block; width: 100%; height: 60px; }
+  .trail path { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-dasharray: 2 9; stroke-linecap: round; }
 
-  /* Steps */
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-  .step { text-align: center; }
-  .step .lcd { background: #1c1915; padding: 10px; border-radius: 14px; box-shadow: var(--shadow); }
-  .step .lcd img { width: 100%; height: auto; display: block; border-radius: 4px; }
-  .num { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--orange); color: #1c1915; font-weight: 800; margin: 18px 0 6px; }
-  .step h3 { margin: 0 0 4px; }
-  .step p { margin: 0; color: var(--muted); }
+  section { padding: 56px 0 0; }
+  h2 { font: clamp(24px, 4vw, 32px)/1.1 var(--pixel); margin: 0 0 18px; text-align: center; }
 
-  /* Mode demos */
-  .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .mode { background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; }
-  .mode canvas, .helper canvas { width: 100%; aspect-ratio: 16 / 10; display: block; background: var(--desk); }
-  .mode .body { padding: 16px 20px 20px; }
-  .mode h3 { margin: 0 0 4px; font-size: 1.2rem; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .mode p { margin: 0; color: var(--muted); }
-  .tag { font-size: .78rem; font-weight: 700; background: var(--soft); color: var(--orange-deep); padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
-  @media (prefers-color-scheme: dark) { .tag { color: var(--orange); } }
-  .mode .button { margin-top: 12px; padding: 7px 14px; font-size: .9rem; }
+  /* The laptop */
+  .tabs { display: flex; justify-content: center; gap: 10px; margin: 0 0 22px; flex-wrap: wrap; }
+  .tabs button { font: 15px/1 var(--pixel); padding: 10px 14px; border: 2px solid var(--ink); border-radius: 10px; color: var(--ink); background: var(--paper); cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--orange); color: #1f1b16; border-color: #1f1b16; }
+  .laptop { display: block; width: 100%; max-width: 820px; height: auto; margin: 0 auto; }
+  .laptop .line-art { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+  .laptop .lid { fill: var(--paper); }
+  .laptop canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+  .status { text-align: center; margin: 16px 0 0; min-height: 1.55em; }
+  .status.user { font-weight: 600; }
+  .status.user::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--duck); border: 2px solid #1f1b16; margin-right: 8px; vertical-align: 1px; }
+  .say { text-align: center; color: var(--soft); margin: 2px 0 0; font-size: 16px; }
 
-  /* Helper demo */
-  .helper { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: center; }
-  .helper .demo { position: relative; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); cursor: crosshair; }
-  .status { position: absolute; left: 14px; top: 14px; background: #1c1915; color: #fff; padding: 6px 12px; border-radius: 999px; font-size: .88rem; font-weight: 600; display: flex; gap: 8px; align-items: center; }
-  .status i { width: 9px; height: 9px; border-radius: 50%; background: var(--orange); display: inline-block; }
-  .status.user i { background: #4cc38a; }
-  .demo-hint { position: absolute; right: 14px; bottom: 12px; font-size: .85rem; color: var(--muted); }
-  ul.plain { padding-left: 1.1em; color: var(--muted); }
-  ul.plain li { margin-bottom: 6px; }
-  ul.plain strong { color: var(--ink); }
+  ol.steps { list-style: none; padding: 0; margin: 0 auto; max-width: 560px; counter-reset: s; }
+  ol.steps li { counter-increment: s; display: grid; grid-template-columns: 46px 1fr; gap: 10px; align-items: start; margin: 0 0 14px; }
+  ol.steps li::before { content: counter(s); font: 16px/1 var(--pixel); border: 2px solid var(--ink); border-radius: 50%; width: 34px; height: 34px; display: grid; place-items: center; }
+  code { font: 0.92em ui-monospace, Consolas, monospace; background: var(--faint); padding: 1px 5px; border-radius: 4px; }
 
-  /* Cards */
-  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: var(--shadow); }
-  .card .icon { width: 42px; height: 42px; border-radius: 12px; background: var(--soft); display: grid; place-items: center; margin-bottom: 12px; color: var(--orange-deep); }
-  @media (prefers-color-scheme: dark) { .card .icon { color: var(--orange); } }
-  .card h3 { margin: 0 0 6px; font-size: 1.1rem; }
-  .card p { margin: 0; color: var(--muted); }
+  footer { margin: 80px 0 0; padding: 22px 0 40px; border-top: 2px solid var(--faint); color: var(--soft); font-size: 14px; text-align: center; }
+  footer p { margin: 4px 0; }
+  footer a { color: var(--soft); }
 
-  /* FAQ */
-  details { border-bottom: 1px solid var(--line); padding: 16px 0; }
-  summary { cursor: pointer; font-weight: 650; font-size: 1.05rem; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
-  summary::after { content: "+"; color: var(--orange); font-weight: 800; }
-  details[open] summary::after { content: "–"; }
-  details p { color: var(--muted); margin: 10px 0 0; }
-
-  /* Get it */
-  .get { background: #1c1915; color: #f4ede4; border-radius: 24px; padding: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 84px; }
-  .get h2 { color: #fff; }
-  .get ol { padding-left: 1.2em; margin: 0; }
-  .get li { margin-bottom: 12px; color: #d6ccbf; }
-  .get li strong { color: #fff; }
-  .get code { background: #2b2620; padding: 1px 6px; border-radius: 4px; }
-  .get .button:not(.primary) { color: #fff; }
-
-  footer { color: var(--muted); font-size: .92rem; padding: 48px 0 56px; }
-
-  @media (max-width: 860px) {
-    nav .links a:not(.button) { display: none; }
-    .try, .helper, .get { grid-template-columns: 1fr; }
-    .steps, .modes, .cards { grid-template-columns: 1fr; }
-    .steps { max-width: 420px; margin: 0 auto; }
-    .hero { padding: 32px 0 40px; }
-    .hero .wrap { grid-template-columns: 1fr; gap: 28px; }
-    .hero-photo { order: -1; }
-    .get { padding: 32px 22px; }
+  @media (max-width: 560px) {
+    .links { gap: 12px; }
+    .links .gh { display: none; }
   }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="wobble"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="1.6"/></filter>
+</svg>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="#top"><img src="harold.png" alt="">Duckwalk</a>
+    <span class="links"><a href="#install">Install</a><a class="gh" href="https://github.com/arudaev/duckwalk">GitHub</a><button class="theme" id="theme" type="button" aria-label="Switch light or dark">Dark</button></span>
+  </nav>
 
-<nav>
-  <div class="wrap">
-    <a class="brand" href="#top"><img class="pixel" src="harold.png" width="24" height="25" alt="">Duckwalk</a>
-    <div class="links">
-      <a href="#try">Try it</a>
-      <a href="#modes">Modes</a>
-      <a href="#helper">PC helper</a>
-      <a href="#faq">FAQ</a>
-      <a href="https://github.com/arudaev/duckwalk">GitHub</a>
-      <a class="button primary" href="#get">Get Duckwalk</a>
-    </div>
-  </div>
-</nav>
-
-<header class="hero" id="top">
-  <div class="wrap">
-    <div class="hero-text">
-      <span class="pill">A Flipper Zero app</span>
-      <h1>Step away.<br><span>Harold keeps watch.</span></h1>
-      <p class="lead">Duckwalk turns your Flipper into Harold, a rubber debugging duck who moves the mouse while you're gone, so your computer stays awake and "available". Then he puts it back where it was.</p>
-      <div class="actions">
-        <a class="button primary" href="#get">Get Duckwalk</a>
-        <a class="button" href="#try">Try it here</a>
-      </div>
-      <ul class="ticks"><li>Free and open source</li><li>USB or Bluetooth</li><li>No drivers</li></ul>
-    </div>
-    <img class="hero-photo" src="hero.jpg" width="1200" height="900" alt="A hand holding a Flipper Zero running Duckwalk: Harold sits at his desk on the orange screen, in front of a laptop and a rubber duck">
-  </div>
-</header>
-
-<main class="wrap">
-
-  <section id="try">
-    <p class="eyebrow">Try it</p>
-    <h2>Press the buttons.</h2>
-    <p class="intro">This is the app as it runs on the Flipper: the same screens, the same buttons. Click the D-pad, or use your arrow keys, Enter and Backspace.</p>
-    <div class="try">
-      <svg class="flipper" id="flipper" viewBox="0 0 520 210" role="group" aria-label="A Flipper Zero running Duckwalk">
-        <defs>
-          <clipPath id="lcd-clip"><rect x="86" y="54" width="232" height="116" rx="3"/></clipPath>
-        </defs>
-        <!-- case -->
-        <path d="M58 14 H470 Q482 14 490 22 L508 42 Q514 49 514 58 V152 Q514 161 508 168 L490 188 Q482 196 470 196 H74 Q64 196 57 189 L12 140 Q6 133 6 124 V86 Q6 77 12 70 L42 22 Q48 14 58 14 Z" fill="#ff8200"/>
-        <!-- face -->
-        <path d="M66 26 H462 Q472 26 478 33 L494 50 Q500 56 500 64 V146 Q500 154 494 160 L478 177 Q472 184 462 184 H80 Q72 184 66 178 L26 134 Q20 128 20 120 V90 Q20 82 25 76 L52 34 Q57 26 66 26 Z" fill="#f4f1ec"/>
-        <!-- screen bezel and LCD -->
-        <rect x="74" y="42" width="256" height="140" rx="14" fill="#1c1915"/>
-        <rect x="86" y="54" width="232" height="116" rx="3" fill="#fe8a2c"/>
-        <image id="lcd" class="pixel" href="screens/home-awake@4x.png" x="86" y="54" width="232" height="116" clip-path="url(#lcd-clip)" preserveAspectRatio="none"/>
-        <circle cx="346" cy="166" r="3.2" fill="#2a2520"/>
-        <!-- D-pad -->
-        <circle cx="416" cy="96" r="58" fill="#c94a22"/>
-        <g class="key" data-key="up" tabindex="0" role="button" aria-label="Up">
-          <path class="face" d="M416 96 L375 55 A58 58 0 0 1 457 55 Z" fill="#e0561f"/>
-          <path d="M410 54 L416 47 L422 54 Z" fill="#a33a17"/>
+  <header class="hero" id="top">
+    <h1>Duckwalk</h1>
+    <p class="line"><b>Harold</b>, a rubber debugging duck on your Flipper, keeps your computer awake while you step away.</p>
+    <div class="stage">
+      <svg class="blob" viewBox="0 0 600 360" preserveAspectRatio="none" aria-hidden="true"><path d="M70,300 C10,250 40,150 130,120 C200,95 230,60 330,40 C440,18 560,60 585,170 C605,265 540,330 430,340 C320,350 140,355 70,300 Z"/></svg>
+      <svg id="flipper" viewBox="-6 -6 372 168" role="group" aria-label="A Flipper Zero running Duckwalk. Its buttons work.">
+        <g class="pen" transform="translate(-2)">
+          <path class="fb" d="m 303.3,1.2 c 0,0 -219.9,0 -229.7,0 -9.8,0 -17,10.3 -17,10.3 0,0 -49.3,63.9 -51.4,66.8 -3,4 -2.1,14.1 0,17 5.9,8 34.5,47.1 35.8,48.8 1.4,1.7 7.7,11.1 16.5,11.1 8.8,0 278.7,0 283.5,0 8.7,0 19.6,-20.2 19.6,-25.2 0,-5 -0.3,-58.9 -0.3,-64.5 0,-3.7 -2.6,-8.4 -5.1,-11.5 C 352.9,51.2 319.9,10 317,6.5 314.5,3.6 308.8,1.2 303.3,1.2 Z"/>
+          <path class="fl" d="m 304,3 c 4.5,0 10,3.3 12,5.7 2.9,3.4 35.3,44 38,47.4 3.1,3.9 4.9,7.5 4.9,9.7 v 64.5 c 0,4 -10.8,22.7 -17.2,22.7 H 57.1 c -4.5,0 -9.3,-3.4 -14.5,-10 -0.2,-0.2 -0.3,-0.4 -0.4,-0.5 -0.7,-0.9 -10.1,-13.7 -18.4,-25 C 16.5,107.6 9,97.4 6.3,93.7 5,92 4.1,83.3 6.3,80.4 8.4,77.6 57.4,14.3 57.9,13.7 L 58,13.6 58.1,13.5 C 58.1,13.4 65.2,3 73.3,3 H 304 m 0,-3 C 304,0 83.3,0 73.3,0 63.4,0 55.5,11.8 55.5,11.8 c 0,0 -49.4,63.9 -51.6,66.8 -2.9,4 -2.1,14.1 0,17 6,8 34.6,47.1 36,48.8 1.4,1.7 8.5,11.7 17.3,11.7 8.8,0 279.9,0 284.7,0 8.8,0 20.2,-20.8 20.2,-25.7 0,-4.9 0,-58.9 0,-64.5 0,-3.7 -3.1,-8.4 -5.6,-11.5 C 354.2,51.6 321.3,10.4 318.4,6.9 315.9,3.9 309.6,0 304,0 Z"/>
+          <path class="fl" d="m 148.1,128.1 h 2.9 v 3.9 h -1 v 2 h -1 v 2 h -1 v 2 h -1 v 2 h 14 v 0.9 h -1 v 1 h -1 v 1 h -17 v -2 h 1 v -2 h 1.1 v -2 h 0.9 v -2 h 1 v -2 h 1 v -2 h 1 c 0,0.1 0,-2.8 0.1,-2.8 z"/>
+          <path class="fl" d="m 171,128 v 3 h -1 v 2 h -0.9 v 2 h -1 v 2 h -1 v 2 h -1 v 2 h -1 v 1.9 h 2.9 v -2 h 1.1 v -2 h 1 v -2 h 1 v -2 h 1 v -2 h 1 v -1 h 1 V 128 c -0.1,0 -3.1,0 -3.1,0 z"/>
+          <path class="fl" d="m 181,128 v 3 h -1 v 2 h -0.9 v 2 h -1 v 2 h -1 v 2 h -1 v 2 h -1 v 1.9 h 2.9 v -2 h 1.1 v -2 h 1 v -2 h 15 V 136 h 1 v -1 h 1 v -1 h 1 v -1 h 1 v -1 h 1 v -1 h 1 v -1 h 1 v -2 c -0.1,0 -21.1,0 -21.1,0 z m 15,4 v 1 h -0.9 v 1 H 182 v -1 h 1 v -1 h 1 v -1 h 13 v 1.1 h -1 z"/>
+          <path class="fl" d="m 205,128 v 3 h -1 v 2 h -0.9 v 2 h -1 v 2 h -1 v 2 h -1 v 2 h -1 v 1.9 h 2.9 v -2 h 1.1 v -2 h 1 v -2 h 15 V 136 h 1 v -1 h 1 v -1 h 1 v -1 h 1 v -1 h 1 v -1 h 1 v -1 h 1 v -2 c -0.1,0 -21.1,0 -21.1,0 z m 15,4 v 1 h -0.9 v 1 H 206 v -1 h 1 v -1 h 1 v -1 h 13 v 1.1 h -1 z"/>
+          <path class="fl" d="M 250.9,128.1 H 231 v 3 h -1 v 2 h -1 v 2 h -1 v 2 h -1 v 2 h -1 v 2 h -1 v 1.9 h 18.9 v -1 h 1 v -1 h 1.1 v -1 h -17 v -1.1 h 1 v -2 h 14 v -1 h 1 V 135 h 1 v -1 h -14 v -1 h 1 v -2 h 17 v -1 h 1 c -0.1,0 -0.1,-2 -0.1,-1.9 z"/>
+          <path class="fl" d="m 257,128 v 3 h -1 v 2 h -0.9 v 2 h -1 v 2 h -1 v 2 h -1 v 2 h -1 v 1.9 h 2.9 v -2 h 1.1 v -2 h 1 v -2 h 11.1 v 1 h 0.9 v 1 h 1 v 1 h 1 v 1 h 1 v 1 h 1 v 1 h 1 l 0.1,1 h 1 v 1.1 h 1 v 1 h 3 v -0.9 h -1 v -1 h -1 v -1 h -1 v -1 h -1 v -1 h -1 v -1 h -1 v -0.9 h -1 v -1 h -1 v -1 h 1.1 v -1 h 1 v -1 h 1 v -1 h 1 v -1 h 1 v -1 h 1 v -1 h 1 v -1 h 1 V 128 c -0.3,0 -21.3,0 -21.3,0 z m 15,4 v 1 h -0.9 v 1 H 258 v -1 h 1 v -1 h 1 v -1 h 13 v 1.1 h -1 z"/>
+          <path class="fl" d="M 223.3,98 H 94.7 C 91,98 88,95 88,91.3 V 25.7 C 88,22 91,19 94.7,19 h 128.6 c 3.7,0 6.7,3 6.7,6.7 v 65.6 c 0,3.7 -3,6.7 -6.7,6.7 z M 94.7,20 C 91.6,20 89,22.6 89,25.7 v 65.6 c 0,3.1 2.6,5.7 5.7,5.7 h 128.6 c 3.1,0 5.7,-2.6 5.7,-5.7 V 25.7 c 0,-3.1 -2.6,-5.7 -5.7,-5.7 z"/>
+          <path class="fl" d="M 276.5,94 C 256.9,94 241,78.1 241,58.5 241,38.9 256.9,23 276.5,23 296.1,23 312,38.9 312,58.5 312,78.1 296.1,94 276.5,94 Z m 0,-70.1 c -19,0 -34.6,15.6 -34.6,34.6 0,19 15.6,34.6 34.6,34.6 19,0 34.6,-15.6 34.6,-34.6 0,-19 -15.6,-34.6 -34.6,-34.6 z"/>
+          <path class="fl" d="m 328.6,94 c -6.3,0 -11.5,-5.2 -11.5,-11.5 0,-6.3 5.1,-11.5 11.5,-11.5 6.4,0 11.4,5.2 11.4,11.5 0,6.3 -5.1,11.5 -11.4,11.5 z m -0.1,-22.1 c -5.8,0 -10.6,4.8 -10.6,10.6 0,5.8 4.8,10.6 10.6,10.6 5.8,0 10.6,-4.8 10.6,-10.6 0,-5.8 -4.8,-10.6 -10.6,-10.6 z"/>
+          <path class="fl" d="m 330.8,88 h -6.4 c -0.3,0 -0.3,-0.2 -0.3,-0.5 v -2 c 0,-0.3 0,-0.4 0.3,-0.4 h 5.9 c 0.6,0 1.1,-0.3 1.4,-0.7 0.3,-0.4 0.5,-0.9 0.5,-1.4 0,-1 -0.5,-2 -1.6,-2 H 326 l -0.1,1.6 c 0,0.2 -0.1,0.4 -0.3,0.5 -0.2,0.1 -0.4,0 -0.5,-0.1 l -2.9,-3 c -0.2,-0.2 -0.2,-0.5 0,-0.7 l 2.8,-3 c 0.1,-0.1 0.4,-0.2 0.5,-0.1 0.2,0.1 0.3,0.3 0.3,0.5 V 78 h 4.9 c 2.8,0 4.2,2.5 4.2,5 0,1.3 -0.4,2.5 -1,3.4 -0.7,1 -1.8,1.6 -3.1,1.6 z m -5.9,-1 h 5.9 c 1,0 1.8,-0.4 2.4,-1.2 0.5,-0.7 0.9,-1.7 0.9,-2.8 0,-1.9 -0.8,-4 -3.2,-4 h -5.4 c -0.3,0 -0.6,-0.2 -0.6,-0.5 v -0.8 l -1.7,1.8 1.7,1.8 v -0.8 c 0,-0.3 0.2,-0.5 0.5,-0.5 h 4.9 c 1.5,0 2.6,1.5 2.6,3 0,0.8 -0.1,1.4 -0.5,1.9 -0.5,0.6 -1.3,1 -2.1,1 h -5.4 z"/>
+          <path class="fl" d="M 276.5,70 C 270.2,70 265,64.8 265,58.5 265,52.2 270.2,47 276.5,47 c 6.3,0 11.5,5.2 11.5,11.5 0,6.3 -5.2,11.5 -11.5,11.5 z m 0,-22 c -5.8,0 -10.5,4.8 -10.5,10.6 0,5.8 4.8,10.5 10.5,10.5 5.7,0 10.5,-4.8 10.5,-10.6 C 287,52.7 282.3,48 276.5,48 Z"/>
+          <path class="fl" d="m 281.2,40 h -9.3 c -0.4,0 -0.8,-0.2 -0.9,-0.5 -0.2,-0.3 -0.2,-0.7 0,-1.1 l 4.7,-7.9 c 0.4,-0.7 1.5,-0.7 1.9,0 l 4.7,7.9 c 0.2,0.3 0.2,0.7 0,1.1 -0.4,0.3 -0.8,0.5 -1.1,0.5 z m -4.7,-9.1 c 0,0 -0.1,0.1 0,0 l -4.7,7.9 c 0,0 0,0.1 0,0.1 0,0 0,0 0.1,0 h 9.3 c 0,0 0.1,0 0.1,0 0,0 0,-0.1 0,-0.1 l -4.8,-7.9 c 0.1,0.1 0,0 0,0 z"/>
+          <path class="fl" d="m 276.5,87 c -0.4,0 -0.8,-0.2 -1,-0.5 l -4.7,-7.9 c -0.2,-0.3 -0.2,-0.7 0,-1.1 0.2,-0.3 0.6,-0.5 0.9,-0.5 h 9.3 c 0.4,0 0.8,0.2 0.9,0.5 0.2,0.3 0.2,0.7 0,1.1 l -4.7,7.9 c 0.1,0.3 -0.3,0.5 -0.7,0.5 z m -4.6,-9 c -0.1,0 -0.1,0 0,0 -0.1,0.1 -0.1,0.1 -0.1,0.2 l 4.7,8.1 c 0,0.1 0.1,0.1 0.2,0 l 4.7,-8.1 c 0,0 0,-0.1 0,-0.1 0,0 0,-0.1 -0.1,-0.1 z"/>
+          <path class="fl" d="m 296.1,64.2 c -0.2,0 -0.4,0 -0.5,-0.1 -0.3,-0.2 -0.5,-0.6 -0.5,-0.9 v -9.3 c 0,-0.4 0.2,-0.8 0.5,-0.9 0.3,-0.2 0.7,-0.2 1.1,0 l 7.9,4.7 c 0.3,0.2 0.5,0.6 0.5,1 0,0.4 -0.2,0.8 -0.5,1 l -7.9,4.7 c -0.3,-0.2 -0.4,-0.2 -0.6,-0.2 z m 0,-10.5 c -0.1,0 -0.1,0.1 0,0 -0.1,0 -0.1,0.1 -0.1,0.1 v 9.3 c 0,0 0,0.1 0,0.1 0,0 0.1,0 0.1,0 l 7.9,-4.7 c 0,0 0,0 0,-0.1 0,0 0,-0.1 0,-0.1 l -7.9,-4.6 c 0,0.1 0,0 0,0 z"/>
+          <path class="fl" d="m 256.9,64.2 c -0.2,0 -0.4,0 -0.5,-0.1 l -7.9,-4.7 c -0.3,-0.2 -0.5,-0.6 -0.5,-1 0,-0.4 0.2,-0.8 0.5,-1 l 7.9,-4.7 c 0.3,-0.2 0.7,-0.2 1.1,0 0.3,0.2 0.5,0.6 0.5,0.9 v 9.3 c 0,0.4 -0.2,0.8 -0.5,0.9 -0.2,0.4 -0.4,0.4 -0.6,0.4 z m 0,-10.5 c 0,0 0,0.1 0,0 l -7.9,4.7 c 0,0 0,0 0,0.1 0,0 0,0.1 0,0.1 l 7.9,4.7 c 0,0 0.1,0 0.1,0 0,0 0,0 0,-0.1 v -9.3 c 0,-0.1 0,-0.1 -0.1,-0.2 0.1,0.1 0.1,0 0,0 z"/>
+          <path class="fl" d="M 329.5,98 H 277 c -22.4,0 -40,-17.1 -40,-39 0,-22 17.9,-40 40,-40 11.1,0 21.7,4.6 29.3,12.8 l 33.9,40.8 c 4,4.3 3.9,8.7 3.9,11.3 v 0.6 C 344,90.7 336.1,98 329.5,98 Z M 277,19.9 c -21.5,0 -39.1,17.6 -39.1,39.1 0,21.3 17.2,38 39,38 h 52.5 c 6,0 13.6,-7 13.6,-12.6 v -0.6 c 0,-2.5 0,-6.5 -3.7,-10.6 L 305.4,32.4 C 298.1,24.5 287.8,19.9 277,19.9 Z"/>
+          <path class="fl" d="m 240.5,98 c -1.9,0 -3.5,-1.6 -3.5,-3.5 0,-1.9 1.6,-3.5 3.5,-3.5 1.9,0 3.5,1.6 3.5,3.5 0,1.9 -1.6,3.5 -3.5,3.5 z m 0,-6 c -1.4,0 -2.5,1.1 -2.5,2.5 0,1.4 1.1,2.5 2.5,2.5 1.4,0 2.5,-1.1 2.5,-2.5 0,-1.4 -1.1,-2.5 -2.5,-2.5 z"/>
+          <path class="fl" d="M 341.5,120 H 72.3 c -9.1,0 -12.5,-3.8 -17.7,-9.5 L 54,109.8 C 49.1,104.3 42.3,96.3 38.2,91 34.4,86.1 35.9,83.7 38.8,79 L 39,78.7 C 40.6,76.2 50.1,62.7 59.3,49.6 68.5,36.6 78,23.1 79.8,20.3 84.5,13.1 90.5,10 100,10 h 199.6 c 3.6,0 8.8,1.7 12,5.5 l 0.8,0.9 c 20.6,24.6 32.3,38.7 34.9,41.9 4.2,5.3 4.8,7.7 4.8,11.4 v 39.7 c -0.1,5 -4.4,10.6 -10.6,10.6 z M 100,11 C 90.9,11 85.1,13.9 80.8,20.8 79,23.6 69.4,37.1 60.2,50.2 51,63.3 41.5,76.8 39.9,79.3 l -0.2,0.3 c -3,4.7 -4.1,6.5 -0.7,10.8 4,5.2 10.8,13.2 15.7,18.7 l 0.6,0.7 c 5.1,5.7 8.3,9.3 16.9,9.3 h 269.2 c 5.6,0 9.5,-5.1 9.5,-9.7 V 69.7 c 0,-3.6 -0.7,-5.7 -4.6,-10.8 C 343.8,55.7 332.1,41.6 311.5,17 l -0.8,-0.9 C 307.8,12.6 302.8,11 299.5,11 Z"/>
+          <path class="fl" d="M 222.7,95 H 95.3 C 92.9,95 91,93.1 91,90.7 V 26.3 C 91,23.9 92.9,22 95.3,22 h 127.4 c 2.4,0 4.3,1.9 4.3,4.3 v 64.4 c 0,2.4 -1.9,4.3 -4.3,4.3 z"/>
+          <polygon class="fl" points="118,137 117,137 117,139 116,139 116,142 115,142 115,144 114,144 114,146 117,146 117,144 118,144 118,142 119,142 119,139 120,139 120,137 134,137 134,136 135,136 135,135 136,135 136,134 122.9,134 123,133 124,133 124,131 142,131 142,130 143,130 143,129 144,129 144,128 121,128 121,131 120,131 120,133 119,133 119,135 118,135"/>
         </g>
-        <g class="key" data-key="right" tabindex="0" role="button" aria-label="Right">
-          <path class="face" d="M416 96 L457 55 A58 58 0 0 1 457 137 Z" fill="#e0561f"/>
-          <path d="M458 90 L465 96 L458 102 Z" fill="#a33a17"/>
-        </g>
-        <g class="key" data-key="down" tabindex="0" role="button" aria-label="Down">
-          <path class="face" d="M416 96 L457 137 A58 58 0 0 1 375 137 Z" fill="#e0561f"/>
-          <path d="M410 138 L416 145 L422 138 Z" fill="#a33a17"/>
-        </g>
-        <g class="key" data-key="left" tabindex="0" role="button" aria-label="Left">
-          <path class="face" d="M416 96 L375 137 A58 58 0 0 1 375 55 Z" fill="#e0561f"/>
-          <path d="M374 90 L367 96 L374 102 Z" fill="#a33a17"/>
-        </g>
-        <g class="key" data-key="ok" tabindex="0" role="button" aria-label="OK">
-          <circle class="face" cx="416" cy="96" r="22" fill="#e86a2a" stroke="#c94a22" stroke-width="3"/>
-        </g>
-        <g class="key" data-key="back" tabindex="0" role="button" aria-label="Back">
-          <circle class="face" cx="472" cy="150" r="14" fill="#e0561f" stroke="#c94a22" stroke-width="3"/>
-          <path d="M478 146 H468 M468 146 L472 142 M468 146 L472 150" stroke="#a33a17" stroke-width="2" fill="none" stroke-linecap="round"/>
-        </g>
+        <image id="lcd" x="93" y="26" width="128" height="64" href="screens/home-awake@4x.png" preserveAspectRatio="none"/>
+        <path class="key" data-key="up" tabindex="0" role="button" aria-label="Up" d="M266.4,50.4 L249.4,33.4 A35,35 0 0 1 299.6,33.4 L282.6,50.4 A11.5,11.5 0 0 0 266.4,50.4 Z"/>
+        <path class="key" data-key="right" tabindex="0" role="button" aria-label="Right" d="M282.6,50.4 L299.6,33.4 A35,35 0 0 1 299.6,83.6 L282.6,66.6 A11.5,11.5 0 0 0 282.6,50.4 Z"/>
+        <path class="key" data-key="down" tabindex="0" role="button" aria-label="Down" d="M282.6,66.6 L299.6,83.6 A35,35 0 0 1 249.4,83.6 L266.4,66.6 A11.5,11.5 0 0 0 282.6,66.6 Z"/>
+        <path class="key" data-key="left" tabindex="0" role="button" aria-label="Left" d="M266.4,66.6 L249.4,83.6 A35,35 0 0 1 249.4,33.4 L266.4,50.4 A11.5,11.5 0 0 0 266.4,66.6 Z"/>
+        <circle class="key" data-key="ok" tabindex="0" role="button" aria-label="OK" cx="274.5" cy="58.5" r="11.5"/>
+        <circle class="key" data-key="back" tabindex="0" role="button" aria-label="Back" cx="326.5" cy="82.5" r="12"/>
       </svg>
-      <div>
-        <div class="screen-note" aria-live="polite">
-          <h3 id="note-title">Harold at his desk</h3>
-          <p id="note-text">Keep-awake is on. Harold reads code, types, sips his coffee and hunts bugs, and the status line counts down to the next walk.</p>
-          <p class="hint" id="note-keys"></p>
-        </div>
-        <div class="chips" aria-label="Jump to a screen">
-          <button class="chip" data-go="home">Home</button>
-          <button class="chip" data-go="settings">Settings</button>
-          <button class="chip" data-go="remote">Remote</button>
-          <button class="chip" data-go="preview">Preview</button>
-          <button class="chip" data-go="link">Connection check</button>
-        </div>
-      </div>
     </div>
-  </section>
-
-  <section id="how">
-    <p class="eyebrow">How it works</p>
-    <h2>Three steps, then walk away.</h2>
-    <p class="intro">Your computer decides you're away from its idle timer, and any mouse movement resets it. Harold sends that movement, as a real mouse would.</p>
-    <div class="steps">
-      <div class="step">
-        <div class="lcd"><img class="pixel" src="screens/welcome@4x.png" width="512" height="256" alt="Welcome screen: USB on the left, Bluetooth on the right"></div>
-        <div class="num">1</div>
-        <h3>Open Duckwalk</h3>
-        <p>On the first launch Harold asks how to reach your computer: a USB cable or Bluetooth.</p>
-      </div>
-      <div class="step">
-        <div class="lcd"><img class="pixel" src="screens/pairing-all-set@4x.png" width="512" height="256" alt="Connection checklist with every box ticked"></div>
-        <div class="num">2</div>
-        <h3>Connect</h3>
-        <p>A checklist on the Flipper ticks itself off and tells you which side needs attention.</p>
-      </div>
-      <div class="step">
-        <div class="lcd"><img class="pixel" src="screens/home-walking@4x.png" width="512" height="256" alt="Harold walking while the pointer walks"></div>
-        <div class="num">3</div>
-        <h3>Step away</h3>
-        <p>Pick a mode. Harold keeps the computer awake until you're back, or until you say stop.</p>
-      </div>
+    <p class="hint">Press its buttons. Hold OK to quack.</p>
+    <div class="actions">
+      <a class="button primary" href="#install">Get it</a>
+      <a class="button" href="https://github.com/arudaev/duckwalk">Source</a>
     </div>
-  </section>
+    <div class="walker">
+      <svg class="trail pen" viewBox="0 0 520 60" preserveAspectRatio="none" aria-hidden="true"><path d="M10,40 C80,10 140,10 200,32 S320,58 380,30 S470,8 510,44"/></svg>
+      <img class="on-light" src="harold-walk.png" width="236" height="121" alt="Harold pushing the mouse pointer along">
+      <img class="on-dark" src="harold-walk-dark.png" width="236" height="121" alt="">
+    </div>
+  </header>
 
   <section id="modes">
-    <p class="eyebrow">Modes</p>
-    <h2>Three ways to look busy.</h2>
-    <p class="intro">Each one puts the pointer back where it started. These run the same kind of paths the app plans, sped up.</p>
-    <div class="modes">
-      <div class="mode">
-        <canvas id="walk" width="640" height="400" aria-label="A pointer taking a short curved walk and coming back"></canvas>
-        <div class="body"><h3>Walk <span class="tag">every few minutes</span></h3><p>A short, curved, random walk. Never the same path twice, so it doesn't look like a jiggler.</p></div>
-      </div>
-      <div class="mode">
-        <canvas id="subtle" width="640" height="400" aria-label="A pointer nudged by one pixel, shown magnified"></canvas>
-        <div class="body"><h3>Subtle <span class="tag">invisible</span></h3><p>One pixel out and back. Enough for the idle timer, too small to notice while you work.</p></div>
-      </div>
-      <div class="mode">
-        <canvas id="wander" width="640" height="400" aria-label="A pointer drifting around without stopping"></canvas>
-        <div class="body"><h3>Wander <span class="tag">non-stop</span></h3><p>The pointer drifts like something alive. Turn it off and it glides back to where it began.</p>
-          <button class="button" id="wander-toggle">Turn Wander off</button></div>
-      </div>
+    <h2>Three ways to walk</h2>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-mode="walk">Walk</button>
+      <button role="tab" aria-selected="false" data-mode="subtle">Subtle</button>
+      <button role="tab" aria-selected="false" data-mode="wander">Wander</button>
     </div>
+    <svg class="laptop" viewBox="0 0 1000 600" role="img" aria-label="A laptop where Harold moves the pointer">
+      <g class="pen">
+        <rect class="lid line-art" x="70" y="16" width="860" height="520" rx="26"/>
+        <rect class="line-art" x="104" y="50" width="792" height="452" rx="6"/>
+        <circle class="line-art" cx="500" cy="33" r="3.5"/>
+        <path class="lid line-art" d="M14,536 L986,536 L974,566 Q970,578 954,578 L46,578 Q30,578 26,566 Z"/>
+        <path class="line-art" d="M430,536 Q432,550 446,550 L554,550 Q568,550 570,536"/>
+      </g>
+      <foreignObject x="108" y="54" width="784" height="444"><canvas xmlns="http://www.w3.org/1999/xhtml" id="screen" width="1568" height="888"></canvas></foreignObject>
+    </svg>
+    <p class="status" id="status" aria-live="polite"></p>
+    <p class="say">Move your mouse over the screen, or touch it: Harold lets go.</p>
   </section>
 
-  <section id="helper">
-    <div class="helper">
-      <div>
-        <p class="eyebrow">PC helper</p>
-        <h2>He lets go when you're back.</h2>
-        <p class="intro">The optional Windows helper tells Harold when you touch your own mouse or keyboard. He drops the pointer at once and waits until you've been away a while. Over USB or Bluetooth.</p>
-        <ul class="plain">
-          <li><strong>Only one number leaves your computer:</strong> how long you've been idle, sent to the Flipper.</li>
-          <li><strong>It never sees what you type,</strong> only that some device was used.</li>
-          <li><strong>Harold's own moves don't count,</strong> so he can't keep himself busy.</li>
-        </ul>
-      </div>
-      <div class="demo" id="helper-demo">
-        <canvas id="helper-canvas" width="640" height="400" aria-label="Move your mouse here: Harold lets go of the pointer"></canvas>
-        <div class="status" id="helper-status"><i></i><span>Harold is wandering</span></div>
-        <div class="demo-hint">Move your mouse in here</div>
-      </div>
-    </div>
-  </section>
-
-  <section id="stops">
-    <p class="eyebrow">Knows when to stop</p>
-    <h2>Awake when you want it, not forever.</h2>
-    <div class="cards">
-      <div class="card">
-        <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
-        <h3>Work hours only</h3><p>Keep Harold to Monday to Friday, 8 to 18. Evenings and weekends, your computer sleeps as usual.</p>
-      </div>
-      <div class="card">
-        <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg></div>
-        <h3>Stop after</h3><p>Nobody around for 1, 2, 4 or 8 hours? Harold goes to sleep, so a computer you walked away from still locks.</p>
-      </div>
-      <div class="card">
-        <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5v14l11-7z"/></svg></div>
-        <h3>A remote too</h3><p>Media keys, next and previous slide, and a D-pad mouse, on the Left button while Harold keeps working.</p>
-      </div>
-    </div>
-  </section>
-
-  <section id="faq">
-    <p class="eyebrow">Questions</p>
-    <h2>Before you ask.</h2>
-    <details><summary>Does it need anything on my computer?</summary><p>No. Duckwalk is a standard USB or Bluetooth mouse, so there are no drivers and nothing to install. The PC helper is optional, for Harold to pause while you work.</p></details>
-    <details><summary>Which computers does it work with?</summary><p>Anything that takes a USB or Bluetooth mouse. It's tested on Windows 11; macOS and Linux reports are welcome. The PC helper is Windows only for now.</p></details>
-    <details><summary>Will it type or click on its own?</summary><p>Never. It only moves the pointer. It clicks or presses media keys only when you use the remote yourself.</p></details>
-    <details><summary>Can I keep using the Flipper's USB port?</summary><p>Over Bluetooth, yes: the USB port stays a normal Flipper port for charging and qFlipper. Over USB, Duckwalk uses the port while it runs and gives it back when you leave.</p></details>
-    <details><summary>Is it allowed at work?</summary><p>That depends on where you work. A keep-awake tool can be against an employer's rules; Duckwalk makes your computer look attended, and whether that's acceptable is your decision.</p></details>
-    <details><summary>Does this page track me?</summary><p>No. No cookies, no analytics and no scripts from anywhere else.</p></details>
-  </section>
-
-  <div class="get" id="get">
-    <div>
-      <p class="eyebrow">Get Duckwalk</p>
-      <h2>Put Harold on your Flipper.</h2>
-      <p>Free and open source under the GPL-3.0. Needs official Flipper firmware 1.5 or newer.</p>
-      <div class="actions" style="margin-top:20px">
-        <a class="button primary" href="https://github.com/arudaev/duckwalk/releases">Download</a>
-        <a class="button" href="https://github.com/arudaev/duckwalk">Source on GitHub</a>
-      </div>
-    </div>
-    <ol>
-      <li><strong>From the Flipper app</strong> once Duckwalk is listed: open the Flipper mobile app or <a href="https://lab.flipper.net/apps">Flipper Lab</a>, go to USB and install Duckwalk.</li>
-      <li><strong>From a release:</strong> copy <code>duckwalk.fap</code> to <code>apps/USB/</code> on the SD card with qFlipper.</li>
-      <li><strong>PC helper:</strong> download <code>duckwalk-helper</code> for Windows from the same release and leave it running.</li>
+  <section id="install">
+    <h2>Install</h2>
+    <ol class="steps">
+      <li><span>Get <code>duckwalk.fap</code> from the <a href="https://github.com/arudaev/duckwalk/releases">releases</a>, or from the Flipper app once it's listed.</span></li>
+      <li><span>Copy it to <code>apps/USB/</code> on the SD card with qFlipper.</span></li>
+      <li><span>Open it, pick USB or Bluetooth, and walk away.</span></li>
     </ol>
-  </div>
+    <p class="say">Official firmware 1.5 or newer. The optional <a href="https://github.com/arudaev/duckwalk/blob/main/desktop/helper/README.md">Windows helper</a> lets Harold know when you're back.</p>
+  </section>
 
-</main>
-
-<footer>
-  <div class="wrap">
-    Duckwalk is free software under the <a href="https://github.com/arudaev/duckwalk/blob/main/LICENSE">GPL-3.0</a>, made by <a href="https://github.com/arudaev">arudaev</a>. Harold is the duck from <a href="https://arudaev.github.io">VOYAGER // 56K</a>. Flipper Zero is a trademark of its owners; Duckwalk is a community app. Read the <a href="https://github.com/arudaev/duckwalk/blob/main/docs/guide.md">user guide</a>.
-  </div>
-</footer>
+  <footer>
+    <p>Free software, <a href="https://github.com/arudaev/duckwalk/blob/main/LICENSE">GPL-3.0</a>, by <a href="https://arudaev.github.io">Alexander Rudaev</a>. No tracking, no cookies.</p>
+    <p>Flipper drawing adapted from <a href="https://github.com/flipperdevices/qFlipper">qFlipper</a> (GPL-3.0). Flipper Zero is a trademark of Flipper Devices Inc.; Duckwalk is not affiliated with them.</p>
+  </footer>
+</div>
 
 <script>
 (() => {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const root = document.documentElement;
+
+  /* ---------- Light and dark ---------- */
+  const themeButton = document.getElementById("theme");
+  const darkQuery = matchMedia("(prefers-color-scheme: dark)");
+  const isDark = () => root.dataset.theme ? root.dataset.theme === "dark" : darkQuery.matches;
+  function labelTheme() { themeButton.textContent = isDark() ? "Light" : "Dark"; }
+  themeButton.addEventListener("click", () => {
+    root.dataset.theme = isDark() ? "light" : "dark";
+    try { localStorage.setItem("duckwalk-theme", root.dataset.theme); } catch (e) {}
+    labelTheme(); readColours();
+  });
+  darkQuery.addEventListener("change", () => { labelTheme(); readColours(); });
+  labelTheme();
 
   /* ---------- The Flipper ---------- */
   const lcd = document.getElementById("lcd");
-  const noteTitle = document.getElementById("note-title");
-  const noteText = document.getElementById("note-text");
-  const noteKeys = document.getElementById("note-keys");
   const shot = (name) => "screens/" + name + "@4x.png";
   const idleLoop = ["home-awake", "home-typing", "home-awake", "home-sip", "home-awake", "home-hop", "home-bug", "home-bug-quack", "home-bug-fixed"];
-
   const screens = {
-    home: { title: "Harold at his desk", text: "Keep-awake is on. Harold reads code, types, sips his coffee and hunts bugs, and the status line counts down to the next walk.", keys: "OK sleep · → Settings · ← Remote · ↑ Preview · ↓ Connection check" },
-    asleep: { img: "home-asleep", title: "Asleep", text: "Keep-awake is off and your computer sleeps as usual. OK wakes Harold again.", keys: "OK wake" },
-    quack: { img: "home-quack", title: "Quack!", text: "Hold OK and Harold quacks, with sound and vibration if you want them.", keys: "" },
-    settings: { img: "settings", title: "Settings", text: "Mode (Walk, Subtle, Wander or Off), USB or Bluetooth, how often, how far, work hours, Stop after, sound and vibration.", keys: "↓ scroll down · Back saves" },
-    settings2: { img: "settings-bottom", title: "More settings", text: "Stop after puts Harold to sleep when nobody has been around for 1 to 8 hours.", keys: "↑ scroll up · Back saves" },
-    remote: { img: "remote-menu", title: "Remote", text: "Media, Slides or Mouse: Up and Down choose, OK opens. Keep-awake keeps running while the remote is open.", keys: "OK opens Media · Back home" },
-    media: { img: "remote-media", title: "Media remote", text: "Up and Down change the volume, Left and Right skip tracks, OK plays or pauses, holding OK mutes.", keys: "Back to the remote menu" },
-    preview: { img: "preview", title: "Preview", text: "The next walk, drawn to scale, with a small Harold tracing it. OK plays it on the computer now.", keys: "OK play it · Back home" },
-    walking: { img: "home-walking", title: "Walking", text: "The pointer takes its walk and comes back to where it started. Harold walks along.", keys: "" },
-    link: { img: "pairing-usb-all-set", title: "Connection check", text: "A checklist for USB or Bluetooth. The first open box tells you which side, Flipper or computer, needs attention.", keys: "Back home" },
+    asleep: "home-asleep", quack: "home-quack", settings: "settings", settings2: "settings-bottom",
+    remote: "remote-menu", media: "remote-media", preview: "preview", walking: "home-walking", link: "pairing-usb-all-set",
   };
   const moves = {
     home: { ok: "asleep", right: "settings", left: "remote", up: "preview", down: "link", hold: "quack" },
@@ -416,257 +253,204 @@
     walking: { back: "home" },
     link: { back: "home" },
   };
-  let state = "home", loopAt = 0, timer = null;
+  [...idleLoop, ...Object.values(screens)].forEach((n) => { new Image().src = shot(n); });
 
+  let state = "home", loopAt = 0, timer = null;
   function show(next) {
     state = next;
-    const s = screens[next];
     clearTimeout(timer);
-    if (next === "home") { loopAt = 0; lcd.setAttribute("href", shot("home-awake")); }
-    else lcd.setAttribute("href", shot(s.img));
-    noteTitle.textContent = s.title;
-    noteText.textContent = s.text;
-    noteKeys.textContent = s.keys;
+    lcd.setAttribute("href", shot(next === "home" ? "home-awake" : screens[next]));
+    loopAt = 0;
     if (next === "walking") timer = setTimeout(() => show("home"), 3200);
     if (next === "quack") timer = setTimeout(() => show("home"), 1400);
   }
-  // Harold's desk is never still.
   setInterval(() => {
     if (state !== "home" || reduce) return;
     loopAt = (loopAt + 1) % idleLoop.length;
     lcd.setAttribute("href", shot(idleLoop[loopAt]));
   }, 1600);
-
   function press(key) {
     const target = (moves[state] || {})[key];
     if (target) show(target);
   }
+  const flipper = document.getElementById("flipper");
   let holdTimer = null, held = false;
-  document.querySelectorAll(".flipper .key").forEach((el) => {
+  flipper.querySelectorAll(".key").forEach((el) => {
     const key = el.dataset.key;
     el.addEventListener("pointerdown", (e) => {
       e.preventDefault(); el.classList.add("down"); held = false;
       if (key === "ok") holdTimer = setTimeout(() => { held = true; press("hold"); }, 600);
     });
-    const up = () => {
+    el.addEventListener("pointerup", () => {
       if (!el.classList.contains("down")) return;
       el.classList.remove("down"); clearTimeout(holdTimer);
       if (!held) press(key);
-    };
-    el.addEventListener("pointerup", up);
+    });
     el.addEventListener("pointerleave", () => { el.classList.remove("down"); clearTimeout(holdTimer); });
     el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); press(key); } });
   });
   const keymap = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", Enter: "ok", Backspace: "back", Escape: "back" };
-  const flipper = document.getElementById("flipper");
   document.addEventListener("keydown", (e) => {
     const key = keymap[e.key];
-    if (!key || (e.target.closest && e.target.closest("input, textarea, summary, button, a"))) return;
+    if (!key || (e.target.closest && e.target.closest("a, button, input, textarea, .key"))) return;
     const r = flipper.getBoundingClientRect();
-    if (r.bottom < 0 || r.top > innerHeight) return;   // only while it's on screen
+    if (r.bottom < 0 || r.top > innerHeight) return;
     e.preventDefault();
     const el = flipper.querySelector(`[data-key="${key}"]`);
     el.classList.add("down"); setTimeout(() => el.classList.remove("down"), 140);
     press(key);
   });
-  document.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => show(b.dataset.go)));
-  show("home");
 
-  /* ---------- Pointer demos ---------- */
-  function pointer(ctx, x, y, s = 1) {
+  /* ---------- The laptop screen ---------- */
+  const canvas = document.getElementById("screen");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const status = document.getElementById("status");
+  const home = [W * 0.5, H * 0.5];
+  let C = {};
+  function readColours() {
+    const cs = getComputedStyle(root);
+    C = { paper: cs.getPropertyValue("--paper").trim(), ink: cs.getPropertyValue("--ink").trim(), faint: cs.getPropertyValue("--faint").trim(), orange: cs.getPropertyValue("--orange").trim() };
+    if (reduce) still();
+  }
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  function backdrop() {
+    ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = C.faint;   // a page of code
+    for (let i = 0; i < 12; i++) ctx.fillRect(70 + (i % 3) * 40, 70 + i * 64, 260 + ((i * 97) % 640), 18);
+  }
+  function pointer(x, y, s = 3) {
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
     ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 26); ctx.lineTo(7, 20); ctx.lineTo(12, 31); ctx.lineTo(17, 29); ctx.lineTo(12, 18); ctx.lineTo(21, 18); ctx.closePath();
-    ctx.fillStyle = "#fff"; ctx.strokeStyle = "#1c1915"; ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.fill(); ctx.stroke();
+    ctx.fillStyle = C.paper; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.4; ctx.lineJoin = "round"; ctx.fill(); ctx.stroke();
     ctx.restore();
   }
-  function desk(ctx, w, h) {
-    ctx.fillStyle = css("--desk"); ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = css("--card"); ctx.strokeStyle = css("--line"); ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.roundRect(36, 34, w - 72, h - 68, 12); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = css("--line");
-    for (let i = 0; i < 6; i++) ctx.fillRect(64, 70 + i * 34, (w - 160) * (0.35 + ((i * 37) % 50) / 100), 10);
-  }
-  function trail(ctx, pts, color) {
-    for (let i = 1; i < pts.length; i++) {
-      ctx.globalAlpha = i / pts.length; ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.lineCap = "round";
-      ctx.beginPath(); ctx.moveTo(pts[i - 1][0], pts[i - 1][1]); ctx.lineTo(pts[i][0], pts[i][1]); ctx.stroke();
+  function trail(pts) {   // dotted, like the drawings
+    ctx.fillStyle = C.orange;
+    for (let i = 0; i < pts.length; i += 3) {
+      ctx.globalAlpha = 0.25 + 0.75 * i / pts.length;
+      ctx.beginPath(); ctx.arc(pts[i][0], pts[i][1], 5, 0, 6.28); ctx.fill();
     }
     ctx.globalAlpha = 1;
   }
-  const rand = (a, b) => a + Math.random() * (b - a);
-  // Draw only what's on screen.
-  const onScreen = new Set();
-  const watch = new IntersectionObserver((entries) => entries.forEach((e) => e.isIntersecting ? onScreen.add(e.target) : onScreen.delete(e.target)));
-  document.querySelectorAll("canvas").forEach((c) => watch.observe(c));
+  function startMark() {
+    ctx.strokeStyle = C.ink; ctx.setLineDash([6, 10]); ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(home[0], home[1], 16, 0, 6.28); ctx.stroke(); ctx.setLineDash([]);
+  }
 
-  // A wander: steer towards a spot, turn a little each step, ease the pace.
+  // Walk: a planned curve through a few spots and back, then a pause.
+  function planWalk() {
+    const pts = [[0, 0]];
+    for (let i = 0; i < 3; i++) pts.push([rand(-440, 440), rand(-280, 280)]);
+    pts.push([0, 0]);
+    const out = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+      for (let s = 0; s < 1; s += 0.025) {
+        const s2 = s * s, s3 = s2 * s, c = (k) => 0.5 * (2 * p1[k] + (-p0[k] + p2[k]) * s + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * s2 + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * s3);
+        out.push([c(0), c(1)]);
+      }
+    }
+    out.push([0, 0]);
+    return out;
+  }
+  // Wander: steer towards a spot, turn a little each step, ease the pace.
   function Wanderer(range) {
-    const w = { x: 0, y: 0, h: rand(0, 6.28), speed: 0, cruise: 2.4, tx: 0, ty: 0, homing: false, range };
+    const w = { x: 0, y: 0, h: rand(0, 6.28), speed: 0, cruise: 6, tx: 0, ty: 0 };
     w.pick = () => {
       for (let i = 0; i < 8; i++) {
-        const a = rand(0, 6.28), r = Math.sqrt(Math.random()) * w.range;
-        w.tx = Math.cos(a) * r; w.ty = Math.sin(a) * r;
-        if (Math.hypot(w.tx - w.x, w.ty - w.y) > w.range * 0.35) break;
+        const a = rand(0, 6.28), r = Math.sqrt(Math.random()) * range;
+        w.tx = Math.cos(a) * r; w.ty = Math.sin(a) * r * 0.6;
+        if (Math.hypot(w.tx - w.x, w.ty - w.y) > range * 0.35) break;
       }
-      if (Math.random() < 0.34) w.cruise = [1.6, 2.4, 3.2][Math.floor(rand(0, 3))];
+      if (Math.random() < 0.34) w.cruise = [4, 6, 8][Math.floor(rand(0, 3))];
     };
     w.step = () => {
-      const tx = w.homing ? 0 : w.tx, ty = w.homing ? 0 : w.ty;
-      const dist = Math.hypot(tx - w.x, ty - w.y);
-      if (dist < 4) { if (w.homing) { w.x = 0; w.y = 0; w.speed = 0; return true; } w.pick(); }
-      let d = Math.atan2(ty - w.y, tx - w.x) - w.h;
+      const dist = Math.hypot(w.tx - w.x, w.ty - w.y);
+      if (dist < 10) w.pick();
+      let d = Math.atan2(w.ty - w.y, w.tx - w.x) - w.h;
       while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
       w.h += Math.max(-0.1, Math.min(0.1, d));
-      let pace = w.cruise;
-      if (w.homing) pace = Math.min(2.4, Math.max(0.6, dist * 0.05));
-      w.speed += (pace - w.speed) * 0.04;
+      w.speed += (w.cruise - w.speed) * 0.05;
       w.x += Math.cos(w.h) * w.speed; w.y += Math.sin(w.h) * w.speed;
-      return false;
     };
     w.pick();
     return w;
   }
 
-  function scaled(canvas) {
-    const ctx = canvas.getContext("2d");
-    return { ctx, w: canvas.width, h: canvas.height };
+  let mode = "walk", pts = [], path = [], t = 0, wait = 40, n = 0, wd = Wanderer(640);
+  let p = [0, 0], last = 0, acc = 0, off = false, userAt = -1e9, frozen = null, onScreen = false;
+  new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; }).observe(canvas);
+  canvas.addEventListener("pointermove", () => { userAt = performance.now(); });
+  canvas.addEventListener("pointerdown", () => { userAt = performance.now(); });
+
+  document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll(".tabs button").forEach((o) => o.setAttribute("aria-selected", String(o === b)));
+    mode = b.dataset.mode; pts = []; path = []; t = 0; wait = 20; n = 0; p = [0, 0]; wd = Wanderer(640); frozen = null;
+    if (reduce) still();
+  }));
+  function say(text, user) { if (status.textContent !== text) status.textContent = text; status.classList.toggle("user", !!user); }
+  function caption() {
+    if (mode === "walk") return wait > 0 ? "Walk: a new random loop every few minutes." : "Walking. It always comes back.";
+    if (mode === "subtle") return off ? "Subtle: one pixel out..." : "...and back. You'll never see it.";
+    return "Wander: it drifts around and never stops.";
   }
 
-  // Walk: a smooth loop through a few waypoints, then a pause.
-  (() => {
-    const { ctx, w, h } = scaled(document.getElementById("walk"));
-    const home = [w * 0.46, h * 0.52];
-    let path = [], t = 0, wait = 60, trailPts = [];
-    function plan() {
-      const pts = [[0, 0]];
-      for (let i = 0; i < 3; i++) pts.push([rand(-120, 120), rand(-80, 80)]);
-      pts.push([0, 0]);
-      const out = [];
-      for (let i = 0; i < pts.length - 1; i++) {
-        const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
-        for (let s = 0; s < 1; s += 0.03) {
-          const s2 = s * s, s3 = s2 * s;
-          out.push([0.5 * (2 * p1[0] + (-p0[0] + p2[0]) * s + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * s2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * s3),
-                    0.5 * (2 * p1[1] + (-p0[1] + p2[1]) * s + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * s2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * s3)]);
-        }
-      }
-      out.push([0, 0]);
-      return out;
+  // The model steps 60 times a second whatever the screen's refresh rate.
+  function tick() {
+    if (mode === "walk") {
+      if (wait > 0) { if (--wait === 0) { path = planWalk(); t = 0; pts = []; } p = [0, 0]; }
+      else { p = path[Math.min(t++, path.length - 1)]; if (t >= path.length) wait = 120; }
+    } else if (mode === "subtle") {
+      n++; off = Math.floor(n / 40) % 4 === 1; p = [off ? 2 : 0, 0];
+    } else {
+      wd.step(); p = [wd.x, wd.y];
     }
-    function frame() {
-      if (!reduce && !onScreen.has(ctx.canvas)) return requestAnimationFrame(frame);
-      desk(ctx, w, h);
-      let p = [0, 0];
-      if (wait > 0) { wait--; if (wait === 0) { path = plan(); t = 0; trailPts = []; } }
-      else { p = path[Math.min(t, path.length - 1)]; t++; if (t >= path.length) wait = 110; }
-      const x = home[0] + p[0], y = home[1] + p[1];
-      trailPts.push([x, y]); if (trailPts.length > 70) trailPts.shift();
-      trail(ctx, trailPts, "#ff8200");
-      ctx.fillStyle = css("--muted"); ctx.font = "600 22px system-ui"; ctx.fillText(wait > 0 ? "Next walk in 0:0" + Math.ceil(wait / 30) : "Walking", 58, h - 50);
-      pointer(ctx, x, y, 1.4);
-      if (!reduce) requestAnimationFrame(frame);
+    pts.push([home[0] + p[0], home[1] + p[1]]); if (pts.length > 140) pts.shift();
+  }
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(now - (last || now), 200); last = now;
+    if (!onScreen) return;
+    backdrop(); startMark();
+    if (now - userAt < 2000) {
+      if (!frozen) frozen = p.slice();
+      if (mode === "subtle") magnifier(false); else trail(pts);
+      pointer(home[0] + frozen[0], home[1] + frozen[1]);
+      return say("You moved the mouse. Harold let go.", true);
     }
-    if (reduce) { path = plan(); trailPts = path.map((p) => [home[0] + p[0], home[1] + p[1]]); wait = 0; t = 0; }
-    frame();
-  })();
+    frozen = null;
+    for (acc += dt; acc >= 1000 / 60; acc -= 1000 / 60) tick();
+    if (mode === "subtle") magnifier(off); else trail(pts);
+    pointer(home[0] + p[0], home[1] + p[1]);
+    say(caption());
+  }
+  function magnifier(isOff) {
+    const mx = W * 0.78, my = H * 0.5, r = 220, z = 16;
+    ctx.save(); ctx.beginPath(); ctx.arc(mx, my, r, 0, 6.28); ctx.clip();
+    ctx.fillStyle = C.paper; ctx.fillRect(mx - r, my - r, 2 * r, 2 * r);
+    ctx.strokeStyle = C.faint; ctx.lineWidth = 2;
+    for (let g = -r; g < r; g += z) {
+      ctx.beginPath(); ctx.moveTo(mx + g, my - r); ctx.lineTo(mx + g, my + r); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(mx - r, my + g); ctx.lineTo(mx + r, my + g); ctx.stroke();
+    }
+    pointer(mx - 80 + (isOff ? z : 0), my - 120, 8);
+    ctx.restore();
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(mx, my, r, 0, 6.28); ctx.stroke();
+    ctx.lineWidth = 9; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(mx - r * 0.72, my + r * 0.72); ctx.lineTo(mx - r * 1.05, my + r * 1.05); ctx.stroke();
+  }
+  function still() {   // reduced motion: one finished path, drawn once
+    backdrop(); startMark();
+    if (mode === "walk") { pts = planWalk().map((q) => [home[0] + q[0], home[1] + q[1]]); trail(pts); wait = 1; }
+    if (mode === "wander") { const w = Wanderer(640); pts = []; for (let i = 0; i < 400; i++) { w.step(); pts.push([home[0] + w.x, home[1] + w.y]); } trail(pts.slice(-200)); }
+    if (mode === "subtle") { off = true; magnifier(true); }
+    pointer(home[0], home[1]);
+    say(caption());
+  }
 
-  // Subtle: one pixel out and back, with a magnifier.
-  (() => {
-    const { ctx, w, h } = scaled(document.getElementById("subtle"));
-    const at = [w * 0.34, h * 0.48];
-    let n = 0;
-    function frame() {
-      if (!reduce && !onScreen.has(ctx.canvas)) return requestAnimationFrame(frame);
-      desk(ctx, w, h);
-      const off = Math.floor(n / 25) % 4 === 1 ? 1 : 0;
-      pointer(ctx, at[0] + off, at[1], 1.4);
-      // the magnifier
-      const mx = w * 0.7, my = h * 0.5, r = 92, z = 6;
-      ctx.save(); ctx.beginPath(); ctx.arc(mx, my, r, 0, 6.28); ctx.clip();
-      ctx.fillStyle = css("--card"); ctx.fillRect(mx - r, my - r, 2 * r, 2 * r);
-      ctx.strokeStyle = css("--line"); ctx.lineWidth = 1;
-      for (let gx = -r; gx < r; gx += z) { ctx.beginPath(); ctx.moveTo(mx + gx, my - r); ctx.lineTo(mx + gx, my + r); ctx.stroke(); }
-      for (let gy = -r; gy < r; gy += z) { ctx.beginPath(); ctx.moveTo(mx - r, my + gy); ctx.lineTo(mx + r, my + gy); ctx.stroke(); }
-      pointer(ctx, mx - 30 + off * z, my - 50, z * 0.55);
-      ctx.restore();
-      ctx.strokeStyle = "#ff8200"; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(mx, my, r, 0, 6.28); ctx.stroke();
-      ctx.fillStyle = css("--muted"); ctx.font = "600 22px system-ui";
-      ctx.fillText(off ? "1 px out" : "and back", mx - 44, my + r + 30);
-      n++;
-      if (!reduce) requestAnimationFrame(frame);
-    }
-    frame();
-  })();
-
-  // Wander: non-stop drift; off glides home.
-  (() => {
-    const { ctx, w, h } = scaled(document.getElementById("wander"));
-    const home = [w * 0.5, h * 0.5];
-    let wd = Wanderer(130), on = true, trailPts = [], rest = 0;
-    const button = document.getElementById("wander-toggle");
-    button.addEventListener("click", () => {
-      on = !on; wd.homing = !on;
-      if (on) { wd = Wanderer(130); rest = 0; }
-      button.textContent = on ? "Turn Wander off" : "Turn Wander on";
-    });
-    function frame() {
-      if (!reduce && !onScreen.has(ctx.canvas)) return requestAnimationFrame(frame);
-      desk(ctx, w, h);
-      let label = "Wandering";
-      if (on || wd.homing) {
-        const back = wd.step();
-        if (back) { wd.homing = false; rest = 1; }
-        if (wd.homing) label = "Going back";
-      }
-      if (!on && rest) label = "Back where it started";
-      const x = home[0] + wd.x, y = home[1] + wd.y * 0.7;
-      trailPts.push([x, y]); if (trailPts.length > 90) trailPts.shift();
-      trail(ctx, trailPts, "#ff8200");
-      ctx.strokeStyle = css("--muted"); ctx.setLineDash([4, 6]); ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(home[0], home[1], 7, 0, 6.28); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = css("--muted"); ctx.font = "600 22px system-ui"; ctx.fillText(label, 58, h - 50);
-      pointer(ctx, x, y, 1.4);
-      if (!reduce) requestAnimationFrame(frame);
-    }
-    if (reduce) { for (let i = 0; i < 300; i++) { wd.step(); trailPts.push([home[0] + wd.x, home[1] + wd.y * 0.7]); } trailPts = trailPts.slice(-90); }
-    frame();
-  })();
-
-  // The helper: your mouse in the box makes Harold let go.
-  (() => {
-    const canvas = document.getElementById("helper-canvas");
-    const { ctx, w, h } = scaled(canvas);
-    const status = document.getElementById("helper-status");
-    const label = status.querySelector("span");
-    const home = [w * 0.5, h * 0.55];
-    let wd = Wanderer(150), userAt = -1e9, trailPts = [], frozen = null, you = null;
-    canvas.addEventListener("pointermove", (e) => {
-      const r = canvas.getBoundingClientRect();
-      you = [(e.clientX - r.left) * (w / r.width), (e.clientY - r.top) * (h / r.height)];
-      userAt = performance.now();
-    });
-    canvas.addEventListener("pointerleave", () => { you = null; });
-    function frame(now) {
-      if (!reduce && !onScreen.has(ctx.canvas)) return requestAnimationFrame(frame);
-      now = now || performance.now();
-      desk(ctx, w, h);
-      const working = now - userAt < 2500;
-      if (working) {
-        if (!frozen) frozen = [home[0] + wd.x, home[1] + wd.y * 0.7];
-        status.classList.add("user"); label.textContent = "You're working: Harold let go";
-      } else {
-        if (frozen) { wd = Wanderer(150); wd.x = frozen[0] - home[0]; wd.y = (frozen[1] - home[1]) / 0.7; frozen = null; trailPts = []; }
-        wd.step();
-        status.classList.remove("user"); label.textContent = "You're away: Harold is wandering";
-      }
-      const x = frozen ? frozen[0] : home[0] + wd.x, y = frozen ? frozen[1] : home[1] + wd.y * 0.7;
-      if (!frozen) { trailPts.push([x, y]); if (trailPts.length > 90) trailPts.shift(); }
-      trail(ctx, trailPts, "#ff8200");
-      pointer(ctx, x, y, 1.4);
-      if (!reduce) requestAnimationFrame(frame);
-    }
-    frame();
-  })();
+  readColours();
+  if (reduce) still(); else requestAnimationFrame(frame);
 })();
 </script>
 </body>
