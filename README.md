@@ -117,9 +117,9 @@ On the first launch Harold asks how to reach the computer: <kbd>←</kbd> for US
 
 ```mermaid
 flowchart LR
-    F["Flipper Zero<br>Duckwalk"] -- "mouse, media keys, data<br>over USB or Bluetooth" --> PC["Your computer"]
-    PC --> H["PC helper<br>(optional, Windows)"]
-    H -- "how long you've been idle" --> F
+    F[Flipper Zero running Duckwalk] -->|mouse, media keys and data over USB or Bluetooth| PC[Your computer]
+    PC --> H[PC helper, optional, Windows]
+    H -->|how long you have been idle| F
 ```
 
 Most Flipper apps that talk to a computer turn the USB port into a single device, so a jiggler and a PC monitor cannot run at once. Over USB, Duckwalk is one device with three parts: a mouse, media keys and a small data channel, all standard USB HID. Over Bluetooth it pairs like any Bluetooth mouse, using the firmware's HID profile plus one small data service of Duckwalk's own, and the USB port stays free for charging and qFlipper.
