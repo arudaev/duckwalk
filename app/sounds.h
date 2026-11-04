@@ -32,11 +32,10 @@ typedef enum {
     SoundCount,
 } Sound;
 
-/* Builds every sound once; call before the first sounds_play. */
+/* Starts the sound worker; call before the first sounds_play. */
 void sounds_init(void);
 void sounds_free(void);
 
-/* Plays the sound if `level` lets it through, and buzzes for the warnings
- * when `vibro` is on. Never blocks for long: the notification service plays
- * it on its own thread. The Flipper's volume and stealth mode still apply. */
+/* Queues the sound if `level` lets it through, and a warning buzz if enabled.
+ * Playback runs on the sound worker. */
 void sounds_play(Sound sound, uint8_t level, bool vibro);

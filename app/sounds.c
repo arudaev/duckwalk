@@ -1,21 +1,15 @@
-/* Harold's sounds, played on the Flipper's speaker.
- *
- * The speaker plays one tone at a time as a train of narrow pulses, so every
- * sound is a list of short tones. The quack follows a recorded duck: a low,
- * buzzy voice around 150 Hz that rises to 180 Hz and falls away, about 170 ms
- * long. A pulse train that low is mostly harmonics, which is what makes it
- * sound nasal rather than like a beep. Melodies use plain notes.
- *
- * The tones are built into notification sequences once, at start, and stay
- * put until the app ends: the notification service plays a sequence later,
- * on its own thread, and reads it while it plays. */
+/* Harold's recordings and the app's notification cues share one playback
+ * queue so a footstep and a chime cannot fight over the speaker. */
 
 #include "sounds.h"
+#include "sounds_samples.h"
+#include "speaker_pcm.h"
 
 #include <notification/notification.h>
 #include <notification/notification_messages.h>
 
 #define STEP_MS 6 /* one pitch step of a sweep */
+#define SOUND_QUEUE_LENGTH 6
 
 typedef struct {
     NotificationMessage* messages; /* NULL on the counting pass */
@@ -45,6 +39,25 @@ static const SoundInfo info[SoundCount] = {
     [SoundNudge] = {SoundLevelLively, false},
 };
 
+typedef struct {
+    const uint8_t* data;
+    size_t count;
+    uint8_t gain;
+} Sample;
+
+static const Sample samples[SoundCount] = {
+    [SoundQuack] = {quack_sample, sizeof(quack_sample), 100},
+    [SoundBugQuack] = {quack_sample, sizeof(quack_sample), 80},
+    [SoundStepLeft] = {step_left_sample, sizeof(step_left_sample), 100},
+    [SoundStepRight] = {step_right_sample, sizeof(step_right_sample), 100},
+};
+
+typedef struct {
+    Sound sound;
+    bool play_audio;
+    bool buzz;
+} SoundRequest;
+
 static const NotificationSequence sequence_buzz = {
     &message_vibro_on,
     &message_delay_100,
@@ -61,6 +74,9 @@ static struct {
     NotificationMessage* messages;
     const NotificationMessage** steps;
     size_t start[SoundCount]; /* each sound's first step */
+    FuriMessageQueue* queue;
+    FuriThread* worker;
+    uint8_t sample_volume;
 } sounds;
 
 static void put(Builder* b, NotificationMessage message) {
@@ -102,41 +118,6 @@ static void sweep(Builder* b, float from, float to, uint32_t ms, float volume, f
     }
 }
 
-/* The recorded quack's pitch and loudness, point by point. Loudness is the
- * speaker's volume, whose pulse width grows with its cube; 0.8 at the peak
- * leaves room for the fade at full volume. */
-static const struct {
-    uint16_t ms;
-    uint16_t hz;
-    float volume;
-} quack_points[] = {
-    {0, 150, 0.20f},
-    {15, 145, 0.68f},
-    {30, 146, 0.80f},
-    {55, 166, 0.78f},
-    {85, 177, 0.66f},
-    {115, 181, 0.46f},
-    {140, 160, 0.38f},
-    {170, 139, 0.22f},
-};
-
-#define QUACK_STEP_MS 5
-
-/* One quack, `pitch` times the recorded pitch, `length` times as long. */
-static void quack(Builder* b, float pitch, float length, float volume) {
-    const size_t n = sizeof(quack_points) / sizeof(quack_points[0]);
-    uint32_t end = quack_points[n - 1].ms;
-    size_t k = 0;
-    for(uint32_t t = 0; t < end; t += QUACK_STEP_MS) {
-        while(t >= quack_points[k + 1].ms) k++;
-        float a = (float)(t - quack_points[k].ms) / (quack_points[k + 1].ms - quack_points[k].ms);
-        float hz = quack_points[k].hz + (quack_points[k + 1].hz - quack_points[k].hz) * a;
-        float v = quack_points[k].volume + (quack_points[k + 1].volume - quack_points[k].volume) * a;
-        uint32_t ms = (uint32_t)(QUACK_STEP_MS * length + 0.5f);
-        tone(b, hz * pitch, ms ? ms : 1, v * volume);
-    }
-}
-
 /* Notes */
 #define C5 523.25f
 #define E5 659.25f
@@ -151,9 +132,6 @@ static void quack(Builder* b, float pitch, float length, float volume) {
 
 static void build(Builder* b, Sound sound) {
     switch(sound) {
-    case SoundQuack:
-        quack(b, 1.0f, 1.0f, 1.0f);
-        break;
     case SoundWake:
         tone(b, C6, 45, 0.7f);
         tone(b, E6, 45, 0.7f);
@@ -185,10 +163,6 @@ static void build(Builder* b, Sound sound) {
         sweep(b, 600, 1000, 90, 0.45f, 0);
         tone(b, 1000, 30, 0.3f);
         break;
-    case SoundBugQuack:
-        /* At the bug: a little higher, quicker and quieter. */
-        quack(b, 1.12f, 0.8f, 0.85f);
-        break;
     case SoundBugFixed:
         tone(b, G6, 45, 0.5f);
         rest(b, 25);
@@ -196,14 +170,6 @@ static void build(Builder* b, Sound sound) {
         break;
     case SoundHop:
         sweep(b, 420, 900, 60, 0.35f, 0);
-        break;
-    case SoundStepLeft:
-        tone(b, 300, 10, 0.5f);
-        tone(b, 160, 8, 0.3f);
-        break;
-    case SoundStepRight:
-        tone(b, 250, 10, 0.5f);
-        tone(b, 140, 8, 0.3f);
         break;
     case SoundNudge:
         tone(b, 1800, 4, 0.25f);
@@ -219,8 +185,29 @@ static void build(Builder* b, Sound sound) {
 
 static void build_all(Builder* b) {
     for(Sound s = 0; s < SoundCount; s++) {
+        if(samples[s].data) continue;
         sounds.start[s] = b->step_count;
         build(b, s);
+    }
+}
+
+static int32_t sound_worker(void* context) {
+    UNUSED(context);
+    while(true) {
+        SoundRequest request;
+        furi_check(furi_message_queue_get(sounds.queue, &request, FuriWaitForever) == FuriStatusOk);
+        if(request.sound == SoundCount) return 0;
+        if(request.buzz) notification_message_block(sounds.notifications, &sequence_buzz);
+        if(!request.play_audio) continue;
+
+        const Sample* sample = &samples[request.sound];
+        if(sample->data) {
+            speaker_pcm_play(sample->data, sample->count, sounds.sample_volume * sample->gain / 100);
+        } else {
+            const NotificationSequence* sequence =
+                (const NotificationSequence*)&sounds.steps[sounds.start[request.sound]];
+            notification_message_block(sounds.notifications, sequence);
+        }
     }
 }
 
@@ -233,11 +220,21 @@ void sounds_init(void) {
     sounds.steps = malloc(b.step_count * sizeof(NotificationMessage*));
     b = (Builder){.messages = sounds.messages, .steps = sounds.steps};
     build_all(&b);
+    sounds.sample_volume = speaker_pcm_volume();
+    sounds.queue = furi_message_queue_alloc(SOUND_QUEUE_LENGTH, sizeof(SoundRequest));
+    sounds.worker = furi_thread_alloc_ex("DuckwalkSound", 2048, sound_worker, NULL);
+    furi_thread_start(sounds.worker);
 }
 
 void sounds_free(void) {
-    /* Let anything still playing finish before its tones are freed. */
-    notification_message_block(sounds.notifications, &sequence_empty);
+    /* Drop pending cues and let the current one release the speaker. */
+    furi_message_queue_reset(sounds.queue);
+    const SoundRequest stop = {.sound = SoundCount};
+    furi_check(furi_message_queue_put(sounds.queue, &stop, FuriWaitForever) == FuriStatusOk);
+    furi_thread_join(sounds.worker);
+    furi_thread_free(sounds.worker);
+    furi_message_queue_free(sounds.queue);
+    sounds.queue = NULL;
     free(sounds.steps);
     free(sounds.messages);
     furi_record_close(RECORD_NOTIFICATION);
@@ -245,10 +242,11 @@ void sounds_free(void) {
 }
 
 void sounds_play(Sound sound, uint8_t level, bool vibro) {
-    if(sound >= SoundCount || !sounds.notifications) return;
-    if(info[sound].buzz && vibro) notification_message(sounds.notifications, &sequence_buzz);
-    if(level >= info[sound].level) {
-        notification_message(
-            sounds.notifications, (const NotificationSequence*)&sounds.steps[sounds.start[sound]]);
-    }
+    if((unsigned)sound >= SoundCount || !sounds.queue) return;
+    const SoundRequest request = {
+        .sound = sound,
+        .play_audio = level >= info[sound].level,
+        .buzz = vibro && info[sound].buzz,
+    };
+    if(request.play_audio || request.buzz) furi_message_queue_put(sounds.queue, &request, 0);
 }

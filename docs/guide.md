@@ -56,17 +56,19 @@ Up and Down choose, Left and Right change. Settings are saved on the SD card in 
 
 | Sound | When | Heard on |
 |---|---|---|
-| A quack, modelled on a recorded duck | You hold OK | Cues, Lively |
+| A recorded cartoon quack | You hold OK | Cues, Lively |
 | Three notes up or down | OK wakes Harold or puts him to sleep | Cues, Lively |
 | A yawn, and a buzz | Stop after ran out and Harold went to sleep | Cues, Lively |
 | Two notes down, and a buzz | The computer went away for more than 3 seconds, while Harold is awake | Cues, Lively |
 | Two notes up | It came back | Cues, Lively |
 | "Huh?", a quack, a ding | The bug hunt: he spots a bug, quacks at it and fixes it | Lively |
 | Boing | A happy little hop | Lively |
-| Pit-pat | His footsteps during a walk (a wander stays quiet) | Lively |
+| Two recorded footfalls | His footsteps during a walk (a wander stays quiet) | Lively |
 | Tick | Subtle's one pixel | Lively |
 
 Harold's own sounds play only while he is on screen. The Flipper's volume and its mute (stealth mode) apply to all of them; the Flipper's own vibration setting can switch the buzz off too.
+
+Harold's quack and footfalls use short recordings. [Sound credits](sound-credits.md)
 
 ## Remote
 
