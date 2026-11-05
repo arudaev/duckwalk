@@ -10,12 +10,12 @@ typedef enum {
     SettingConnection,
     SettingInterval,
     SettingLength,
+    SettingResumeAfter, /* with the PC helper: the wait after your own input */
     SettingHours,
     SettingStopAfter,
-    SettingResumeAfter, /* with the PC helper: the wait after your own input */
+    SettingBabyLock, /* Back leaves only on a double tap or a 2 s hold */
     SettingSound,
     SettingVibro,
-    SettingBabyLock, /* Back leaves only on a double tap or a 2 s hold */
     SettingCount,
 } Setting;
 

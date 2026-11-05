@@ -45,12 +45,12 @@ The corner shows the connection: **USB**, **BT**, **BT pairing**, **no USB**. **
 | Connection | USB or Bluetooth |
 | Every | 30–60 s, 1–3 min, 2–4 min between walks (Wander doesn't wait) |
 | Walk length | Short, Medium, Long: how far a walk or a wander strays |
+| Resume after | 10 s, 30 s (default), 1 min, 2 min, 5 min: with the PC helper, how long Harold waits after your last own input before he takes the pointer again |
 | Hours | Always, or Mon–Fri 8–18 only |
 | Stop after | 1 h, 2 h, 4 h (default), 8 h, Never: Harold goes to sleep when nobody has pressed a button on the Flipper (or, with the PC helper, used the computer) for that long, so a computer you walked away from still locks. The home screen then says **You were away**; **OK** wakes him. Without the helper only the Flipper's buttons count, even while you work at the computer. For a whole day away, choose **Never** |
-| Resume after | 10 s, 30 s (default), 1 min, 2 min, 5 min: with the PC helper, how long Harold waits after your last own input before he takes the pointer again |
+| Baby lock | Off (default) or On: Back leaves only on a double tap or a 2-second hold, so a stray press doesn't close Duckwalk |
 | Sound | Off, Cues (default), Lively: see [Sounds](#sounds) |
 | Vibration | On or Off: a buzz for the two warnings, Stop after and a lost connection |
-| Baby lock | Off (default) or On: Back leaves only on a double tap or a 2-second hold, so a stray press doesn't close Duckwalk |
 
 Up and Down choose, Left and Right change. Settings are saved on the SD card in `apps_data/duckwalk/settings.txt`.
 

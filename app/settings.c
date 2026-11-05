@@ -33,12 +33,12 @@ static const struct {
     [SettingConnection] = {"Connection", connection_names, LinkCount, LinkUsb},
     [SettingInterval] = {"Every", interval_names, IntervalCount, IntervalNormal},
     [SettingLength] = {"Walk length", length_names, WalkLengthCount, WalkLengthMedium},
+    [SettingResumeAfter] = {"Resume after", resume_names, ResumeAfterCount, ResumeAfter30s},
     [SettingHours] = {"Hours", hours_names, HoursCount, HoursAlways},
     [SettingStopAfter] = {"Stop after", stop_names, StopAfterCount, StopAfter4h},
-    [SettingResumeAfter] = {"Resume after", resume_names, ResumeAfterCount, ResumeAfter30s},
+    [SettingBabyLock] = {"Baby lock", switch_names, 2, 0},
     [SettingSound] = {"Sound", sound_names, SoundLevelCount, SoundLevelCues},
     [SettingVibro] = {"Vibration", switch_names, 2, 1},
-    [SettingBabyLock] = {"Baby lock", switch_names, 2, 0},
 };
 
 void settings_defaults(DuckwalkSettings* settings) {

@@ -52,7 +52,7 @@ On the first launch Harold asks how to reach the computer: **Left** for USB, **R
 | Button | On the Flipper |
 |---|---|
 | **OK** | Wake Harold (keep-awake on) or put him to sleep. Hold to quack |
-| **Right** | Settings: mode, USB or Bluetooth, how often, how far, work hours, Stop after, Resume after, sound, vibration and Baby lock |
+| **Right** | Settings: mode, USB or Bluetooth, how often, how far, Resume after, work hours, Stop after, Baby lock, sound and vibration |
 | **Left** | Remote: media, slides or mouse |
 | **Up** | Preview: the next walk drawn to scale; OK plays it now |
 | **Down** | Connection check: a checklist that shows whether the Flipper or the computer needs attention |
