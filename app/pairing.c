@@ -202,6 +202,7 @@ void pairing_input(Duckwalk* app, const InputEvent* input) {
     Step step = current_step(app);
     switch(input->key) {
     case InputKeyBack:
+    case InputKeyUp: /* Down opened the check, so Up goes back */
         app->screen = ScreenHome;
         break;
     case InputKeyRight:

@@ -33,6 +33,8 @@ Harold asks how to reach your computer. **Left** for a USB cable, **Right** for 
 | Down | Connection check: is Harold reaching the computer? |
 | Back | Leave Duckwalk; USB and Bluetooth go back to normal. With Baby lock on: tap twice, or hold for 2 seconds |
 
+To come back, press the opposite button: **Down** from the preview, **Up** from the connection check, **Right** from the Remote's menu. **Back** works everywhere too. Settings is the exception: there Left and Right change the value, so only **Back** leaves.
+
 The corner shows the connection: **USB**, **BT**, **BT pairing**, **no USB**. **+PC** means the PC helper is talking to Duckwalk.
 
 ## Settings

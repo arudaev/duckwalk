@@ -58,6 +58,8 @@ On the first launch Harold asks how to reach the computer: **Left** for USB, **R
 | **Down** | Connection check: a checklist that shows whether the Flipper or the computer needs attention |
 | **Back** | Leave Duckwalk; USB and Bluetooth go back to normal. With Baby lock on: tap twice, or hold for 2 seconds |
 
+The opposite button brings you back: Down from Preview, Up from the connection check, Right from the Remote's menu.
+
 For a whole day away, set **Stop after** to **Never**. The [user guide](docs/guide.md) shows every screen.
 
 ## How it works

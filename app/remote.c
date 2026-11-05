@@ -111,7 +111,10 @@ static void menu_input(Duckwalk* app, const InputEvent* input) {
         r->selected = (r->selected + 1) % RemotePageCount;
     } else if(input->key == InputKeyOk && input->type == InputTypeShort) {
         r->page = r->selected;
-    } else if(input->key == InputKeyBack && input->type == InputTypeShort) {
+    } else if(
+        (input->key == InputKeyBack || input->key == InputKeyRight) &&
+        input->type == InputTypeShort) {
+        /* Left opened the Remote, so Right goes back. */
         app->screen = ScreenHome;
     }
 }
