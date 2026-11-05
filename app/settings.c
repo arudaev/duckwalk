@@ -21,6 +21,7 @@ static const char* const switch_names[] = {"Off", "On"};
 /* An old file's "Sound: On" isn't a name here, so it loads as the default, Cues. */
 static const char* const sound_names[] = {"Off", "Cues", "Lively"};
 static const char* const stop_names[] = {"1 h", "2 h", "4 h", "8 h", "Never"};
+static const char* const resume_names[] = {"10 s", "30 s", "1 min", "2 min", "5 min"};
 
 static const struct {
     const char* label;
@@ -34,6 +35,7 @@ static const struct {
     [SettingLength] = {"Walk length", length_names, WalkLengthCount, WalkLengthMedium},
     [SettingHours] = {"Hours", hours_names, HoursCount, HoursAlways},
     [SettingStopAfter] = {"Stop after", stop_names, StopAfterCount, StopAfter4h},
+    [SettingResumeAfter] = {"Resume after", resume_names, ResumeAfterCount, ResumeAfter30s},
     [SettingSound] = {"Sound", sound_names, SoundLevelCount, SoundLevelCues},
     [SettingVibro] = {"Vibration", switch_names, 2, 1},
     [SettingBabyLock] = {"Baby lock", switch_names, 2, 0},
@@ -122,6 +124,11 @@ bool settings_stop_due(const DuckwalkSettings* settings, uint32_t idle_ms) {
     static const uint8_t hours[StopAfterCount] = {1, 2, 4, 8, 0};
     uint8_t h = hours[settings->values[SettingStopAfter]];
     return h && idle_ms >= h * 3600u * 1000u;
+}
+
+uint32_t settings_resume_after_ms(const DuckwalkSettings* settings) {
+    static const uint16_t seconds[ResumeAfterCount] = {10, 30, 60, 120, 300};
+    return seconds[settings->values[SettingResumeAfter]] * 1000u;
 }
 
 bool settings_on_duty(const DuckwalkSettings* settings) {

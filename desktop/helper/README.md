@@ -2,7 +2,7 @@
 
 [← User guide](../../docs/guide.md) · [Docs home](../../docs/README.md) · [Next: Contributing →](../../CONTRIBUTING.md)
 
-A small program for your computer that tells Duckwalk when **you** are using your mouse or keyboard. With it running, Harold lets go of the pointer the moment you touch your own mouse, keyboard, touchpad, touch screen or pen, stays away for 30 seconds after your last input, and walks only while you are really away.
+A small program for your computer that tells Duckwalk when **you** are using your mouse or keyboard. With it running, Harold lets go of the pointer the moment you touch your own mouse, keyboard, touchpad, touch screen or pen, stays away for 30 seconds after your last input (**Resume after** in Duckwalk's Settings), and walks only while you are really away.
 
 Without the helper, Duckwalk works as before: it can't see your input, so it walks on its timer whether you are there or not.
 

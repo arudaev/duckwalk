@@ -21,7 +21,7 @@ Harold asks how to reach your computer. **Left** for a USB cable, **Right** for 
 | ![Harold walking](screens/home-walking@4x.png) | **Walking.** The pointer takes a short, curved walk and comes back to where it started. Harold walks along on the screen. |
 | ![Harold wandering](screens/home-wandering@4x.png) | **Wandering.** In Wander mode the pointer drifts around without stopping, and Harold drifts with it. |
 | ![Harold asleep](screens/home-asleep@4x.png) | **Asleep.** Keep-awake is off. **OK** wakes him; OK again puts him to sleep. |
-| ![You're working](screens/home-working@4x.png) | **You're working.** With the [PC helper](../desktop/helper/README.md) running, Harold lets go of the pointer while you use your own mouse or keyboard, and waits 30 seconds after you stop. |
+| ![You're working](screens/home-working@4x.png) | **You're working.** With the [PC helper](../desktop/helper/README.md) running, Harold lets go of the pointer while you use your own mouse or keyboard, and waits 30 seconds after you stop (**Resume after** in Settings). |
 
 | Button | Does |
 |---|---|
@@ -47,6 +47,7 @@ The corner shows the connection: **USB**, **BT**, **BT pairing**, **no USB**. **
 | Walk length | Short, Medium, Long: how far a walk or a wander strays |
 | Hours | Always, or Mon–Fri 8–18 only |
 | Stop after | 1 h, 2 h, 4 h (default), 8 h, Never: Harold goes to sleep when nobody has pressed a button on the Flipper (or, with the PC helper, used the computer) for that long, so a computer you walked away from still locks. The home screen then says **You were away**; **OK** wakes him. Without the helper only the Flipper's buttons count, even while you work at the computer. For a whole day away, choose **Never** |
+| Resume after | 10 s, 30 s (default), 1 min, 2 min, 5 min: with the PC helper, how long Harold waits after your last own input before he takes the pointer again |
 | Sound | Off, Cues (default), Lively: see [Sounds](#sounds) |
 | Vibration | On or Off: a buzz for the two warnings, Stop after and a lost connection |
 | Baby lock | Off (default) or On: Back leaves only on a double tap or a 2-second hold, so a stray press doesn't close Duckwalk |

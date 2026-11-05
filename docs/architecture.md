@@ -112,7 +112,7 @@ flowchart TD
     wander -->|"user active (PC helper)"| stop
     play -->|last step| plan["Plan the next walk"] --> wait
     play -->|"user active (PC helper)"| stop["Let go of the pointer"] --> hold
-    wait -->|user active| hold["Hold: nothing moves<br/>until 30 s after the user's last input"] -->|user away| wait
+    wait -->|user active| hold["Hold: nothing moves<br/>until Resume after (30 s by default)<br/>after the user's last input"] -->|user away| wait
 ```
 
 A walk is planned before it plays, so Preview shows the path that will really play. If a report doesn't get through, its movement is added to the next one (`link.c`), so a walk always ends where it started. A wander isn't planned: `wander.c` works out each step from where the cursor is, turning a little at a time so it moves in arcs, and keeps count of what it sent, so going home lands exactly on the start.
