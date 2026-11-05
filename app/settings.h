@@ -14,6 +14,7 @@ typedef enum {
     SettingStopAfter,
     SettingSound,
     SettingVibro,
+    SettingBabyLock, /* Back leaves only on a double tap or a 2 s hold */
     SettingCount,
 } Setting;
 

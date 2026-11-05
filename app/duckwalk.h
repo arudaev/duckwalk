@@ -76,6 +76,10 @@ typedef struct {
     uint8_t bug_row;
     uint32_t step_at; /* the next footstep during a walk */
     bool step_left;
+    /* Baby lock: how far Back has got towards leaving */
+    uint32_t back_down_at; /* Back went down here */
+    uint32_t back_tap_at; /* the first tap of a double tap */
+    uint32_t lock_hint_until; /* say how to leave until here */
 } HomeAnim;
 
 /* The Bluetooth pairing checklist (pairing.c). */

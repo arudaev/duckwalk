@@ -36,6 +36,7 @@ static const struct {
     [SettingStopAfter] = {"Stop after", stop_names, StopAfterCount, StopAfter4h},
     [SettingSound] = {"Sound", sound_names, SoundLevelCount, SoundLevelCues},
     [SettingVibro] = {"Vibration", switch_names, 2, 1},
+    [SettingBabyLock] = {"Baby lock", switch_names, 2, 0},
 };
 
 void settings_defaults(DuckwalkSettings* settings) {

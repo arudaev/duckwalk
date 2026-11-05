@@ -31,7 +31,7 @@ Harold asks how to reach your computer. **Left** for a USB cable, **Right** for 
 | Left | Remote |
 | Up | Preview the next walk |
 | Down | Connection check: is Harold reaching the computer? |
-| Back | Leave Duckwalk; USB and Bluetooth go back to normal |
+| Back | Leave Duckwalk; USB and Bluetooth go back to normal. With Baby lock on: tap twice, or hold for 2 seconds |
 
 The corner shows the connection: **USB**, **BT**, **BT pairing**, **no USB**. **+PC** means the PC helper is talking to Duckwalk.
 
@@ -49,6 +49,7 @@ The corner shows the connection: **USB**, **BT**, **BT pairing**, **no USB**. **
 | Stop after | 1 h, 2 h, 4 h (default), 8 h, Never: Harold goes to sleep when nobody has pressed a button on the Flipper (or, with the PC helper, used the computer) for that long, so a computer you walked away from still locks. The home screen then says **You were away**; **OK** wakes him. Without the helper only the Flipper's buttons count, even while you work at the computer. For a whole day away, choose **Never** |
 | Sound | Off, Cues (default), Lively: see [Sounds](#sounds) |
 | Vibration | On or Off: a buzz for the two warnings, Stop after and a lost connection |
+| Baby lock | Off (default) or On: Back leaves only on a double tap or a 2-second hold, so a stray press doesn't close Duckwalk |
 
 Up and Down choose, Left and Right change. Settings are saved on the SD card in `apps_data/duckwalk/settings.txt`.
 
