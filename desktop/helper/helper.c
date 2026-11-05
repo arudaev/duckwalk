@@ -344,11 +344,17 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    RAWINPUTDEVICE wanted[2] = {
+    /* A precision touchpad moves the pointer through synthesised mouse input,
+     * but its gestures (two-finger scroll, pinch) never show up as mouse
+     * input at all. Listening to the touchpad and touch screen themselves
+     * catches every finger on them. */
+    RAWINPUTDEVICE wanted[] = {
         {.usUsagePage = 0x01, .usUsage = 0x02, .dwFlags = RIDEV_INPUTSINK, .hwndTarget = window}, /* mice */
         {.usUsagePage = 0x01, .usUsage = 0x06, .dwFlags = RIDEV_INPUTSINK, .hwndTarget = window}, /* keyboards */
+        {.usUsagePage = 0x0D, .usUsage = 0x05, .dwFlags = RIDEV_INPUTSINK, .hwndTarget = window}, /* touchpads */
+        {.usUsagePage = 0x0D, .usUsage = 0x04, .dwFlags = RIDEV_INPUTSINK, .hwndTarget = window}, /* touch screens */
     };
-    if(!RegisterRawInputDevices(wanted, 2, sizeof(wanted[0]))) {
+    if(!RegisterRawInputDevices(wanted, sizeof(wanted) / sizeof(wanted[0]), sizeof(wanted[0]))) {
         fprintf(stderr, "Can't listen to input (error %lu).\n", GetLastError());
         return 1;
     }
