@@ -58,6 +58,10 @@
 #define FIXED_MS   1400
 #define BUG_MIN_MS 10000
 #define BUG_MAX_MS 25000
+/* Baby lock */
+#define LOCK_HOLD_MS 2000 /* hold Back this long to leave */
+#define LOCK_TAP_MS  600 /* or tap it again within this */
+#define LOCK_HINT_MS 2000
 
 static uint32_t ms(uint32_t milliseconds) {
     return furi_ms_to_ticks(milliseconds);
@@ -418,7 +422,10 @@ static void draw_bubble(Canvas* canvas, int32_t x, const char* text) {
 static void draw_status(Canvas* canvas, const Duckwalk* app) {
     const KeepAwake* ka = &app->keep_awake;
     char line[24];
-    if(keep_awake_is_walking(ka)) {
+    if(tick_before(app->home.lock_hint_until)) {
+        /* Baby lock caught a single Back. */
+        snprintf(line, sizeof(line), "Back x2 or hold");
+    } else if(keep_awake_is_walking(ka)) {
         snprintf(
             line,
             sizeof(line),
@@ -496,6 +503,39 @@ void home_draw(Canvas* canvas, Duckwalk* app) {
     canvas_draw_str_aligned(canvas, 126, 63, AlignRight, AlignBottom, "Settings >");
 }
 
+/* Back leaves Duckwalk. With Baby lock on, a stray press only says how:
+ * tap Back twice, or hold it for 2 s. */
+static void back_input(Duckwalk* app, const InputEvent* input) {
+    HomeAnim* anim = &app->home;
+    if(!app->settings.values[SettingBabyLock]) {
+        if(input->type == InputTypeShort) app->running = false;
+        return;
+    }
+    switch(input->type) {
+    case InputTypePress:
+        anim->back_down_at = furi_get_tick();
+        break;
+    case InputTypeLong:
+    case InputTypeRepeat:
+        if(furi_get_tick() - anim->back_down_at >= ms(LOCK_HOLD_MS)) {
+            app->running = false;
+        } else {
+            anim->lock_hint_until = tick_in_ms(LOCK_HINT_MS);
+        }
+        break;
+    case InputTypeShort:
+        if(anim->back_tap_at && tick_before(anim->back_tap_at)) {
+            app->running = false;
+        } else {
+            anim->back_tap_at = tick_in_ms(LOCK_TAP_MS);
+            anim->lock_hint_until = tick_in_ms(LOCK_HINT_MS);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 void home_input(Duckwalk* app, const InputEvent* input) {
     KeepAwake* ka = &app->keep_awake;
     DuckwalkSettings* s = &app->settings;
@@ -516,8 +556,8 @@ void home_input(Duckwalk* app, const InputEvent* input) {
     } else if(input->key == InputKeyUp && input->type == InputTypeShort) {
         app->preview_started = furi_get_tick();
         app->screen = ScreenPreview;
-    } else if(input->key == InputKeyBack && input->type == InputTypeShort) {
-        app->running = false;
+    } else if(input->key == InputKeyBack) {
+        back_input(app, input);
     }
 }
 

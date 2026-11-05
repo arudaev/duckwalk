@@ -124,7 +124,8 @@ void preview_input(Duckwalk* app, const InputEvent* input) {
     } else if(input->key == InputKeyRight && !keep_awake_is_playing(ka)) {
         keep_awake_replan(ka);
         app->preview_started = furi_get_tick();
-    } else if(input->key == InputKeyBack) {
+    } else if(input->key == InputKeyBack || input->key == InputKeyDown) {
+        /* Up opened the Preview, so Down goes back. */
         app->screen = ScreenHome;
     }
 }

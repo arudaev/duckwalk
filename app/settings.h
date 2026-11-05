@@ -10,8 +10,10 @@ typedef enum {
     SettingConnection,
     SettingInterval,
     SettingLength,
+    SettingResumeAfter, /* with the PC helper: the wait after your own input */
     SettingHours,
     SettingStopAfter,
+    SettingBabyLock, /* Back leaves only on a double tap or a 2 s hold */
     SettingSound,
     SettingVibro,
     SettingCount,
@@ -42,6 +44,17 @@ typedef enum {
     StopAfterCount,
 } StopAfter;
 
+/* With the PC helper running: how long Harold waits after your last own
+ * input (mouse, keyboard, touch) before he takes the pointer again. */
+typedef enum {
+    ResumeAfter10s,
+    ResumeAfter30s,
+    ResumeAfter1min,
+    ResumeAfter2min,
+    ResumeAfter5min,
+    ResumeAfterCount,
+} ResumeAfter;
+
 typedef struct {
     uint8_t values[SettingCount];
     uint8_t awake_mode; /* the mode OK wakes Harold into */
@@ -60,6 +73,9 @@ void settings_interval(Interval interval, uint32_t* min_s, uint32_t* max_s);
 
 /* True once nobody has been around for the Stop after time. */
 bool settings_stop_due(const DuckwalkSettings* settings, uint32_t idle_ms);
+
+/* How long Harold keeps his hands off the pointer after your own input. */
+uint32_t settings_resume_after_ms(const DuckwalkSettings* settings);
 
 /* True when Harold should be keeping the computer awake right now. */
 bool settings_on_duty(const DuckwalkSettings* settings);

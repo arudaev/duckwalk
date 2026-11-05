@@ -27,10 +27,6 @@
 #define BUSY_LOOP_MS WALK_STEP_MS
 #define CALM_LOOP_MS 100
 
-/* With the PC helper running, Harold keeps his hands off the pointer for
- * this long after the user's last own input. */
-#define USER_HOLD_MS 30000
-
 /* How often the work-hours schedule is checked. */
 #define DUTY_CHECK_MS 1000
 
@@ -179,7 +175,7 @@ int32_t duckwalk_app(void* p) {
             duty_checked = furi_get_tick();
             keep_awake_set_paused(&app->keep_awake, !settings_on_duty(&app->settings));
         }
-        keep_awake_set_user_active(&app->keep_awake, helper_user_active(USER_HOLD_MS));
+        keep_awake_set_user_active(&app->keep_awake, helper_user_active(settings_resume_after_ms(&app->settings)));
         remote_tick(app);
         pairing_tick(app);
         if(keep_awake_tick(&app->keep_awake)) home_on_move(app);
