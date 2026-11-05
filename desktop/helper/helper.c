@@ -273,6 +273,8 @@ static DWORD WINAPI ble_thread(LPVOID arg) {
 
 /* Input */
 
+static void user_seen(void);
+
 static void on_input(HRAWINPUT input) {
     RAWINPUTHEADER header;
     UINT size = sizeof(header);
@@ -283,6 +285,33 @@ static void on_input(HRAWINPUT input) {
         ignored++;
         return;
     }
+    user_seen();
+}
+
+/* Touch and pen: Windows turns taps and drags on a touch screen (a Surface
+ * in tablet mode, say) into mouse input and marks it with a signature in
+ * dwExtraInfo. A low-level mouse hook sees that mark even where a touch
+ * screen's own reports don't reach Raw Input. The hook only posts a
+ * message: it must return quickly, and writing to Duckwalk can take a few
+ * milliseconds. */
+#define TOUCH_SIGNATURE_MASK 0xFFFFFF00u
+#define TOUCH_SIGNATURE      0xFF515700u /* MI_WP_SIGNATURE */
+#define WM_TOUCH_SEEN        (WM_APP + 1)
+static HWND input_window;
+
+static LRESULT CALLBACK touch_hook(int code, WPARAM wparam, LPARAM lparam) {
+    if(code == HC_ACTION) {
+        const MSLLHOOKSTRUCT* mouse = (const MSLLHOOKSTRUCT*)lparam;
+        if(((ULONG_PTR)mouse->dwExtraInfo & TOUCH_SIGNATURE_MASK) == TOUCH_SIGNATURE) {
+            PostMessageW(input_window, WM_TOUCH_SEEN, 0, 0);
+        }
+    }
+    return CallNextHookEx(NULL, code, wparam, lparam);
+}
+
+/* You did something: tell Duckwalk straight away (at most four times a
+ * second). */
+static void user_seen(void) {
     ULONGLONG now = GetTickCount64();
     user_at = now;
 #ifdef HAVE_BLE
@@ -297,6 +326,9 @@ static LRESULT CALLBACK window_proc(HWND window, UINT msg, WPARAM wparam, LPARAM
     case WM_INPUT:
         on_input((HRAWINPUT)lparam);
         break;
+    case WM_TOUCH_SEEN:
+        user_seen();
+        return 0;
     case WM_TIMER:
         if(GetTickCount64() - harold_refreshed_at >= REFRESH_HAROLD_MS) {
             harold_refreshed_at = GetTickCount64();
@@ -343,16 +375,16 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Can't create the input window (error %lu).\n", GetLastError());
         return 1;
     }
+    input_window = window;
 
     /* A precision touchpad moves the pointer through synthesised mouse input,
      * but its gestures (two-finger scroll, pinch) never show up as mouse
-     * input at all. Listening to the touchpad and touch screen themselves
-     * catches every finger on them. */
+     * input at all, and neither do touch screens and pens. So the helper
+     * listens to every digitizer itself: touch screen, pen and touchpad. */
     RAWINPUTDEVICE wanted[] = {
         {.usUsagePage = 0x01, .usUsage = 0x02, .dwFlags = RIDEV_INPUTSINK, .hwndTarget = window}, /* mice */
         {.usUsagePage = 0x01, .usUsage = 0x06, .dwFlags = RIDEV_INPUTSINK, .hwndTarget = window}, /* keyboards */
-        {.usUsagePage = 0x0D, .usUsage = 0x05, .dwFlags = RIDEV_INPUTSINK, .hwndTarget = window}, /* touchpads */
-        {.usUsagePage = 0x0D, .usUsage = 0x04, .dwFlags = RIDEV_INPUTSINK, .hwndTarget = window}, /* touch screens */
+        {.usUsagePage = 0x0D, .usUsage = 0, .dwFlags = RIDEV_PAGEONLY | RIDEV_INPUTSINK, .hwndTarget = window}, /* digitizers */
     };
     if(!RegisterRawInputDevices(wanted, sizeof(wanted) / sizeof(wanted[0]), sizeof(wanted[0]))) {
         fprintf(stderr, "Can't listen to input (error %lu).\n", GetLastError());
@@ -373,6 +405,11 @@ int main(int argc, char** argv) {
 #else
     if(duckwalk == INVALID_HANDLE_VALUE) printf("Duckwalk isn't connected over USB yet; waiting for it...\n");
 #endif
+    /* The backstop for touch and pen (see touch_hook). Without it the helper
+     * still works through Raw Input. */
+    if(!SetWindowsHookExW(WH_MOUSE_LL, touch_hook, instance, 0) && verbose) {
+        printf("No touch backstop (error %lu); Raw Input still sees touch.\n", GetLastError());
+    }
     SetTimer(window, 1, HELPER_HEARTBEAT_MS, NULL);
 
     MSG msg;
