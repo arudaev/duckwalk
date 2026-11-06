@@ -21,9 +21,14 @@ mod linux;
 #[cfg(target_os = "linux")]
 pub use self::linux::{ignored, start};
 
-#[cfg(not(any(windows, target_os = "linux")))]
+#[cfg(target_os = "macos")]
+mod macos;
+#[cfg(target_os = "macos")]
+pub use self::macos::{ignored, start};
+
+#[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
 mod unsupported;
-#[cfg(not(any(windows, target_os = "linux")))]
+#[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
 pub use self::unsupported::{ignored, start};
 
 /// Duckwalk over USB (pid.codes test IDs, see `app/usb/usb_duck.h`).
@@ -33,13 +38,13 @@ pub const DUCKWALK_PID: u16 = 0x0001;
 pub const HAROLD_NAME: &str = "Harold ";
 
 /// How many of Duckwalk's own moves were ignored, for `--verbose`.
-#[cfg_attr(not(any(windows, target_os = "linux")), allow(dead_code))]
+#[cfg_attr(not(any(windows, target_os = "linux", target_os = "macos")), allow(dead_code))]
 static IGNORED: AtomicU64 = AtomicU64::new(0);
 
 /// Is this input device Duckwalk's, by its IDs or the name it pairs under?
 /// Used where the system names devices by vendor, product and name (Linux,
 /// macOS); Windows goes by device path.
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+#[cfg_attr(not(any(target_os = "linux", target_os = "macos")), allow(dead_code))]
 pub fn is_duckwalk_device(vendor: u16, product: u16, name: &str) -> bool {
     (vendor == DUCKWALK_VID && product == DUCKWALK_PID) || name.starts_with(HAROLD_NAME)
 }

@@ -2,7 +2,9 @@
 
 One app for Windows, macOS and Linux that will replace the [PC helper](../helper/README.md). Why Rust, and what stays per system: [decision 0002](../../docs/decisions/0002-one-desktop-app-in-rust.md).
 
-**On Windows and Linux it sees your input:** your own mouse, keyboard, touchpad, touch screen and pen, never Duckwalk's own moves. It tells Harold how long you have been idle, over USB or Bluetooth. On macOS it can't see your input yet (#120), so it tells Harold you are away and he walks on his timer.
+**It sees your input** on Windows, macOS and Linux: your own mouse, keyboard, touchpad, touch screen and pen, never Duckwalk's own moves. It tells Harold how long you have been idle, over USB or Bluetooth.
+
+**On macOS, allow Input Monitoring.** On first start the app asks for it; allow it in **System Settings > Privacy & Security > Input Monitoring** and start the app again. It reads only that an input happened and from which device, never which keys. Without it Harold walks on his timer.
 
 **On Linux, join the `input` group first.** The app reads your devices from `/dev/input/`, which only that group may do:
 
@@ -35,7 +37,7 @@ CI builds it on Windows, macOS and Linux for every pull request and uploads `duc
 | File | Does |
 |---|---|
 | `src/main.rs` | Sends an idle packet every second and straight away when you are active, over USB when Duckwalk is plugged in, otherwise over Bluetooth |
-| `src/input/` | Sees your input: Raw Input on Windows, evdev on Linux; macOS to come |
+| `src/input/` | Sees your input: Raw Input on Windows, IOHIDManager on macOS, evdev on Linux |
 | `src/protocol.rs` | The packets, the same as `app/helper_protocol.h` |
 | `src/usb.rs` | Finds Duckwalk's data channel with `hidapi` |
 | `src/ble/` | Finds Duckwalk's Bluetooth service: WinRT on Windows, `btleplug` on macOS and Linux |
