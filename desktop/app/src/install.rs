@@ -11,7 +11,8 @@ pub enum Installed {
     /// Carry on: this is the installed copy (`true`), or installing doesn't
     /// apply here (`false`).
     Here(bool),
-    /// The installed copy was started; this process should end.
+    /// The installed copy was started; this process should end (Windows).
+    #[cfg_attr(not(windows), allow(dead_code))]
     Moved,
 }
 
