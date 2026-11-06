@@ -18,6 +18,7 @@
 
 #include "duckwalk.h"
 #include "helper.h"
+#include "helper_protocol.h"
 #include "link.h"
 #include "util.h"
 
@@ -121,6 +122,30 @@ static void check_link(Duckwalk* app) {
     if(app->keep_awake.mode != KeepAwakeOff) duckwalk_sound(app, now ? SoundLinkBack : SoundLinkLost);
 }
 
+/* A command from the desktop app (an agent, say): as if pressed here. */
+static void run_command(Duckwalk* app) {
+    uint8_t cmd, arg;
+    if(!helper_take_command(&cmd, &arg)) return;
+    DuckwalkSettings* s = &app->settings;
+    bool asleep = app->keep_awake.mode == KeepAwakeOff;
+    app->active_at = furi_get_tick(); /* counts as somebody around */
+    if(cmd == HELPER_CMD_WAKE && asleep) {
+        s->values[SettingMode] = s->awake_mode;
+        duckwalk_apply_settings(app);
+        duckwalk_sound(app, SoundWake);
+    } else if(cmd == HELPER_CMD_SLEEP && !asleep) {
+        s->values[SettingMode] = KeepAwakeOff;
+        duckwalk_apply_settings(app);
+        duckwalk_sound(app, SoundSleep);
+    } else if(cmd == HELPER_CMD_MODE) {
+        s->values[SettingMode] = arg;
+        duckwalk_apply_settings(app);
+        app->pending.save = true;
+        if(asleep) duckwalk_sound(app, SoundWake);
+    }
+    FURI_LOG_I(TAG, "Command %u from the desktop app", cmd);
+}
+
 /* What Harold is doing, for the desktop app (talk.h). */
 static void tell_the_pc(Duckwalk* app) {
     const KeepAwake* ka = &app->keep_awake;
@@ -188,6 +213,7 @@ int32_t duckwalk_app(void* p) {
 
         furi_mutex_acquire(app->mutex, FuriWaitForever);
         if(got) handle_input(app, &input);
+        run_command(app);
         duckwalk_check_stop_after(app, got);
         check_link(app);
         if(furi_get_tick() - duty_checked >= furi_ms_to_ticks(DUTY_CHECK_MS)) {

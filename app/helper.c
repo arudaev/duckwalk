@@ -8,11 +8,21 @@
 static volatile uint32_t heard_at;
 static volatile uint32_t user_at;
 static volatile bool heard;
+/* A command waiting for the main loop: 0 when there is none. */
+static volatile uint8_t command;
+static volatile uint8_t command_arg;
 
 bool helper_receive(const uint8_t* data, uint32_t now) {
     if(data[0] != HELPER_MAGIC || data[1] != HELPER_VERSION) return false;
     if(data[2] == HELPER_MSG_BYE) {
         heard = false;
+        return true;
+    }
+    if(data[2] == HELPER_MSG_COMMAND) {
+        if(data[3] < HELPER_CMD_WAKE || data[3] > HELPER_CMD_MODE) return false;
+        if(data[3] == HELPER_CMD_MODE && (data[4] < 1 || data[4] > 3)) return false;
+        command_arg = data[4];
+        command = data[3];
         return true;
     }
     if(data[2] != HELPER_MSG_IDLE) return false;
@@ -44,6 +54,15 @@ bool helper_present(void) {
      * would wrap and make it look present again. */
     if(heard && tick_reached(heard_at + furi_ms_to_ticks(HELPER_TIMEOUT_MS))) heard = false;
     return heard;
+}
+
+bool helper_take_command(uint8_t* cmd, uint8_t* arg) {
+    uint8_t c = command;
+    if(!c) return false;
+    *arg = command_arg;
+    command = 0;
+    *cmd = c;
+    return true;
 }
 
 bool helper_user_active(uint32_t hold_ms) {
