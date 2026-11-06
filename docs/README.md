@@ -15,7 +15,7 @@ Start here. Every page about Duckwalk is linked from this one, in reading order,
 | Order | Page | Question answered |
 |---|---|---|
 | **01** | [User guide](guide.md) | What does every screen and button do, and how do I connect over USB or Bluetooth? |
-| **02** | [PC helper](../desktop/helper/README.md) | How does Harold know I'm back at the computer? |
+| **02** | [Desktop app](../desktop/app/README.md) | How does Harold know I'm back at the computer? |
 
 What Duckwalk is and how to install it: the [README](../README.md).
 
@@ -39,8 +39,7 @@ What Duckwalk is and how to install it: the [README](../README.md).
 app/            the Flipper app (C, built with ufbt)
   usb/          the composite USB device: mouse, media keys, data channel
   images/       Harold's sprites (made by brand/tools/make_brand.py)
-desktop/helper/ the PC helper for Windows (C, Win32)
-desktop/app/    the desktop app for Windows, macOS and Linux (Rust), replacing the helper in v0.3
+desktop/app/    the desktop app for Windows, macOS and Linux (Rust)
 tests/          host tests for the app's logic
 sim/            the screen simulator
 brand/          banner, sprite sources and the tool that draws the sprites

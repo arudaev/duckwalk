@@ -8,7 +8,10 @@
  * Over USB the same three, as: Harold has the USB port, the PC sees him, the
  * pointer moves. Right shows the fix for the first open box. Opens with Down
  * on the home screen, after choosing Bluetooth in Settings and on the first
- * launch. Once all is set it also says whether the PC helper is running. */
+ * launch.
+ *
+ * A fourth line, optional, says whether the desktop app is running; once the
+ * rest is set, Right shows what it does and a QR code for where to get it. */
 
 #include "duckwalk.h"
 #include "duckwalk_icons.h"
@@ -69,6 +72,8 @@ static void draw_box(Canvas* canvas, int32_t x, int32_t y, bool done, bool faile
     }
 }
 
+#define ROW_Y(i) (13 + (i) * 9)
+
 static void draw_checklist(Canvas* canvas, Duckwalk* app) {
     Step step = current_step(app);
     LinkKind kind = link_kind();
@@ -77,12 +82,17 @@ static void draw_checklist(Canvas* canvas, Duckwalk* app) {
 
     canvas_set_font(canvas, FontSecondary);
     for(Step i = StepOnAir; i <= StepPointer; i++) {
-        int32_t y = 15 + i * 11;
+        int32_t y = ROW_Y(i);
         bool failed = i == StepPointer && app->pairing.pointer_failed && step == StepPointer;
         draw_box(canvas, 2, y, i < step, failed, i == step);
         canvas_draw_str(canvas, 14, y + 8, rows[kind][i].label);
         canvas_draw_str_aligned(canvas, 126, y + 8, AlignRight, AlignBottom, rows[kind][i].side);
     }
+    /* The desktop app: optional, so its box never blinks or fails. */
+    int32_t y = ROW_Y(StepAllSet);
+    draw_box(canvas, 2, y, helper_present(), false, false);
+    canvas_draw_str(canvas, 14, y + 8, "Desktop app");
+    canvas_draw_str_aligned(canvas, 126, y + 8, AlignRight, AlignBottom, "optional");
 
     /* What to do now, in one line. */
     const char* next = line;
@@ -101,11 +111,34 @@ static void draw_checklist(Canvas* canvas, Duckwalk* app) {
     } else if(step == StepPointer) {
         next = "OK: test the pointer";
     } else {
-        /* The helper is what makes Harold let go while you work. */
-        next = helper_present() ? "All set, PC helper on" : "All set, no PC helper";
+        /* The desktop app is what makes Harold let go while you work. */
+        next = helper_present() ? "All set, desktop app on" : "All set. Desktop app: >";
     }
     canvas_draw_line(canvas, 0, 50, 127, 50);
     canvas_draw_str(canvas, 2, 60, next);
+}
+
+/* Once the link is set: what the desktop app does, and where to get it. */
+static void draw_app_help(Canvas* canvas) {
+    canvas_set_font(canvas, FontPrimary);
+    canvas_draw_str(canvas, 2, 10, "Desktop app");
+    canvas_set_font(canvas, FontSecondary);
+    if(helper_present()) {
+        canvas_draw_str(canvas, 2, 22, "It's running: Harold");
+        canvas_draw_str(canvas, 2, 30, "lets go of the pointer");
+        canvas_draw_str(canvas, 2, 38, "while you work, and");
+        canvas_draw_str(canvas, 2, 46, "takes it when you're away.");
+        canvas_draw_line(canvas, 0, 53, 127, 53);
+        canvas_draw_str(canvas, 2, 63, "< Back");
+        return;
+    }
+    canvas_draw_icon(canvas, 74, 5, &I_qr_site_54x54);
+    canvas_draw_str(canvas, 2, 20, "Harold lets go");
+    canvas_draw_str(canvas, 2, 28, "while you work.");
+    canvas_draw_str(canvas, 2, 36, "Win, Mac, Linux:");
+    canvas_draw_str(canvas, 2, 44, "arudaev.github");
+    canvas_draw_str(canvas, 2, 52, ".io/duckwalk");
+    canvas_draw_str(canvas, 2, 63, "< Back");
 }
 
 static void draw_help(Canvas* canvas, Duckwalk* app) {
@@ -157,6 +190,10 @@ static void draw_help(Canvas* canvas, Duckwalk* app) {
 }
 
 void pairing_draw(Canvas* canvas, Duckwalk* app) {
+    if(app->pairing.help && current_step(app) == StepAllSet) {
+        draw_app_help(canvas);
+        return;
+    }
     canvas_set_font(canvas, FontPrimary);
     const char* title = link_kind() == LinkUsb ? "USB" : "Bluetooth";
     canvas_draw_str(canvas, 2, 10, app->pairing.help ? "Help" : title);
@@ -206,7 +243,7 @@ void pairing_input(Duckwalk* app, const InputEvent* input) {
         app->screen = ScreenHome;
         break;
     case InputKeyRight:
-        if(step != StepAllSet) p->help = true;
+        p->help = true; /* at All set: the desktop app's page */
         break;
     case InputKeyOk:
         if(step == StepPointer && p->asked) {
@@ -244,7 +281,10 @@ void pairing_tick(Duckwalk* app) {
         p->pointer_ok = false;
         p->asked = false;
     }
-    if(p->pointer_ok && tick_reached(p->done_at + furi_ms_to_ticks(DONE_MS))) {
+    /* All set: back home after a moment, unless the desktop app is missing
+     * or its page is open, so its line can be read. */
+    if(p->pointer_ok && !p->help && helper_present() &&
+       tick_reached(p->done_at + furi_ms_to_ticks(DONE_MS))) {
         app->screen = ScreenHome;
     }
 }

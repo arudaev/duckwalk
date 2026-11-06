@@ -121,6 +121,7 @@
 
   ol.steps { list-style: none; padding: 0; margin: 0 auto; max-width: 560px; counter-reset: s; }
   ol.steps li { counter-increment: s; display: grid; grid-template-columns: 46px 1fr; gap: 10px; align-items: start; margin: 0 0 14px; }
+  ol.steps code { white-space: nowrap; }
   ol.steps li::before { content: counter(s); font: 16px/1 var(--pixel); border: 2px solid var(--ink); border-radius: 50%; width: 34px; height: 34px; display: grid; place-items: center; }
   code { font: 0.92em ui-monospace, Consolas, monospace; background: var(--faint); padding: 1px 5px; border-radius: 4px; }
 
@@ -266,7 +267,18 @@
       <li><span>Copy it to <code>apps/USB/</code> on the SD card with qFlipper.</span></li>
       <li><span>Open it, pick USB or Bluetooth, and walk away.</span></li>
     </ol>
-    <p class="say">Official firmware 1.5 or newer. The optional <a href="https://github.com/arudaev/duckwalk/blob/main/desktop/helper/README.md">Windows helper</a> lets Harold know when you're back.</p>
+    <p class="say">Official firmware 1.5 or newer. The optional <a href="#app">desktop app</a> lets Harold know when you're back.</p>
+  </section>
+
+  <section id="app">
+    <h2>The desktop app</h2>
+    <p class="say">Optional, for Windows, macOS and Linux. Harold lets go of the pointer while you use your own mouse or keyboard, and walks when you're away.</p>
+    <ol class="steps">
+      <li><span>From the <a href="https://github.com/arudaev/duckwalk/releases">releases</a>, download the one for your computer: <code>duckwalk-desktop-windows-x64.exe</code> (most PCs) or <code>-windows-arm64.exe</code>, <code>-macos-arm64</code> (Apple silicon) or <code>-macos-x64</code> (Intel), <code>-linux-x64</code>.</span></li>
+      <li><span>Move it to a folder where it can stay, because it starts from there at every login. Then open it. There is no window: Harold appears in the tray, or the menu bar on a Mac.</span></li>
+      <li><span>The Flipper shows <code>+PC</code> in the corner. Harold's tray menu turns start at login off, and quits.</span></li>
+    </ol>
+    <p class="say">Windows may warn about an unknown app: More info, then Run anyway. On macOS and Linux, make it executable (<code>chmod +x</code>) and start it from a terminal the first time; macOS then asks for Input Monitoring, and on Linux you <a href="https://github.com/arudaev/duckwalk/blob/main/desktop/app/README.md#linux-join-the-input-group">join the input group</a> first. What it reads, exactly: the <a href="https://github.com/arudaev/duckwalk/blob/main/desktop/app/README.md">app's README</a>.</p>
   </section>
 
   <footer>

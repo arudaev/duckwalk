@@ -52,16 +52,6 @@ ctest --test-dir build/tests --output-on-failure
 
 **Screen simulator:** every screen as a PNG, drawn by the app's own code with the firmware's u8g2 and fonts. See [sim/README.md](../sim/README.md). After changing a screen, render it and copy the result into `docs/screens/` so the docs stay current.
 
-## The PC helper
-
-```bash
-cmake -S desktop/helper -B build/helper
-cmake --build build/helper
-build/helper/duckwalk-helper --verbose
-```
-
-`--verbose` prints every input device the helper sees and whether it counts as you or as Duckwalk. See [desktop/helper/README.md](../desktop/helper/README.md).
-
 ## The desktop app
 
 ```bash
@@ -70,7 +60,7 @@ cargo test
 cargo run --release -- --verbose
 ```
 
-Rust (stable); on Linux also `libudev-dev`, `libdbus-1-dev`, `pkg-config`, `libgtk-3-dev`, `libxdo-dev` and `libayatana-appindicator3-dev`. `--pretend-working` tells Harold you are working all the time, to check the link. See [desktop/app/README.md](../desktop/app/README.md).
+Rust (stable); on Linux also `libudev-dev`, `libdbus-1-dev`, `pkg-config`, `libgtk-3-dev`, `libxdo-dev` and `libayatana-appindicator3-dev`. `--verbose` lists every input device as yours or Duckwalk's; `--pretend-working` tells Harold you are working all the time, to check the link. See [desktop/app/README.md](../desktop/app/README.md).
 
 ## Bluetooth
 
@@ -87,7 +77,6 @@ Every pull request runs:
 | Build (release SDK), Build (rc SDK) | `ufbt` builds the `.fap` against both SDKs (an Apps Catalog requirement) |
 | Host tests | `tests/` with CMake and CTest |
 | Screens | The simulator renders every screen and fails if text runs off it; the PNGs are uploaded as `duckwalk-screens` |
-| Helper (Windows) | Builds `duckwalk-helper.exe` and uploads it |
 | Desktop app | Formats, lints, tests and builds `desktop/app` on Windows, macOS and Linux, and uploads each build |
 | Text hygiene | No invisible characters, no em dashes, no stock phrasing (`scripts/check_text.py`) |
 | PR conventions | Conventional Commits title, a linked issue, labels by path |
@@ -96,9 +85,10 @@ Every pull request runs:
 
 1. Raise `fap_version` in `app/application.fam` and add the version to `app/docs/changelog.md`. The catalog wants `major.minor`, higher than the last one it has.
 2. Write the release notes in `docs/releases/v<version>.md` and merge both through a pull request.
-3. The author tags `main`, for example `git tag v0.1 && git push origin v0.1`.
-4. The Release workflow checks that the tag matches `fap_version`, builds `duckwalk.fap` and the helper for x64 and ARM64, and leaves a draft release with them attached.
-5. The author reads the draft and publishes it, then updates the catalog manifest's `commit_sha` (issue #10).
+3. Optional, before tagging: **Actions > Release > Run workflow** does a dry run that builds everything and releases nothing.
+4. The author tags `main`, for example `git tag v0.1 && git push origin v0.1`.
+5. The Release workflow checks that the tag matches `fap_version`, builds `duckwalk.fap` and the desktop app for Windows (x64, ARM64), macOS (Apple silicon, Intel) and Linux (x64), and leaves a draft release with them attached.
+6. The author reads the draft and publishes it, then updates the catalog manifest's `commit_sha` (issue #10).
 
 ---
 

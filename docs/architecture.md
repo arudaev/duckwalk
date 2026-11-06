@@ -21,7 +21,7 @@ flowchart LR
     end
     subgraph PC["Computer"]
         os["Windows, macOS, Linux<br/>(built-in HID drivers)"]
-        helper["desktop/helper<br/>PC helper (Windows)"]
+        helper["desktop/app<br/>desktop app (tray)"]
     end
 
     main --> screens
@@ -47,8 +47,8 @@ flowchart LR
 | `walk.c` | Plans a walk: a smooth curve through random waypoints that ends where it started |
 | `link.c` | The connection: starts USB or Bluetooth, queues reports and sends them, carries dropped moves into the next report |
 | `usb/usb_duck.c` | One USB HID interface with three parts: mouse, media keys and a 63-byte data channel |
-| `ble_duck.c` | The Bluetooth profile: the firmware's HID mouse and media keys, plus a one-characteristic service the PC helper writes to |
-| `helper.c`, `helper_protocol.h` | Packets from the PC helper; the protocol both sides compile |
+| `ble_duck.c` | The Bluetooth profile: the firmware's HID mouse and media keys, plus a one-characteristic service the desktop app writes to |
+| `helper.c`, `helper_protocol.h` | Packets from the desktop app; the protocol both sides share (`desktop/app/src/protocol.rs` mirrors it) |
 | `settings.c` | Reading and writing `settings.txt`, defaults line by line |
 | `util.h` | The log tag and tick helpers that survive the counter wrapping |
 
@@ -109,9 +109,9 @@ flowchart TD
     mode -->|Walk| play["Play the planned walk<br/>one step every 20 ms"]
     mode -->|Wander| wander["Wander: steer for a random spot,<br/>a new one before it's reached"]
     wander -->|mode off, work hours over, leaving the app| home["Glide back to the start"] --> wait
-    wander -->|"user active (PC helper)"| stop
+    wander -->|"user active (desktop app)"| stop
     play -->|last step| plan["Plan the next walk"] --> wait
-    play -->|"user active (PC helper)"| stop["Let go of the pointer"] --> hold
+    play -->|"user active (desktop app)"| stop["Let go of the pointer"] --> hold
     wait -->|user active| hold["Hold: nothing moves<br/>until Resume after (30 s by default)<br/>after the user's last input"] -->|user away| wait
 ```
 
@@ -119,9 +119,9 @@ A walk is planned before it plays, so Preview shows the path that will really pl
 
 ## The data channel
 
-Over USB, Duckwalk's HID interface has a third collection: 63-byte vendor reports in both directions. The PC helper writes the user's idle time into it once a second, and the desktop app says goodbye when it quits so the Flipper drops +PC at once; the format is in [`app/helper_protocol.h`](../app/helper_protocol.h). Over Bluetooth the same packets go to a service of Duckwalk's own (`ble_duck.c`): one write-only characteristic, 63 bytes, writable only by the paired computer. The firmware's serial service would have done, but its two 486-byte buffers don't fit beside the HID service. The profile wraps the firmware's HID profile, so its mouse and media functions work unchanged, and Windows picks the new service up without pairing again.
+Over USB, Duckwalk's HID interface has a third collection: 63-byte vendor reports in both directions. The desktop app writes the user's idle time into it once a second, and says goodbye when it quits so the Flipper drops +PC at once; the format is in [`app/helper_protocol.h`](../app/helper_protocol.h). Over Bluetooth the same packets go to a service of Duckwalk's own (`ble_duck.c`): one write-only characteristic, 63 bytes, writable only by the paired computer. The firmware's serial service would have done, but its two 486-byte buffers don't fit beside the HID service. The profile wraps the firmware's HID profile, so its mouse and media functions work unchanged, and Windows picks the new service up without pairing again.
 
-How the helper tells Duckwalk's own input from yours is written up in [decision 0001](decisions/0001-tell-duckwalk-from-the-user.md).
+How the desktop app tells Duckwalk's own input from yours is written up in [decision 0001](decisions/0001-tell-duckwalk-from-the-user.md) and [decision 0002](decisions/0002-one-desktop-app-in-rust.md).
 
 ---
 
