@@ -112,6 +112,16 @@ When the Flipper asks you to confirm a code, check it matches the one on the com
 
 ![USB check](screens/pairing-usb-all-set@4x.png)
 
+## Without the PC helper
+
+The Flipper app works with any computer that takes a USB or Bluetooth mouse; nothing needs installing. The [PC helper](../desktop/helper/README.md) runs on Windows 10 and 11 only until v0.3, which brings macOS and Linux.
+
+Without the helper, Harold can't tell when you are working, so he walks on his timer whether you are there or not. Pick the mode to match:
+
+- **While you work:** **Subtle**. One pixel out and back, which you won't notice. **Walk** works too if a short walk now and then doesn't bother you.
+- **When you're away:** **Wander**, or **Walk**.
+- **Stop after** counts only the Flipper's buttons, so press one now and then, or choose **Never** for a whole day.
+
 ## Before you use it at work
 
 A keep-awake tool can be against your employer's rules. Duckwalk makes your computer look attended; whether that is acceptable where you work is your decision.
