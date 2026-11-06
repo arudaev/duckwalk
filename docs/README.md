@@ -31,7 +31,7 @@ What Duckwalk is and how to install it: the [README](../README.md).
 | **08** | [Project board](contributing/project-board.md) | How is the work tracked? |
 | **09** | [Brand](brand.md) | Which colours, type and drawings do we use? |
 | **10** | [Sound design](sound-design.md) | What does each sound need to be, and how do I deliver it? |
-| **11** | Decisions: [0001](decisions/0001-tell-duckwalk-from-the-user.md), [0002](decisions/0002-one-desktop-app-in-rust.md) | Why are things the way they are? |
+| **11** | Decisions: [0001](decisions/0001-tell-duckwalk-from-the-user.md), [0002](decisions/0002-one-desktop-app-in-rust.md), [0003](decisions/0003-trusted-install-for-free.md) | Why are things the way they are? |
 | **12** | [Code signing policy](code-signing.md) | Who signs the Windows builds, and what Duckwalk sends over the network (nothing) |
 
 ## Where things are

@@ -8,11 +8,22 @@ It is optional. Without it, Duckwalk can't see your input and walks on its timer
 
 ## Use it
 
-1. Download the app for your computer from the [releases](https://github.com/arudaev/duckwalk/releases).
+1. Get the app for your computer:
+   - **Windows:** download it from the [releases](https://github.com/arudaev/duckwalk/releases).
+   - **macOS:** with [Homebrew](https://brew.sh), which builds it on your Mac, so macOS doesn't flag it:
+     ```bash
+     brew install --HEAD arudaev/tap/duckwalk
+     ```
+     (Plain `brew install arudaev/tap/duckwalk` once v0.1 is out.)
+   - **Linux:** with Rust, after installing the libraries listed under [Build](#build):
+     ```bash
+     cargo install --git https://github.com/arudaev/duckwalk duckwalk
+     ```
+     Or download the binary from the releases.
 2. Start Duckwalk on the Flipper, plugged in over USB or paired over Bluetooth.
-3. Open the download. There is no window: Harold appears in the tray (the menu bar on macOS), in colour once he's connected.
+3. Start it: open the download on Windows, run `duckwalk` on macOS and Linux. There is no window: Harold appears in the tray (the menu bar on macOS), in colour once he's connected.
    - **Windows** may warn about an unknown app: **More info**, then **Run anyway**. The app then installs itself: it copies itself to `%LOCALAPPDATA%\Programs\Duckwalk`, adds **Duckwalk** to the Start menu (Windows Search finds it there) and runs from that copy, so you can delete the download. A newer download updates it the same way; quit the running one from Harold's menu first.
-   - **macOS and Linux:** move it to a folder where it can stay, since it starts from there at every login. Make it executable (`chmod +x`) and start it from a terminal the first time.
+   - **macOS and Linux:** Homebrew and cargo put it where it can stay. A Linux binary from the releases: move it to such a folder first, since it starts from there at every login, and make it executable (`chmod +x`).
 4. The Flipper shows **USB+PC** or **BT+PC** in the corner. While you work, its status line says **You're working**.
 
 Harold's menu in the tray says how he's connected and whether you're working, and has:
@@ -22,7 +33,7 @@ Harold's menu in the tray says how he's connected and whether you're working, an
 
 Only one copy runs at a time.
 
-**To remove it:** untick **Start at login** in Harold's menu, choose **Quit Duckwalk**, then delete the app. On Windows that's the folder `%LOCALAPPDATA%\Programs\Duckwalk` and the Start menu entry **Duckwalk**.
+**To remove it:** untick **Start at login** in Harold's menu, choose **Quit Duckwalk**, then remove the app: on Windows, delete the folder `%LOCALAPPDATA%\Programs\Duckwalk` and the Start menu entry **Duckwalk**; on macOS, `brew uninstall duckwalk`; installed with cargo, `cargo uninstall duckwalk`.
 
 **Tested on Windows 11** over USB and Bluetooth. The macOS and Linux builds are new; reports are welcome.
 
