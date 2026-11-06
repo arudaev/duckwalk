@@ -277,6 +277,14 @@ static void pairing_usb_all_set(void) {
     helper_receive(packet, furi_get_tick());
     press(InputKeyOk, InputTypeShort);
 }
+static void pairing_app_help(void) {
+    pairing_all_set();
+    press(InputKeyRight, InputTypeShort);
+}
+static void pairing_app_on_help(void) {
+    pairing_usb_all_set();
+    press(InputKeyRight, InputTypeShort);
+}
 static void welcome(void) {
     app.screen = ScreenWelcome;
 }
@@ -319,6 +327,8 @@ static const struct {
     {"pairing-usb-busy", pairing_usb_busy},
     {"pairing-usb-unplugged-help", pairing_usb_unplugged_help},
     {"pairing-usb-all-set", pairing_usb_all_set},
+    {"pairing-app-help", pairing_app_help},
+    {"pairing-app-on-help", pairing_app_on_help},
     {"welcome", welcome},
 };
 
