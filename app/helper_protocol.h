@@ -10,7 +10,9 @@
  * PC -> Flipper
  *   HELPER_MSG_IDLE: [3..6] milliseconds since the user last touched a mouse
  *   or keyboard other than Duckwalk, little-endian. Sent once a second, and
- *   straight away (at most every 250 ms) when the user is active. */
+ *   straight away (at most every 250 ms) when the user is active.
+ *   HELPER_MSG_BYE: no data. The helper is quitting; forget it now instead
+ *   of after HELPER_TIMEOUT_MS. Older Flipper builds ignore it. */
 
 #include <stdint.h>
 
@@ -18,6 +20,7 @@
 #define HELPER_VERSION 1
 
 #define HELPER_MSG_IDLE 0x01
+#define HELPER_MSG_BYE  0x02
 
 #define HELPER_PACKET_LEN 63
 

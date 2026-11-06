@@ -11,6 +11,10 @@ static volatile bool heard;
 
 bool helper_receive(const uint8_t* data, uint32_t now) {
     if(data[0] != HELPER_MAGIC || data[1] != HELPER_VERSION) return false;
+    if(data[2] == HELPER_MSG_BYE) {
+        heard = false;
+        return true;
+    }
     if(data[2] != HELPER_MSG_IDLE) return false;
     uint32_t idle_ms = helper_get_u32(&data[3]);
     /* An idle time longer than the clock has run means "long ago". */

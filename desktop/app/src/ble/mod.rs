@@ -5,6 +5,7 @@
 //! newest packet at least once a heartbeat. It runs until the program ends
 //! and prints when the link comes and goes.
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use uuid::{uuid, Uuid};
@@ -18,8 +19,20 @@ pub const NAME_PREFIX: &str = "Harold ";
 
 const LOOK_AGAIN: Duration = Duration::from_secs(5);
 
-const CONNECTED: &str = "Connected to Duckwalk over Bluetooth.";
-const LOST: &str = "Lost Duckwalk over Bluetooth (out of range, or closed). Waiting for it...";
+/// Is a Bluetooth link up (a write went through)? Read for the tray.
+pub static LINKED: AtomicBool = AtomicBool::new(false);
+
+/// The link came up (`true`) or went (`false`); say so once.
+fn linked(up: bool, quiet: bool) {
+    if LINKED.swap(up, Ordering::Relaxed) == up || quiet {
+        return;
+    }
+    if up {
+        println!("Connected to Duckwalk over Bluetooth.");
+    } else {
+        println!("Lost Duckwalk over Bluetooth (out of range, or closed). Waiting for it...");
+    }
+}
 
 #[cfg(not(windows))]
 mod btleplug;

@@ -14,6 +14,15 @@ sudo usermod -aG input $USER
 
 Then log out and in again. Without it the app says it can't read any input device, and Harold walks on his timer.
 
+## In the tray
+
+Harold sits in the tray (the menu bar on macOS), in colour while he's connected and grey while the app looks for him. His menu says how he's connected and whether you're working, and has:
+
+- **Start at login:** on after the first start. Windows uses the Run entry for your user, macOS a Launch Agent, Linux an autostart file in `~/.config/autostart/`.
+- **Quit Duckwalk:** tells the Flipper goodbye, so it drops **+PC** at once instead of after 5 seconds.
+
+There is no window. Only one copy runs at a time.
+
 ## Run it
 
 ```bash
@@ -25,7 +34,7 @@ The Flipper shows **USB+PC** or **BT+PC** in the corner, and **You're working** 
 
 ## Build
 
-You need Rust (stable). On Linux, also `libudev-dev`, `libdbus-1-dev` and `pkg-config`.
+You need Rust (stable). On Linux, also `libudev-dev`, `libdbus-1-dev`, `pkg-config`, and for the tray `libgtk-3-dev`, `libxdo-dev` and `libayatana-appindicator3-dev`.
 
 ```bash
 cargo test
@@ -36,7 +45,9 @@ CI builds it on Windows, macOS and Linux for every pull request and uploads `duc
 
 | File | Does |
 |---|---|
-| `src/main.rs` | Sends an idle packet every second and straight away when you are active, over USB when Duckwalk is plugged in, otherwise over Bluetooth |
+| `src/main.rs` | Sends an idle packet every second and straight away when you are active, over USB when Duckwalk is plugged in, otherwise over Bluetooth; a goodbye on Quit |
+| `src/tray.rs`, `src/status.rs` | Harold in the tray, and the line his menu shows |
+| `src/login.rs` | Start at login |
 | `src/input/` | Sees your input: Raw Input on Windows, IOHIDManager on macOS, evdev on Linux |
 | `src/protocol.rs` | The packets, the same as `app/helper_protocol.h` |
 | `src/usb.rs` | Finds Duckwalk's data channel with `hidapi` |
