@@ -17,3 +17,5 @@ fw/
 soak_pc.exe
 pc-*.csv
 flipper-*.csv
+# Rust (desktop/app)
+target/

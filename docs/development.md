@@ -62,6 +62,16 @@ build/helper/duckwalk-helper --verbose
 
 `--verbose` prints every input device the helper sees and whether it counts as you or as Duckwalk. See [desktop/helper/README.md](../desktop/helper/README.md).
 
+## The desktop app
+
+```bash
+cd desktop/app
+cargo test
+cargo run --release -- --verbose
+```
+
+Rust (stable); on Linux also `libudev-dev`, `libdbus-1-dev` and `pkg-config`. `--pretend-working` tells Harold you are working all the time, to check the link. See [desktop/app/README.md](../desktop/app/README.md).
+
 ## Bluetooth
 
 - **Is Harold on air?** A phone app such as nRF Connect lists "Harold <Flipper name>" advertising the HID service (`0x1812`). If you only see "Flipper <name>" with service `0x3082`, another app (PC Health, Bluetooth Remote) or the Flipper's own serial profile has the radio, and Duckwalk isn't in Bluetooth mode.
@@ -78,6 +88,7 @@ Every pull request runs:
 | Host tests | `tests/` with CMake and CTest |
 | Screens | The simulator renders every screen and fails if text runs off it; the PNGs are uploaded as `duckwalk-screens` |
 | Helper (Windows) | Builds `duckwalk-helper.exe` and uploads it |
+| Desktop app | Formats, lints, tests and builds `desktop/app` on Windows, macOS and Linux, and uploads each build |
 | Text hygiene | No invisible characters, no em dashes, no stock phrasing (`scripts/check_text.py`) |
 | PR conventions | Conventional Commits title, a linked issue, labels by path |
 
