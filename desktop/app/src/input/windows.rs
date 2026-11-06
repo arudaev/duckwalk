@@ -10,9 +10,9 @@
 
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicIsize, Ordering};
-use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::sync::atomic::{AtomicIsize, AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use windows::core::w;
 use windows::Devices::Bluetooth::BluetoothLEDevice;
@@ -25,8 +25,8 @@ use windows::Win32::UI::Input::{
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, CreateWindowExW, DefWindowProcW, DispatchMessageW, GetMessageW, PostMessageW, RegisterClassW,
-    SetTimer, SetWindowsHookExW, TranslateMessage, HC_ACTION, MSG, MSLLHOOKSTRUCT, WH_MOUSE_LL, WINDOW_EX_STYLE,
-    WINDOW_STYLE, WM_APP, WM_INPUT, WM_TIMER, WNDCLASSW,
+    SetWindowsHookExW, TranslateMessage, HC_ACTION, MSG, MSLLHOOKSTRUCT, WH_MOUSE_LL, WINDOW_EX_STYLE, WINDOW_STYLE,
+    WM_APP, WM_INPUT, WNDCLASSW,
 };
 
 use super::{Activity, HAROLD_NAME, IGNORED};
@@ -85,7 +85,7 @@ struct State {
     activity: Arc<Activity>,
     verbose: bool,
     harold: Vec<String>,
-    harold_at: Instant,
+    harold_version: u64,
     devices: HashMap<isize, bool>,
 }
 
@@ -93,11 +93,32 @@ thread_local! {
     static STATE: RefCell<Option<State>> = const { RefCell::new(None) };
 }
 
+/// Paired Harolds, kept up to date by a thread of their own: the lookup can
+/// block, and the input thread must never wait.
+static HAROLDS: Mutex<Vec<String>> = Mutex::new(Vec::new());
+static HAROLDS_VERSION: AtomicU64 = AtomicU64::new(0);
+
+fn watch_harolds(verbose: bool) {
+    // The first lookup before any input arrives, then every 30 s.
+    *HAROLDS.lock().unwrap() = paired_harolds(verbose);
+    HAROLDS_VERSION.fetch_add(1, Ordering::Relaxed);
+    std::thread::spawn(move || loop {
+        std::thread::sleep(REFRESH_HAROLD);
+        let found = paired_harolds(verbose);
+        let mut current = HAROLDS.lock().unwrap();
+        if *current != found {
+            *current = found;
+            HAROLDS_VERSION.fetch_add(1, Ordering::Relaxed);
+        }
+    });
+}
+
 /// The hidden window, for the touch hook to post to.
 static WINDOW: AtomicIsize = AtomicIsize::new(0);
 
 impl State {
     fn is_duckwalk(&mut self, device: HANDLE) -> bool {
+        self.update_harold();
         if let Some(&duck) = self.devices.get(&(device.0 as isize)) {
             return duck;
         }
@@ -118,12 +139,13 @@ impl State {
         duck
     }
 
-    fn refresh_harold(&mut self) {
-        self.harold_at = Instant::now();
-        let harold = paired_harolds(self.verbose);
-        if harold != self.harold {
+    /// Pick up a new list of paired Harolds, if there is one.
+    fn update_harold(&mut self) {
+        let version = HAROLDS_VERSION.load(Ordering::Relaxed);
+        if version != self.harold_version {
+            self.harold_version = version;
+            self.harold = HAROLDS.lock().unwrap().clone();
             self.devices.clear(); // look at every device again
-            self.harold = harold;
         }
     }
 }
@@ -172,16 +194,6 @@ extern "system" fn window_proc(window: HWND, msg: u32, wparam: WPARAM, lparam: L
             STATE.with_borrow(|s| s.as_ref().map(|s| s.activity.user_seen()));
             return LRESULT(0);
         }
-        WM_TIMER => {
-            STATE.with_borrow_mut(|s| {
-                if let Some(s) = s.as_mut() {
-                    if s.harold_at.elapsed() >= REFRESH_HAROLD {
-                        s.refresh_harold();
-                    }
-                }
-            });
-            return LRESULT(0);
-        }
         _ => {}
     }
     unsafe { DefWindowProcW(window, msg, wparam, lparam) }
@@ -211,7 +223,27 @@ pub fn start(activity: Arc<Activity>, verbose: bool) {
     });
 }
 
+/// The backstop for touch and pen, on a thread that does nothing else: every
+/// mouse move on the computer waits for a low-level hook to return, so its
+/// thread must always be free. Raw Input still works without it.
+fn touch_backstop(verbose: bool) {
+    std::thread::spawn(move || unsafe {
+        let Ok(instance) = GetModuleHandleW(None) else { return };
+        if SetWindowsHookExW(WH_MOUSE_LL, Some(touch_hook), instance, 0).is_err() {
+            if verbose {
+                println!("No touch backstop; Raw Input still sees touch.");
+            }
+            return;
+        }
+        let mut msg = MSG::default();
+        while GetMessageW(&mut msg, None, 0, 0).as_bool() {
+            DispatchMessageW(&msg);
+        }
+    });
+}
+
 fn watch(activity: Arc<Activity>, verbose: bool) -> windows::core::Result<()> {
+    watch_harolds(verbose);
     unsafe {
         let instance = GetModuleHandleW(None)?;
         let class = WNDCLASSW {
@@ -262,23 +294,18 @@ fn watch(activity: Arc<Activity>, verbose: bool) -> windows::core::Result<()> {
         ];
         RegisterRawInputDevices(&wanted, std::mem::size_of::<RAWINPUTDEVICE>() as u32)?;
 
-        let mut state = State {
+        let state = State {
             activity: activity.clone(),
             verbose,
             harold: Vec::new(),
-            harold_at: Instant::now(),
+            harold_version: 0,
             devices: HashMap::new(),
         };
-        state.refresh_harold();
         STATE.set(Some(state));
         activity.user_seen();
         activity.set_watching();
 
-        // The backstop for touch and pen; Raw Input still works without it.
-        if SetWindowsHookExW(WH_MOUSE_LL, Some(touch_hook), instance, 0).is_err() && verbose {
-            println!("No touch backstop; Raw Input still sees touch.");
-        }
-        SetTimer(window, 1, 1000, None);
+        touch_backstop(verbose);
 
         let mut msg = MSG::default();
         while GetMessageW(&mut msg, None, 0, 0).as_bool() {
