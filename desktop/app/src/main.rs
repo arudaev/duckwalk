@@ -7,10 +7,12 @@
 #![cfg_attr(windows, windows_subsystem = "windows")]
 
 mod ble;
+mod control;
 mod flipper;
 mod input;
 mod install;
 mod login;
+mod mcp;
 mod protocol;
 mod status;
 mod tray;
@@ -22,13 +24,14 @@ use std::time::{Duration, Instant};
 
 use tokio::sync::{watch, Notify};
 
-use protocol::{bye_packet, idle_packet, usb_report, HEARTBEAT};
+use protocol::{bye_packet, command_packet, idle_packet, usb_report, HEARTBEAT};
 use status::{Connection, STATUS};
 
 const RETRY_OPEN: Duration = Duration::from_secs(2);
 
 const USAGE: &str = "\
 Usage: duckwalk [--verbose] [--pretend-working] [--no-install]
+       duckwalk mcp
 
 Duckwalk's desktop app. Tells Harold over USB or Bluetooth when you use
 your own mouse or keyboard, so he walks the pointer only while you are
@@ -37,6 +40,8 @@ away. It lives in the tray and starts at login.
   --verbose          print what it finds and sends
   --pretend-working  say you are working all the time, to check the link:
                      the Flipper should show \"You're working\"
+  mcp                run as an MCP server over stdio, for coding agents
+                     (talks to the running app; see the README)
   --no-install       run from here; don't copy to the install folder
                      (Windows) or point start at login at this copy";
 
@@ -75,6 +80,12 @@ fn only_one() -> bool {
 }
 
 fn main() {
+    // An agent's MCP client starts `duckwalk mcp` with its own pipes: answer
+    // there, before anything that would touch a console or the tray.
+    if std::env::args().nth(1).as_deref() == Some("mcp") {
+        mcp::run();
+        return;
+    }
     attach_console();
     let mut verbose = false;
     let mut pretend_working = false;
@@ -150,6 +161,18 @@ async fn link(verbose: bool, pretend_working: bool, quit: Arc<Notify>) {
     let (usb_busy_tx, usb_busy_rx) = watch::channel(false);
     tokio::spawn(ble::run(packet_rx, usb_busy_rx, verbose));
 
+    // Commands from an agent (control.rs): over USB through this loop, over
+    // Bluetooth through the link's queue of packets that must arrive once.
+    let (cmd_tx, mut cmd_rx) = tokio::sync::mpsc::unbounded_channel();
+    control::serve(move |cmd| match STATUS.connection() {
+        Connection::None => Err("Duckwalk isn't connected: open it on the Flipper, over USB or Bluetooth.".into()),
+        Connection::Usb => cmd_tx.send(cmd).map(|_| "usb").map_err(|e| e.to_string()),
+        Connection::Bluetooth => {
+            ble::send_once(command_packet(&cmd));
+            Ok("bluetooth")
+        }
+    });
+
     let mut usb = usb::Usb::new();
     let mut last_try = Instant::now() - RETRY_OPEN;
     let mut ticker = tokio::time::interval(HEARTBEAT);
@@ -160,6 +183,15 @@ async fn link(verbose: bool, pretend_working: bool, quit: Arc<Notify>) {
         tokio::select! {
             _ = listen.tick() => {
                 usb.poll(|p| flipper::HAROLD.receive(p, verbose));
+                continue;
+            }
+            Some(cmd) = cmd_rx.recv() => {
+                if usb.is_open() {
+                    usb.send(&usb_report(&command_packet(&cmd)));
+                }
+                if verbose {
+                    println!("Agent: {cmd:?}");
+                }
                 continue;
             }
             _ = ticker.tick() => {}

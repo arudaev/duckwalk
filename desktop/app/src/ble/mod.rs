@@ -6,10 +6,14 @@
 //! newest packet at least once a heartbeat. It runs until the program ends
 //! and prints when the link comes and goes.
 
+use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 use std::time::Duration;
 
 use uuid::{uuid, Uuid};
+
+use crate::protocol::PACKET_LEN;
 
 pub const SERVICE: Uuid = uuid!("15f18352-9e6d-4ff4-9f45-cd158a70941c");
 pub const PACKET: Uuid = uuid!("15f18352-9e6d-4ff4-9f45-cd158a70941d");
@@ -25,6 +29,23 @@ const LOOK_AGAIN: Duration = Duration::from_secs(5);
 
 /// Is a Bluetooth link up (a write went through)? Read for the tray.
 pub static LINKED: AtomicBool = AtomicBool::new(false);
+
+/// Packets that must reach Duckwalk once, not just the newest one (commands
+/// from an agent): written before the next idle packet.
+static ONCE: Mutex<VecDeque<[u8; PACKET_LEN]>> = Mutex::new(VecDeque::new());
+
+pub fn send_once(packet: [u8; PACKET_LEN]) {
+    ONCE.lock().unwrap().push_back(packet);
+}
+
+fn take_once() -> Option<[u8; PACKET_LEN]> {
+    ONCE.lock().unwrap().pop_front()
+}
+
+#[cfg_attr(not(windows), allow(dead_code))]
+fn has_once() -> bool {
+    !ONCE.lock().unwrap().is_empty()
+}
 
 /// The link came up (`true`) or went (`false`); say so once.
 fn linked(up: bool, quiet: bool) {

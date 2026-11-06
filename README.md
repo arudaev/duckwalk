@@ -78,7 +78,7 @@ The lock timer and "away" status follow the computer's idle timer, and any mouse
 ## Docs and help
 
 - [User guide](docs/guide.md): every screen, Settings, the remote, pairing
-- [Desktop app](desktop/app/README.md): the optional tray app for Windows, macOS and Linux
+- [Desktop app](desktop/app/README.md): the optional tray app for Windows, macOS and Linux, with an MCP server and an [agent skill](skills/duckwalk/SKILL.md) for coding agents
 - [All docs](docs/README.md), including the [architecture](docs/architecture.md) and [developer guide](docs/development.md)
 - Found a bug or tried it on macOS or Linux? [Open an issue](https://github.com/arudaev/duckwalk/issues/new/choose).
 

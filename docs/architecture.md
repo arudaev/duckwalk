@@ -124,6 +124,8 @@ Over USB, Duckwalk's HID interface has a third collection: 63-byte vendor report
 
 **Harold talks back** (`talk.c`): Duckwalk tells the desktop app its state on every change and every 2 s, each walk's whole path as it starts (up to 15 packets of 27 steps), a quack, and that it's closing. Over USB these go the other way through the same vendor report; over Bluetooth they are notifications on the same characteristic. A second characteristic doesn't fit: the radio stack refuses it beside the HID service (error 152). Each side ignores message types it doesn't know, so older builds and apps keep working.
 
+**Commands from the PC** (`HELPER_MSG_COMMAND`): wake, sleep or a mode, sent by the desktop app when an agent asks through `duckwalk mcp`. The packet arrives in the USB interrupt or the Bluetooth thread, so `helper.c` only parks it; the main loop takes it and acts as if OK had been pressed, or a mode chosen in Settings, and it counts as somebody around for Stop after.
+
 **Changing the Bluetooth layout:** Windows keeps a paired device's GATT layout from pairing time. When a Duckwalk build changes its service (adding notify did), Windows marks the service "Unknown" and the app can't find it until Harold is removed in Windows' Bluetooth settings and paired again. Avoid layout changes after a release; if one can't be avoided, say so in the release notes.
 
 How the desktop app tells Duckwalk's own input from yours is written up in [decision 0001](decisions/0001-tell-duckwalk-from-the-user.md) and [decision 0002](decisions/0002-one-desktop-app-in-rust.md).

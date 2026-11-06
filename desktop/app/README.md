@@ -51,6 +51,32 @@ sudo usermod -aG input $USER
 
 Then log out and in again. Without it the app says it can't read any input device, and Harold walks on his timer.
 
+## For coding agents
+
+A coding agent (Claude Code, Codex and others) can check on Harold and switch keep-awake on and off, for example around a long build. The desktop app is its own MCP server: started as `duckwalk mcp`, it talks to the running tray app over a local socket (a named pipe on Windows), never over the network.
+
+| Tool | Does |
+|---|---|
+| `status` | Connection, keep-awake on or off, mode, walking or waiting while you work, your idle time |
+| `wake` / `sleep` | Keep-awake on or off, like OK on the Flipper |
+| `set_mode` | `subtle`, `walk` or `wander` |
+
+Add it to **Claude Code**:
+
+```bash
+claude mcp add duckwalk -- duckwalk mcp
+```
+
+On Windows, give the full path: `%LOCALAPPDATA%\Programs\Duckwalk\duckwalk.exe mcp`. For **Codex**, add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.duckwalk]
+command = "duckwalk"
+args = ["mcp"]
+```
+
+The agent skill in [`skills/duckwalk`](../../skills/duckwalk/SKILL.md) tells an agent when to use these and how to install Duckwalk; add it with `npx skills add arudaev/duckwalk`.
+
 ## What it does, exactly
 
 - **It notices that you used a device, not what you did with it.** It never looks at which keys you press or where you move the pointer. Windows Raw Input, macOS IOHIDManager and Linux evdev each tell the app that an input happened and which device sent it.
@@ -85,6 +111,7 @@ CI builds it on Windows, macOS and Linux for every pull request and uploads `duc
 | `src/main.rs` | Sends an idle packet every second and straight away when you are active, over USB when Duckwalk is plugged in, otherwise over Bluetooth; a goodbye on Quit |
 | `src/tray.rs`, `src/status.rs` | Harold in the tray, and the line his menu shows |
 | `src/login.rs` | Start at login |
+| `src/control.rs`, `src/mcp.rs` | The local control socket, and `duckwalk mcp` on top of it |
 | `src/install.rs`, `build.rs`, `assets/` | Windows: installs itself and adds the Start menu entry; Harold's icon in the exe and the tray (drawn by `brand/tools/make_icon.py`) |
 | `src/input/` | Sees your input: Raw Input on Windows, IOHIDManager on macOS, evdev on Linux |
 | `src/protocol.rs` | The packets the app sends, the same as `app/helper_protocol.h` |
