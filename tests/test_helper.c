@@ -57,6 +57,18 @@ int main(void) {
     helper_receive(p, t);
     CHECK(!helper_user_active(30000), "still active 31 s after input");
 
+    /* The helper says goodbye: gone at once, not after the timeout. */
+    packet(p, 0);
+    helper_receive(p, t);
+    CHECK(helper_present(), "not present before goodbye");
+    memset(p, 0, HELPER_PACKET_LEN);
+    p[0] = HELPER_MAGIC;
+    p[1] = HELPER_VERSION;
+    p[2] = HELPER_MSG_BYE;
+    CHECK(helper_receive(p, t), "goodbye rejected");
+    CHECK(!helper_present(), "still present right after goodbye");
+    CHECK(!helper_user_active(30000), "active after goodbye");
+
     /* An idle time longer than the Flipper's uptime is just "long ago". */
     packet(p, 0xFFFFFFFF);
     helper_receive(p, t);
