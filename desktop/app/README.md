@@ -33,7 +33,7 @@ Harold's menu in the tray says how he's connected and whether you're working, an
 
 Only one copy runs at a time.
 
-**To remove it:** untick **Start at login** in Harold's menu, choose **Quit Duckwalk**, then remove the app: on Windows, delete the folder `%LOCALAPPDATA%\Programs\Duckwalk` and the Start menu entry **Duckwalk**; on macOS, `brew uninstall duckwalk`; installed with cargo, `cargo uninstall duckwalk`.
+**To remove it:** untick **Start at login** in Harold's menu, choose **Quit Duckwalk**, then remove the app: on Windows, delete the folder `%LOCALAPPDATA%\Programs\Duckwalk`, the Start menu entry **Duckwalk**, and that folder from your user PATH (search Windows for *environment variables*); on macOS, `brew uninstall duckwalk`; installed with cargo, `cargo uninstall duckwalk`.
 
 **Tested on Windows 11** over USB and Bluetooth. The macOS and Linux builds are new; reports are welcome.
 
@@ -50,6 +50,26 @@ sudo usermod -aG input $USER
 ```
 
 Then log out and in again. Without it the app says it can't read any input device, and Harold walks on his timer.
+
+## For coding agents
+
+A coding agent can check on Harold and switch keep-awake on and off, for example around a long build. Everything runs on your computer: no account, no sign-in, no network.
+
+| Agent | Set it up |
+|---|---|
+| **Claude Code** | `/plugin install duckwalk --marketplace arudaev/duckwalk` adds the skill and the MCP server in one go. On Claude Code before 2.1.275: `/plugin marketplace add arudaev/duckwalk`, then `/plugin install duckwalk@duckwalk` |
+| **Codex** | `codex mcp add duckwalk -- duckwalk mcp` for the MCP server, and `npx skills add arudaev/duckwalk` for the skill |
+| **Others** | Any MCP client: a stdio server, command `duckwalk`, argument `mcp`. The skill: `npx skills add arudaev/duckwalk` |
+
+Then ask your agent to set Duckwalk up: the skill tells it to check for the desktop app and, with your OK, install it. On Windows the app puts its folder on your PATH, so `duckwalk` works by name in new terminals.
+
+| Tool | Does |
+|---|---|
+| `status` | Connection, keep-awake on or off, mode, walking or waiting while you work, your idle time |
+| `wake` / `sleep` | Keep-awake on or off, like OK on the Flipper |
+| `set_mode` | `subtle`, `walk` or `wander` |
+
+`duckwalk mcp` talks to the running tray app over a local socket (a named pipe on Windows), never over the network. Without the tray app or a connected Flipper, the tools say so.
 
 ## What it does, exactly
 
@@ -85,6 +105,7 @@ CI builds it on Windows, macOS and Linux for every pull request and uploads `duc
 | `src/main.rs` | Sends an idle packet every second and straight away when you are active, over USB when Duckwalk is plugged in, otherwise over Bluetooth; a goodbye on Quit |
 | `src/tray.rs`, `src/status.rs` | Harold in the tray, and the line his menu shows |
 | `src/login.rs` | Start at login |
+| `src/control.rs`, `src/mcp.rs` | The local control socket, and `duckwalk mcp` on top of it |
 | `src/install.rs`, `build.rs`, `assets/` | Windows: installs itself and adds the Start menu entry; Harold's icon in the exe and the tray (drawn by `brand/tools/make_icon.py`) |
 | `src/input/` | Sees your input: Raw Input on Windows, IOHIDManager on macOS, evdev on Linux |
 | `src/protocol.rs` | The packets the app sends, the same as `app/helper_protocol.h` |

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "duckwalk",
+  "displayName": "Duckwalk",
+  "version": "0.1.0",
+  "description": "Keep your computer awake during long agent tasks with Duckwalk, a Flipper Zero app. Adds the duckwalk skill and the MCP server from Duckwalk's desktop app: status, wake, sleep, set_mode.",
+  "author": {
+    "name": "Alexander Rudaev",
+    "url": "https://github.com/arudaev"
+  },
+  "homepage": "https://arudaev.github.io/duckwalk/",
+  "repository": "https://github.com/arudaev/duckwalk",
+  "license": "GPL-3.0-only",
+  "keywords": ["flipper-zero", "keep-awake", "mouse-jiggler", "mcp"],
+  "mcpServers": {
+    "duckwalk": {
+      "command": "duckwalk",
+      "args": ["mcp"]
+    }
+  }
+}

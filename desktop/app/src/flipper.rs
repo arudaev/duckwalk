@@ -140,6 +140,8 @@ impl WalkBuilder {
 pub struct Harold {
     heard: AtomicBool,
     awake: AtomicBool,
+    walking: AtomicBool,
+    waiting: AtomicBool,
     mode: AtomicU8,
     walk: Mutex<WalkBuilder>,
 }
@@ -147,6 +149,8 @@ pub struct Harold {
 pub static HAROLD: Harold = Harold {
     heard: AtomicBool::new(false),
     awake: AtomicBool::new(false),
+    walking: AtomicBool::new(false),
+    waiting: AtomicBool::new(false),
     mode: AtomicU8::new(0),
     walk: Mutex::new(WalkBuilder {
         total: 0,
@@ -160,9 +164,17 @@ impl Harold {
     pub fn receive(&self, packet: &[u8], verbose: bool) {
         let Some(msg) = parse(packet) else { return };
         match &msg {
-            Message::State { awake, mode, .. } => {
+            Message::State {
+                awake,
+                walking,
+                waiting,
+                mode,
+                ..
+            } => {
                 self.heard.store(true, Ordering::Relaxed);
                 self.awake.store(*awake, Ordering::Relaxed);
+                self.walking.store(*walking, Ordering::Relaxed);
+                self.waiting.store(*waiting, Ordering::Relaxed);
                 self.mode.store(
                     match mode {
                         Mode::Off => 0,
@@ -212,6 +224,25 @@ impl Harold {
 
     pub fn awake(&self) -> bool {
         self.awake.load(Ordering::Relaxed)
+    }
+
+    pub fn walking(&self) -> bool {
+        self.walking.load(Ordering::Relaxed)
+    }
+
+    pub fn waiting(&self) -> bool {
+        self.waiting.load(Ordering::Relaxed)
+    }
+
+    /// The keep-awake mode, by name.
+    pub fn mode_name(&self) -> &'static str {
+        match self.mode.load(Ordering::Relaxed) {
+            0 => "off",
+            1 => "subtle",
+            2 => "walk",
+            3 => "wander",
+            _ => "unknown",
+        }
     }
 }
 

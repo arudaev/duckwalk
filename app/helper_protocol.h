@@ -13,6 +13,9 @@
  *   straight away (at most every 250 ms) when the user is active.
  *   HELPER_MSG_BYE: no data. The helper is quitting; forget it now instead
  *   of after HELPER_TIMEOUT_MS. Older Flipper builds ignore it.
+ *   HELPER_MSG_COMMAND: [3] HELPER_CMD_*, [4] for HELPER_CMD_MODE the mode
+ *   (1 subtle, 2 walk, 3 wander). As if pressed on the Flipper: wake and
+ *   sleep do what OK does, and a mode is set as in Settings.
  *
  * Flipper -> PC (types 0x81 and up, so the two directions never mix; each
  * side ignores types it doesn't know)
@@ -35,6 +38,11 @@
 
 #define HELPER_MSG_IDLE 0x01
 #define HELPER_MSG_BYE  0x02
+#define HELPER_MSG_COMMAND 0x03
+
+#define HELPER_CMD_WAKE  1
+#define HELPER_CMD_SLEEP 2
+#define HELPER_CMD_MODE  3
 
 #define HELPER_MSG_STATE   0x81
 #define HELPER_MSG_WALK    0x82

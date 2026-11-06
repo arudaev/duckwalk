@@ -10,6 +10,8 @@ pub const VERSION: u8 = 1;
 pub const MSG_IDLE: u8 = 0x01;
 /// The app is quitting: the Flipper drops "+PC" at once.
 pub const MSG_BYE: u8 = 0x02;
+/// Wake, sleep or a mode, from an agent through `duckwalk mcp`.
+pub const MSG_COMMAND: u8 = 0x03;
 pub const PACKET_LEN: usize = 63;
 
 /// Over USB the packet travels as vendor report 4.
@@ -39,6 +41,21 @@ pub fn bye_packet() -> [u8; PACKET_LEN] {
     p
 }
 
+/// A command for Harold, as if pressed on the Flipper (`HELPER_MSG_COMMAND`).
+pub fn command_packet(cmd: &crate::control::Command) -> [u8; PACKET_LEN] {
+    use crate::control::Command;
+    let mut p = [0u8; PACKET_LEN];
+    p[0] = MAGIC;
+    p[1] = VERSION;
+    p[2] = MSG_COMMAND;
+    (p[3], p[4]) = match *cmd {
+        Command::Wake => (1, 0),
+        Command::Sleep => (2, 0),
+        Command::Mode(m) => (3, m),
+    };
+    p
+}
+
 /// The same packet with the USB report ID in front, ready for `hid_write`.
 pub fn usb_report(packet: &[u8; PACKET_LEN]) -> [u8; PACKET_LEN + 1] {
     let mut r = [0u8; PACKET_LEN + 1];
@@ -64,6 +81,13 @@ mod tests {
         let p = bye_packet();
         assert_eq!(&p[..3], &[b'D', 1, 0x02]);
         assert!(p[3..].iter().all(|&b| b == 0));
+    }
+
+    #[test]
+    fn command_packets() {
+        use crate::control::Command;
+        assert_eq!(&command_packet(&Command::Sleep)[..5], &[b'D', 1, 0x03, 2, 0]);
+        assert_eq!(&command_packet(&Command::Mode(3))[..5], &[b'D', 1, 0x03, 3, 3]);
     }
 
     #[test]

@@ -12,6 +12,7 @@ Writes:
     desktop/app/assets/duckwalk.ico        16 to 256 px, for the Windows exe
     desktop/app/assets/harold-32.png       the tray icon, lit
     desktop/app/assets/harold-32-grey.png  the tray icon while looking for him
+    .claude-plugin/icon.png                the Claude Code plugin's icon, 512 px
 """
 
 from pathlib import Path
@@ -103,6 +104,8 @@ def main() -> None:
     big.save(OUT / "duckwalk.ico", sizes=[(s, s) for s in sizes], append_images=[render(pixels, s) for s in sizes])
     render(pixels, 32).save(OUT / "harold-32.png")
     render(pixels, 32, grey=True).save(OUT / "harold-32-grey.png")
+    # The Claude Code plugin's icon (.claude-plugin/icon.png): 512 px, square.
+    render(pixels, 512).save(ROOT / ".claude-plugin" / "icon.png")
     print(f"wrote {OUT.relative_to(ROOT)}: duckwalk.ico, harold-32.png, harold-32-grey.png")
 
 

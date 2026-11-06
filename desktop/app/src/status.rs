@@ -48,6 +48,11 @@ impl Status {
         self.asleep.store(asleep, Ordering::Relaxed);
     }
 
+    /// Seconds since your last own input, or UNWATCHED.
+    pub fn idle_s(&self) -> u32 {
+        self.idle_s.load(Ordering::Relaxed)
+    }
+
     pub fn set_idle_s(&self, s: u32) {
         self.idle_s.store(s, Ordering::Relaxed);
     }

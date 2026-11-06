@@ -69,6 +69,27 @@ int main(void) {
     CHECK(!helper_present(), "still present right after goodbye");
     CHECK(!helper_user_active(30000), "active after goodbye");
 
+    /* Commands: parked for the main loop, taken once, the newest wins;
+     * unknown commands and modes are refused. */
+    uint8_t cmd, arg;
+    CHECK(!helper_take_command(&cmd, &arg), "a command before any arrived");
+    memset(p, 0, HELPER_PACKET_LEN);
+    p[0] = HELPER_MAGIC;
+    p[1] = HELPER_VERSION;
+    p[2] = HELPER_MSG_COMMAND;
+    p[3] = HELPER_CMD_SLEEP;
+    CHECK(helper_receive(p, t), "sleep refused");
+    p[3] = HELPER_CMD_MODE;
+    p[4] = 3;
+    CHECK(helper_receive(p, t), "mode refused");
+    CHECK(helper_take_command(&cmd, &arg) && cmd == HELPER_CMD_MODE && arg == 3, "newest command not taken");
+    CHECK(!helper_take_command(&cmd, &arg), "a command taken twice");
+    p[4] = 9;
+    CHECK(!helper_receive(p, t), "mode 9 accepted");
+    p[3] = 7;
+    CHECK(!helper_receive(p, t), "command 7 accepted");
+    CHECK(!helper_take_command(&cmd, &arg), "a refused command was parked");
+
     /* An idle time longer than the Flipper's uptime is just "long ago". */
     packet(p, 0xFFFFFFFF);
     helper_receive(p, t);

@@ -6,7 +6,7 @@ use btleplug::platform::{Adapter, Manager, Peripheral};
 use futures::StreamExt;
 use tokio::sync::watch;
 
-use super::{linked, LOOK_AGAIN, NAME_PREFIX, NOTIFY, PACKET, SERVICE};
+use super::{linked, take_once, LOOK_AGAIN, NAME_PREFIX, NOTIFY, PACKET, SERVICE};
 use crate::flipper::HAROLD;
 use crate::protocol::{HEARTBEAT, PACKET_LEN};
 
@@ -36,6 +36,9 @@ pub async fn run(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch
         loop {
             if *usb_busy.borrow() {
                 break; // USB is doing it
+            }
+            while let Some(once) = take_once() {
+                let _ = harold.write(&packet, &once, WriteType::WithoutResponse).await;
             }
             let data = *packets.borrow();
             if harold.write(&packet, &data, WriteType::WithoutResponse).await.is_err() {

@@ -13,7 +13,7 @@ use windows::Devices::Enumeration::DeviceInformation;
 use windows::Foundation::TypedEventHandler;
 use windows::Storage::Streams::{DataReader, DataWriter};
 
-use super::{linked, LOOK_AGAIN, NOTIFY, PACKET, SERVICE};
+use super::{has_once, linked, take_once, LOOK_AGAIN, NOTIFY, PACKET, SERVICE};
 use crate::flipper::HAROLD;
 use crate::protocol::{HEARTBEAT, PACKET_LEN};
 
@@ -44,6 +44,9 @@ fn link(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receive
             }
             continue;
         };
+        while let Some(once) = take_once() {
+            let _ = write(target, &once);
+        }
         let data = *packets.borrow_and_update();
         if matches!(write(target, &data), Ok(true)) {
             linked(true, false);
@@ -60,7 +63,7 @@ fn link(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receive
 /// Wait a heartbeat, or less when a new packet comes in (you are active).
 fn wait_for_news(packets: &mut watch::Receiver<[u8; PACKET_LEN]>) {
     let until = std::time::Instant::now() + HEARTBEAT;
-    while std::time::Instant::now() < until && !packets.has_changed().unwrap_or(false) {
+    while std::time::Instant::now() < until && !packets.has_changed().unwrap_or(false) && !has_once() {
         std::thread::sleep(std::time::Duration::from_millis(20));
     }
 }
