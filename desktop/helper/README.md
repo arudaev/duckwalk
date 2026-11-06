@@ -4,7 +4,9 @@
 
 A small program for your computer that tells Duckwalk when **you** are using your mouse or keyboard. With it running, Harold lets go of the pointer the moment you touch your own mouse, keyboard, touchpad, touch screen or pen, stays away for 30 seconds after your last input (**Resume after** in Duckwalk's Settings), and walks only while you are really away.
 
-Without the helper, Duckwalk works as before: it can't see your input, so it walks on its timer whether you are there or not.
+Without the helper, Duckwalk works as before: it can't see your input, so it walks on its timer whether you are there or not. The guide says [how to manage without it](../../docs/guide.md#without-the-pc-helper).
+
+**Windows 10 and 11 only, until v0.3.** The Flipper app itself works with any computer; the helper for macOS and Linux comes in v0.3.
 
 ## Use it
 
@@ -26,7 +28,7 @@ To start it with Windows, put a shortcut to it in `shell:startup` (Win+R, type `
 ## Limits
 
 - **Bluetooth needs a Visual Studio build.** The Bluetooth part uses the Windows SDK's GATT API, which MinGW lacks; a MinGW build works over USB only. The `duckwalk-helper.exe` from CI has both.
-- **Windows only.** macOS and Linux versions would need their own input APIs; contributions are welcome.
+- **Windows only, until v0.3.** macOS and Linux need their own input APIs; v0.3 brings one desktop app for all three.
 
 ## Build
 

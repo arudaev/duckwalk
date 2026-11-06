@@ -23,7 +23,7 @@ Harold lives on your desk. When you step away, he moves the mouse pointer so Tea
 - **Never the same path twice**, so it does not look like a jiggler.
 - **USB or Bluetooth.** Plug it in, or pair it and keep it in your pocket. A connection check shows whether the Flipper or the computer needs attention.
 - **Stops when you want it to.** Work hours only (Mon–Fri 8–18), and **Stop after** puts Harold to sleep when nobody has been around for 1 to 8 hours, so a PC you walked away from still locks.
-- **Lets go while you work.** With the optional [PC helper](desktop/helper/README.md) on Windows, Harold pauses the moment you touch your own mouse or keyboard, over USB or Bluetooth.
+- **Lets go while you work.** With the optional [PC helper](desktop/helper/README.md), Harold pauses the moment you touch your own mouse or keyboard, over USB or Bluetooth. The helper runs on Windows 10 and 11 for now; macOS and Linux follow in v0.3.
 - **A remote too.** Play, pause, volume and tracks; next and previous slide; a D-pad mouse.
 - **Harold is good company.** He reads code, types, sips coffee, hunts bugs and quacks at them.
 
@@ -60,6 +60,8 @@ On the first launch Harold asks how to reach the computer: **Left** for USB, **R
 
 The opposite button brings you back: Down from Preview, Up from the connection check, Right from the Remote's menu.
 
+The Flipper app needs nothing installed on the computer: it shows up as a normal USB or Bluetooth mouse, so it works with any computer that takes one. So far it has been tested on Windows 11. Only the PC helper is Windows only, until v0.3.
+
 For a whole day away, set **Stop after** to **Never**. The [user guide](docs/guide.md) shows every screen.
 
 ## How it works
@@ -76,7 +78,7 @@ The lock timer and "away" status follow the computer's idle timer, and any mouse
 ## Docs and help
 
 - [User guide](docs/guide.md): every screen, Settings, the remote, pairing
-- [PC helper](desktop/helper/README.md): the optional Windows program
+- [PC helper](desktop/helper/README.md): the optional program for Windows 10 and 11 (macOS and Linux in v0.3)
 - [All docs](docs/README.md), including the [architecture](docs/architecture.md) and [developer guide](docs/development.md)
 - Found a bug or tried it on macOS or Linux? [Open an issue](https://github.com/arudaev/duckwalk/issues/new/choose).
 
