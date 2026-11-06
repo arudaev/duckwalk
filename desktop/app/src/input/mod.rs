@@ -41,6 +41,7 @@ impl Activity {
         })
     }
 
+    #[cfg_attr(not(windows), allow(dead_code))]
     pub fn set_watching(&self) {
         self.watching.store(true, Ordering::Relaxed);
     }
@@ -50,6 +51,7 @@ impl Activity {
     }
 
     /// You did something.
+    #[cfg_attr(not(windows), allow(dead_code))]
     pub fn user_seen(&self) {
         let now = self.started.elapsed().as_millis() as u64;
         self.last_ms.store(now, Ordering::Relaxed);
