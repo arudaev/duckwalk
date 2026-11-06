@@ -1,4 +1,4 @@
-//! macOS and Linux: not watched yet (evdev and IOHIDManager follow), so the
+//! macOS: not watched yet (IOHIDManager follows), so the
 //! app reports "away" and Harold walks as he would without it.
 
 use std::sync::Arc;

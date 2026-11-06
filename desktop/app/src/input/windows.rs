@@ -10,7 +10,7 @@
 
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicIsize, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicIsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -29,10 +29,9 @@ use windows::Win32::UI::WindowsAndMessaging::{
     WINDOW_STYLE, WM_APP, WM_INPUT, WM_TIMER, WNDCLASSW,
 };
 
-use super::Activity;
+use super::{Activity, HAROLD_NAME, IGNORED};
 
 const DUCKWALK_USB: &str = "vid_1209&pid_0001";
-const HAROLD_NAME: &str = "Harold ";
 const REFRESH_HAROLD: Duration = Duration::from_secs(30);
 const DEVICE_CACHE: usize = 64;
 
@@ -93,8 +92,6 @@ struct State {
 thread_local! {
     static STATE: RefCell<Option<State>> = const { RefCell::new(None) };
 }
-
-static IGNORED: AtomicU64 = AtomicU64::new(0);
 
 /// The hidden window, for the touch hook to post to.
 static WINDOW: AtomicIsize = AtomicIsize::new(0);

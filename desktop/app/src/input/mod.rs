@@ -16,10 +16,33 @@ mod windows;
 #[cfg(windows)]
 pub use self::windows::{ignored, start};
 
-#[cfg(not(windows))]
+#[cfg(target_os = "linux")]
+mod linux;
+#[cfg(target_os = "linux")]
+pub use self::linux::{ignored, start};
+
+#[cfg(not(any(windows, target_os = "linux")))]
 mod unsupported;
-#[cfg(not(windows))]
+#[cfg(not(any(windows, target_os = "linux")))]
 pub use self::unsupported::{ignored, start};
+
+/// Duckwalk over USB (pid.codes test IDs, see `app/usb/usb_duck.h`).
+pub const DUCKWALK_VID: u16 = 0x1209;
+pub const DUCKWALK_PID: u16 = 0x0001;
+/// Duckwalk over Bluetooth pairs as "Harold <Flipper name>".
+pub const HAROLD_NAME: &str = "Harold ";
+
+/// How many of Duckwalk's own moves were ignored, for `--verbose`.
+#[cfg_attr(not(any(windows, target_os = "linux")), allow(dead_code))]
+static IGNORED: AtomicU64 = AtomicU64::new(0);
+
+/// Is this input device Duckwalk's, by its IDs or the name it pairs under?
+/// Used where the system names devices by vendor, product and name (Linux,
+/// macOS); Windows goes by device path.
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+pub fn is_duckwalk_device(vendor: u16, product: u16, name: &str) -> bool {
+    (vendor == DUCKWALK_VID && product == DUCKWALK_PID) || name.starts_with(HAROLD_NAME)
+}
 
 /// Shared between the input thread and the sender.
 pub struct Activity {
@@ -74,6 +97,18 @@ impl Activity {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn duckwalk_devices() {
+        assert!(is_duckwalk_device(0x1209, 0x0001, "arudaev Duckwalk Mouse"));
+        assert!(is_duckwalk_device(0, 0, "Harold Rgudalap Mouse"));
+        assert!(!is_duckwalk_device(0x045e, 0x0932, "Surface Arc Mouse"));
+        assert!(!is_duckwalk_device(
+            0x1209,
+            0x0002,
+            "Someone else's pid.codes test device"
+        ));
+    }
 
     #[test]
     fn away_until_watching() {
