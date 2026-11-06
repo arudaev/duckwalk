@@ -1,6 +1,6 @@
 # 0002 – One desktop app for Windows, macOS and Linux, in Rust
 
-[← Decision 0001](0001-tell-duckwalk-from-the-user.md) · [Docs home](../README.md)
+[← Decision 0001](0001-tell-duckwalk-from-the-user.md) · [Docs home](../README.md) · [Next: Decision 0003 →](0003-trusted-install-for-free.md)
 
 Issue #119, 6 November 2026. Tried on Windows 11 (Surface, ARM64) with Duckwalk on official firmware 1.5.1.
 
@@ -49,4 +49,4 @@ Not yet checked on a real Mac or Linux computer (#117).
 
 ---
 
-[← Decision 0001](0001-tell-duckwalk-from-the-user.md) · [Docs home](../README.md)
+[← Decision 0001](0001-tell-duckwalk-from-the-user.md) · [Docs home](../README.md) · [Next: Decision 0003 →](0003-trusted-install-for-free.md)
