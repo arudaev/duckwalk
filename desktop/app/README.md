@@ -33,7 +33,7 @@ Harold's menu in the tray says how he's connected and whether you're working, an
 
 Only one copy runs at a time.
 
-**To remove it:** untick **Start at login** in Harold's menu, choose **Quit Duckwalk**, then remove the app: on Windows, delete the folder `%LOCALAPPDATA%\Programs\Duckwalk` and the Start menu entry **Duckwalk**; on macOS, `brew uninstall duckwalk`; installed with cargo, `cargo uninstall duckwalk`.
+**To remove it:** untick **Start at login** in Harold's menu, choose **Quit Duckwalk**, then remove the app: on Windows, delete the folder `%LOCALAPPDATA%\Programs\Duckwalk`, the Start menu entry **Duckwalk**, and that folder from your user PATH (search Windows for *environment variables*); on macOS, `brew uninstall duckwalk`; installed with cargo, `cargo uninstall duckwalk`.
 
 **Tested on Windows 11** over USB and Bluetooth. The macOS and Linux builds are new; reports are welcome.
 
@@ -53,29 +53,15 @@ Then log out and in again. Without it the app says it can't read any input devic
 
 ## For coding agents
 
-A coding agent (Claude Code, Codex and others) can check on Harold and switch keep-awake on and off, for example around a long build. Everything runs on your computer: no account, no sign-in, no network.
+A coding agent can check on Harold and switch keep-awake on and off, for example around a long build. Everything runs on your computer: no account, no sign-in, no network.
 
-**1. Install the desktop app** and start it once (see [Use it](#use-it)). It is its own MCP server.
+| Agent | Set it up |
+|---|---|
+| **Claude Code** | `/plugin install duckwalk --marketplace arudaev/duckwalk` adds the skill and the MCP server in one go. On Claude Code before 2.1.275: `/plugin marketplace add arudaev/duckwalk`, then `/plugin install duckwalk@duckwalk` |
+| **Codex** | `codex mcp add duckwalk -- duckwalk mcp` for the MCP server, and `npx skills add arudaev/duckwalk` for the skill |
+| **Others** | Any MCP client: a stdio server, command `duckwalk`, argument `mcp`. The skill: `npx skills add arudaev/duckwalk` |
 
-**2. Add the MCP server.** In Claude Code:
-
-```bash
-claude mcp add duckwalk -- duckwalk mcp
-```
-
-On Windows, give the full path: `claude mcp add duckwalk -- "%LOCALAPPDATA%\Programs\Duckwalk\duckwalk.exe" mcp`. In Codex, add to `~/.codex/config.toml`:
-
-```toml
-[mcp_servers.duckwalk]
-command = "duckwalk"
-args = ["mcp"]
-```
-
-**3. Install the agent skill (optional).** It tells the agent when to wake Harold and when to let the computer lock again, and how to install Duckwalk:
-
-```bash
-npx skills add arudaev/duckwalk
-```
+Then ask your agent to set Duckwalk up: the skill tells it to check for the desktop app and, with your OK, install it. On Windows the app puts its folder on your PATH, so `duckwalk` works by name in new terminals.
 
 | Tool | Does |
 |---|---|

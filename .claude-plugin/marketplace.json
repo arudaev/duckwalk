@@ -1,0 +1,21 @@
+{
+  "name": "duckwalk",
+  "owner": {
+    "name": "Alexander Rudaev",
+    "url": "https://github.com/arudaev"
+  },
+  "description": "Duckwalk for coding agents: keep the computer awake through Harold on a Flipper Zero.",
+  "plugins": [
+    {
+      "name": "duckwalk",
+      "source": "./",
+      "displayName": "Duckwalk",
+      "description": "The duckwalk skill and the MCP server from Duckwalk's desktop app: status, wake, sleep, set_mode.",
+      "version": "0.1.0",
+      "homepage": "https://arudaev.github.io/duckwalk/",
+      "repository": "https://github.com/arudaev/duckwalk",
+      "license": "GPL-3.0-only",
+      "category": "productivity"
+    }
+  ]
+}

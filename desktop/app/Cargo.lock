@@ -477,6 +477,7 @@ dependencies = [
  "tray-icon",
  "uuid",
  "windows 0.58.0",
+ "windows-registry",
  "winresource",
 ]
 

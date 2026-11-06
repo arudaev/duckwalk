@@ -3,7 +3,8 @@
 //! "Duckwalk" shortcut to the Start menu (so Windows Search finds it) and
 //! starts that copy; the download can then go. A newer download replaces the
 //! installed copy the same way. `--no-install` skips all of it, for running
-//! from source.
+//! from source. The install folder also goes on the user's PATH (no admin
+//! rights needed), so coding agents can start `duckwalk mcp` by name.
 //!
 //! macOS and Linux run from wherever they were started, for now (#127).
 
@@ -35,11 +36,14 @@ mod windows {
     use std::path::{Path, PathBuf};
 
     use windows::core::{w, Interface, HSTRING};
+    use windows::Win32::Foundation::{LPARAM, WPARAM};
     use windows::Win32::System::Com::{
         CoCreateInstance, CoInitializeEx, IPersistFile, CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED,
     };
     use windows::Win32::UI::Shell::{IShellLinkW, ShellLink};
-    use windows::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_ICONINFORMATION, MB_OK};
+    use windows::Win32::UI::WindowsAndMessaging::{
+        MessageBoxW, SendMessageTimeoutW, HWND_BROADCAST, MB_ICONINFORMATION, MB_OK, SMTO_ABORTIFHUNG, WM_SETTINGCHANGE,
+    };
 
     use super::Installed;
 
@@ -70,6 +74,47 @@ mod windows {
         unsafe { MessageBoxW(None, &text, w!("Duckwalk"), MB_OK | MB_ICONINFORMATION) };
     }
 
+    /// Is `dir` one of the entries of a PATH value? Case and a trailing
+    /// backslash don't matter.
+    pub(super) fn path_has(path: &str, dir: &str) -> bool {
+        let dir = dir.trim_end_matches('\\');
+        path.split(';')
+            .any(|p| p.trim().trim_end_matches('\\').eq_ignore_ascii_case(dir))
+    }
+
+    /// Put the install folder on the user's PATH, once, and tell Windows, so
+    /// terminals and agents started from now on find `duckwalk`.
+    fn add_to_path(dir: &Path) {
+        let Some(dir) = dir.to_str() else { return };
+        let Ok(env) = windows_registry::CURRENT_USER.create("Environment") else {
+            return;
+        };
+        let path = env.get_string("Path").unwrap_or_default();
+        if path_has(&path, dir) {
+            return;
+        }
+        let path = if path.trim().is_empty() {
+            dir.to_string()
+        } else {
+            format!("{};{dir}", path.trim_end_matches(';'))
+        };
+        if env.set_expand_string("Path", &path).is_err() {
+            return;
+        }
+        let what = HSTRING::from("Environment");
+        unsafe {
+            SendMessageTimeoutW(
+                HWND_BROADCAST,
+                WM_SETTINGCHANGE,
+                WPARAM(0),
+                LPARAM(what.as_ptr() as isize),
+                SMTO_ABORTIFHUNG,
+                1000,
+                None,
+            );
+        }
+    }
+
     /// The Start menu shortcut, made (or remade) through the shell.
     fn shortcut(target: &Path) -> windows::core::Result<()> {
         let Some(link) = start_menu_link() else { return Ok(()) };
@@ -97,6 +142,7 @@ mod windows {
             if start_menu_link().is_some_and(|l| !l.exists()) {
                 let _ = shortcut(&target);
             }
+            add_to_path(&dir);
             return Installed::Here(true);
         }
 
@@ -109,10 +155,24 @@ mod windows {
             }
         }
         let _ = shortcut(&target);
+        add_to_path(&dir);
         let args: Vec<String> = std::env::args().skip(1).collect();
         match std::process::Command::new(&target).args(&args).spawn() {
             Ok(_) => Installed::Moved,
             Err(_) => Installed::Here(false),
         }
+    }
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::windows::path_has;
+
+    #[test]
+    fn path_entries() {
+        let path = r"C:\Windows;C:\Users\me\AppData\Local\Programs\Duckwalk\;D:\tools";
+        assert!(path_has(path, r"c:\users\me\appdata\local\programs\duckwalk"));
+        assert!(!path_has(path, r"C:\Users\me\AppData\Local\Programs\Duck"));
+        assert!(!path_has("", r"C:\x"));
     }
 }

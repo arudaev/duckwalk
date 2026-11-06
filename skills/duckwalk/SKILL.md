@@ -41,15 +41,16 @@ The Flipper app itself comes from the Flipper Apps Catalog or the releases page;
 
 ## Adding the MCP server
 
-The server is the desktop app started as `duckwalk mcp` (stdio). It talks to the running tray app over a local socket and never opens a network port.
+The server is the desktop app started as `duckwalk mcp` (stdio). It talks to the running tray app over a local socket and never opens a network port. On Windows the app puts its folder on the user's PATH when it installs itself; a terminal opened before that needs restarting.
 
-- **Claude Code:** `claude mcp add duckwalk -- duckwalk mcp` (on Windows, use the full path: `%LOCALAPPDATA%\Programs\Duckwalk\duckwalk.exe`)
-- **Codex:** in `~/.codex/config.toml`:
-  ```toml
-  [mcp_servers.duckwalk]
-  command = "duckwalk"
-  args = ["mcp"]
-  ```
-- **Others:** any MCP client that starts a stdio server: command `duckwalk`, argument `mcp`.
+- **Claude Code:** the Duckwalk plugin brings this skill and the server: `/plugin install duckwalk --marketplace arudaev/duckwalk`
+- **Codex:** `codex mcp add duckwalk -- duckwalk mcp`
+- **Others:** a stdio MCP server with command `duckwalk` and argument `mcp`.
+
+## Setting it all up for the user
+
+1. Run `duckwalk --help` (or call the `status` tool). If the command isn't found, the desktop app isn't installed: offer to install it (see above) and wait for a yes.
+2. Make sure the MCP server is added for this agent (see above).
+3. Call `status`. If `connection` is `none`, ask the user to open Duckwalk on the Flipper.
 
 More: https://github.com/arudaev/duckwalk/blob/main/desktop/app/README.md
