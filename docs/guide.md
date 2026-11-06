@@ -108,9 +108,13 @@ When the Flipper asks you to confirm a code, check it matches the one on the com
 
 ## Checking the connection
 
-**Down** on the home screen opens the same checklist for whichever connection you use. Over USB it reads **Harold has USB**, **PC sees Harold**, **Pointer moves**, and **Right** explains the open box (another app holding the port, a charge-only cable). Once everything is ticked, the last line says whether the [desktop app](../desktop/app/README.md) is running, which is what lets Harold pause while you work.
+**Down** on the home screen opens the same checklist for whichever connection you use. Over USB it reads **Harold has USB**, **PC sees Harold**, **Pointer moves**, and **Right** explains the open box (another app holding the port, a charge-only cable).
 
-![USB check](screens/pairing-usb-all-set@4x.png)
+The fourth line, **Desktop app**, is optional: it's ticked while the [desktop app](../desktop/app/README.md) is running, which is what lets Harold pause while you work. Once the rest is ticked, **Right** says what the app does and shows a QR code for the Duckwalk site, where you can get it.
+
+| | |
+|---|---|
+| ![USB check](screens/pairing-usb-all-set@4x.png) | ![Where to get the desktop app](screens/pairing-app-help@4x.png) |
 
 ## Without the desktop app
 
