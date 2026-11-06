@@ -20,9 +20,12 @@ pub async fn run(packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Re
 
 fn link(packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bool>, verbose: bool) {
     let mut packet: Option<GattCharacteristic> = None;
+    // Connected means a write went through, not just that Windows knows him.
+    let mut connected = false;
     loop {
         if *usb_busy.borrow() {
             packet = None; // USB is doing it
+            connected = false;
             std::thread::sleep(LOOK_AGAIN);
             continue;
         }
@@ -34,16 +37,20 @@ fn link(packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bo
             continue;
         };
         let data = *packets.borrow();
-        match write(target, &data) {
-            Ok(true) => {}
-            _ => {
-                println!("{LOST}");
-                packet = None;
-                std::thread::sleep(LOOK_AGAIN);
-                continue;
+        if matches!(write(target, &data), Ok(true)) {
+            if !connected {
+                println!("{CONNECTED}");
+                connected = true;
             }
+            std::thread::sleep(HEARTBEAT);
+        } else {
+            if connected {
+                println!("{LOST}");
+                connected = false;
+            }
+            packet = None;
+            std::thread::sleep(LOOK_AGAIN);
         }
-        std::thread::sleep(HEARTBEAT);
     }
 }
 
@@ -74,7 +81,6 @@ fn find(verbose: bool) -> Result<Option<GattCharacteristic>> {
             if verbose {
                 println!("Bluetooth: {id}");
             }
-            println!("{CONNECTED}");
             return Ok(Some(list.GetAt(0)?));
         }
     }

@@ -28,18 +28,25 @@ pub async fn run(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch
             tokio::time::sleep(LOOK_AGAIN).await;
             continue;
         };
-        println!("{CONNECTED}");
+        // Connected means a write went through, not just that he was found.
+        let mut connected = false;
         loop {
-            // Write at least once a heartbeat, and straight away on news.
-            let _ = tokio::time::timeout(HEARTBEAT, packets.changed()).await;
             if *usb_busy.borrow() {
                 break; // USB is doing it
             }
             let data = *packets.borrow();
             if harold.write(&packet, &data, WriteType::WithoutResponse).await.is_err() {
-                println!("{LOST}");
+                if connected {
+                    println!("{LOST}");
+                }
                 break;
             }
+            if !connected {
+                println!("{CONNECTED}");
+                connected = true;
+            }
+            // Write at least once a heartbeat, and straight away on news.
+            let _ = tokio::time::timeout(HEARTBEAT, packets.changed()).await;
         }
     }
 }
