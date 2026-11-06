@@ -5,7 +5,7 @@ use btleplug::api::{Central, CharPropFlags, Characteristic, Manager as _, Periph
 use btleplug::platform::{Adapter, Manager, Peripheral};
 use tokio::sync::watch;
 
-use super::{CONNECTED, LOOK_AGAIN, LOST, NAME_PREFIX, PACKET, SERVICE};
+use super::{linked, LOOK_AGAIN, NAME_PREFIX, PACKET, SERVICE};
 use crate::protocol::{HEARTBEAT, PACKET_LEN};
 
 pub async fn run(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bool>, verbose: bool) {
@@ -21,6 +21,7 @@ pub async fn run(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch
     let _ = adapter.start_scan(ScanFilter::default()).await;
     loop {
         if *usb_busy.borrow() {
+            linked(false, true);
             tokio::time::sleep(LOOK_AGAIN).await;
             continue;
         }
@@ -28,23 +29,17 @@ pub async fn run(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch
             tokio::time::sleep(LOOK_AGAIN).await;
             continue;
         };
-        // Connected means a write went through, not just that he was found.
-        let mut connected = false;
+        // Linked means a write went through, not just that he was found.
         loop {
             if *usb_busy.borrow() {
                 break; // USB is doing it
             }
             let data = *packets.borrow();
             if harold.write(&packet, &data, WriteType::WithoutResponse).await.is_err() {
-                if connected {
-                    println!("{LOST}");
-                }
+                linked(false, false);
                 break;
             }
-            if !connected {
-                println!("{CONNECTED}");
-                connected = true;
-            }
+            linked(true, false);
             // Write at least once a heartbeat, and straight away on news.
             let _ = tokio::time::timeout(HEARTBEAT, packets.changed()).await;
         }

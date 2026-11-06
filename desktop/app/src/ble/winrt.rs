@@ -10,7 +10,7 @@ use windows::Devices::Bluetooth::GenericAttributeProfile::{
 use windows::Devices::Enumeration::DeviceInformation;
 use windows::Storage::Streams::DataWriter;
 
-use super::{CONNECTED, LOOK_AGAIN, LOST, PACKET, SERVICE};
+use super::{linked, LOOK_AGAIN, PACKET, SERVICE};
 use crate::protocol::{HEARTBEAT, PACKET_LEN};
 
 pub async fn run(packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bool>, verbose: bool) {
@@ -20,12 +20,11 @@ pub async fn run(packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Re
 
 fn link(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bool>, verbose: bool) {
     let mut packet: Option<GattCharacteristic> = None;
-    // Connected means a write went through, not just that Windows knows him.
-    let mut connected = false;
+    // Linked means a write went through, not just that Windows knows him.
     loop {
         if *usb_busy.borrow() {
             packet = None; // USB is doing it
-            connected = false;
+            linked(false, true);
             std::thread::sleep(LOOK_AGAIN);
             continue;
         }
@@ -38,16 +37,10 @@ fn link(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receive
         };
         let data = *packets.borrow_and_update();
         if matches!(write(target, &data), Ok(true)) {
-            if !connected {
-                println!("{CONNECTED}");
-                connected = true;
-            }
+            linked(true, false);
             wait_for_news(&mut packets);
         } else {
-            if connected {
-                println!("{LOST}");
-                connected = false;
-            }
+            linked(false, false);
             packet = None;
             std::thread::sleep(LOOK_AGAIN);
         }

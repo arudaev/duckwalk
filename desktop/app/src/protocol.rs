@@ -8,6 +8,8 @@ use std::time::Duration;
 pub const MAGIC: u8 = b'D';
 pub const VERSION: u8 = 1;
 pub const MSG_IDLE: u8 = 0x01;
+/// The app is quitting: the Flipper drops "+PC" at once.
+pub const MSG_BYE: u8 = 0x02;
 pub const PACKET_LEN: usize = 63;
 
 /// Over USB the packet travels as vendor report 4.
@@ -25,6 +27,15 @@ pub fn idle_packet(idle: Duration) -> [u8; PACKET_LEN] {
     p[1] = VERSION;
     p[2] = MSG_IDLE;
     p[3..7].copy_from_slice(&ms.to_le_bytes());
+    p
+}
+
+/// Goodbye: the app is quitting.
+pub fn bye_packet() -> [u8; PACKET_LEN] {
+    let mut p = [0u8; PACKET_LEN];
+    p[0] = MAGIC;
+    p[1] = VERSION;
+    p[2] = MSG_BYE;
     p
 }
 
@@ -46,6 +57,13 @@ mod tests {
         assert_eq!(&p[..7], &[b'D', 1, 0x01, 0x04, 0x03, 0x02, 0x01]);
         assert!(p[7..].iter().all(|&b| b == 0));
         assert_eq!(p.len(), 63);
+    }
+
+    #[test]
+    fn bye_packet_has_no_data() {
+        let p = bye_packet();
+        assert_eq!(&p[..3], &[b'D', 1, 0x02]);
+        assert!(p[3..].iter().all(|&b| b == 0));
     }
 
     #[test]
