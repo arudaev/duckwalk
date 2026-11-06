@@ -9,6 +9,7 @@
 mod ble;
 mod flipper;
 mod input;
+mod install;
 mod login;
 mod protocol;
 mod status;
@@ -27,7 +28,7 @@ use status::{Connection, STATUS};
 const RETRY_OPEN: Duration = Duration::from_secs(2);
 
 const USAGE: &str = "\
-Usage: duckwalk [--verbose] [--pretend-working]
+Usage: duckwalk [--verbose] [--pretend-working] [--no-install]
 
 Duckwalk's desktop app. Tells Harold over USB or Bluetooth when you use
 your own mouse or keyboard, so he walks the pointer only while you are
@@ -35,7 +36,9 @@ away. It lives in the tray and starts at login.
 
   --verbose          print what it finds and sends
   --pretend-working  say you are working all the time, to check the link:
-                     the Flipper should show \"You're working\"";
+                     the Flipper should show \"You're working\"
+  --no-install       run from here; don't copy to the install folder
+                     (Windows) or point start at login at this copy";
 
 /// When you are active, tell Harold straight away, but at most this often.
 const SEND_ACTIVE: Duration = Duration::from_millis(250);
@@ -63,14 +66,24 @@ fn attach_console() {
 #[cfg(not(windows))]
 fn attach_console() {}
 
+const INSTANCE: &str = "duckwalk-desktop-app";
+
+/// No other Duckwalk is running. The check lets go at once, so a copy this
+/// one starts after installing can take over.
+fn only_one() -> bool {
+    !single_instance::SingleInstance::new(INSTANCE).is_ok_and(|i| !i.is_single())
+}
+
 fn main() {
     attach_console();
     let mut verbose = false;
     let mut pretend_working = false;
+    let mut no_install = false;
     for arg in std::env::args().skip(1) {
         match arg.as_str() {
             "--verbose" | "-v" => verbose = true,
             "--pretend-working" => pretend_working = true,
+            "--no-install" => no_install = true,
             _ => {
                 println!("{USAGE}");
                 return;
@@ -79,10 +92,25 @@ fn main() {
     }
 
     // One Duckwalk at a time: login and a double-click shouldn't make two.
-    let instance = single_instance::SingleInstance::new("duckwalk-desktop-app");
-    if instance.as_ref().is_ok_and(|i| !i.is_single()) {
-        println!("Duckwalk is already running; look for Harold in the tray.");
+    if !only_one() {
+        install::tell(
+            "Duckwalk is already running: Harold is in the tray.
+
+             To update it, quit it from his menu, then open the new download again.",
+        );
         return;
+    }
+    // Started from a download: move to where it can stay, and start from there.
+    let installed = match install::ensure(no_install) {
+        install::Installed::Moved => return,
+        install::Installed::Here(installed) => installed,
+    };
+    let instance = single_instance::SingleInstance::new(INSTANCE);
+    if instance.as_ref().is_ok_and(|i| !i.is_single()) {
+        return;
+    }
+    if installed && login::is_enabled() {
+        login::set(true); // point start at login at this copy
     }
 
     println!(

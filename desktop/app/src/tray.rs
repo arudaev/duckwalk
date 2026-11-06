@@ -12,7 +12,8 @@ use tray_icon::{Icon, TrayIcon, TrayIconBuilder};
 use crate::login;
 use crate::status::{Connection, STATUS};
 
-const HAROLD_PNG: &[u8] = include_bytes!("../../../brand/source/harold-16.png");
+const HAROLD_LIT: &[u8] = include_bytes!("../assets/harold-32.png");
+const HAROLD_GREY: &[u8] = include_bytes!("../assets/harold-32-grey.png");
 const REFRESH: Duration = Duration::from_millis(500);
 
 /// What wakes the event loop: a menu click, or the refresh tick.
@@ -21,29 +22,15 @@ enum Wake {
     Tick,
 }
 
-/// Harold's 16 px sprite, doubled with hard edges so the pixel art stays
-/// sharp; `grey` drains the colour for "not connected".
-fn harold_icon(grey: bool) -> Icon {
-    let decoder = png::Decoder::new(std::io::Cursor::new(HAROLD_PNG));
-    let mut reader = decoder.read_info().expect("Harold's sprite");
-    let mut buf = vec![0; reader.output_buffer_size().expect("sprite size")];
-    let info = reader.next_frame(&mut buf).expect("Harold's sprite");
-    let (w, h) = (info.width as usize, info.height as usize);
-    let channels = buf.len() / (w * h);
-    let mut rgba = Vec::with_capacity(w * h * 16);
-    for y in 0..h * 2 {
-        for x in 0..w * 2 {
-            let i = ((y / 2) * w + x / 2) * channels;
-            let (mut r, mut g, mut b) = (buf[i], buf[i + 1], buf[i + 2]);
-            let a = if channels == 4 { buf[i + 3] } else { 255 };
-            if grey {
-                let l = ((r as u16 * 3 + g as u16 * 6 + b as u16) / 10) as u8;
-                (r, g, b) = (l, l, l);
-            }
-            rgba.extend_from_slice(&[r, g, b, if grey { a / 2 } else { a }]);
-        }
-    }
-    Icon::from_rgba(rgba, (w * 2) as u32, (h * 2) as u32).expect("tray icon")
+/// Harold in colour (brand/tools/make_icon.py), or grey while the app looks
+/// for him: yellow reads on light and dark taskbars alike.
+fn harold_icon(png_bytes: &[u8]) -> Icon {
+    let decoder = png::Decoder::new(std::io::Cursor::new(png_bytes));
+    let mut reader = decoder.read_info().expect("Harold's icon");
+    let mut buf = vec![0; reader.output_buffer_size().expect("icon size")];
+    let info = reader.next_frame(&mut buf).expect("Harold's icon");
+    buf.truncate(info.buffer_size());
+    Icon::from_rgba(buf, info.width, info.height).expect("tray icon")
 }
 
 /// Run the tray on this (the main) thread until Quit. `ready` runs once the
@@ -72,8 +59,8 @@ pub fn run(ready: impl FnOnce() + 'static, quit: impl Fn() + 'static) -> ! {
     let menu = Menu::new();
     let _ = menu.append_items(&[&state, &PredefinedMenuItem::separator(), &login_item, &quit_item]);
 
-    let lit = harold_icon(false);
-    let grey = harold_icon(true);
+    let lit = harold_icon(HAROLD_LIT);
+    let grey = harold_icon(HAROLD_GREY);
     let mut tray: Option<TrayIcon> = None;
     let mut shown = (String::new(), None::<bool>);
 
