@@ -6,7 +6,8 @@ is drawn once here and committed as a 1-bit image:
     pip install qrcode pillow
     python brand/tools/make_qr.py
 
-Writes app/images/qr_site_54x54.png: the Duckwalk site, 25x25 modules with a
+Writes app/images/qr_site_54x54.png: the desktop app section of the Duckwalk
+site, 25x25 modules with a
 one-module quiet zone, each module 2x2 pixels (black = pixel on).
 
 The scheme and host are written in capitals: QR codes store capitals and a
@@ -20,7 +21,7 @@ from pathlib import Path
 import qrcode
 from PIL import Image
 
-URL = "HTTPS://ARUDAEV.GITHUB.IO/duckwalk"
+URL = "HTTPS://ARUDAEV.GITHUB.IO/duckwalk/#app"
 SCALE = 2
 
 ROOT = Path(__file__).resolve().parents[2]

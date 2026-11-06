@@ -8,9 +8,10 @@ It is optional. Without it, Duckwalk can't see your input and walks on its timer
 
 ## Use it
 
-1. Start Duckwalk on the Flipper, plugged in over USB or paired over Bluetooth.
-2. Start the desktop app. There is no window: Harold appears in the tray (the menu bar on macOS), in colour once he's connected.
-3. The Flipper shows **USB+PC** or **BT+PC** in the corner. While you work, its status line says **You're working**.
+1. Download the app for your computer from the [releases](https://github.com/arudaev/duckwalk/releases) and move it to a folder where it can stay: it starts from there at every login.
+2. Start Duckwalk on the Flipper, plugged in over USB or paired over Bluetooth.
+3. Start the desktop app. There is no window: Harold appears in the tray (the menu bar on macOS), in colour once he's connected. Windows may warn about an unknown app: **More info**, then **Run anyway**. On macOS and Linux, make it executable (`chmod +x`) and start it from a terminal the first time.
+4. The Flipper shows **USB+PC** or **BT+PC** in the corner. While you work, its status line says **You're working**.
 
 Harold's menu in the tray says how he's connected and whether you're working, and has:
 
