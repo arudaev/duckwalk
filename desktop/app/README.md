@@ -53,21 +53,17 @@ Then log out and in again. Without it the app says it can't read any input devic
 
 ## For coding agents
 
-A coding agent (Claude Code, Codex and others) can check on Harold and switch keep-awake on and off, for example around a long build. The desktop app is its own MCP server: started as `duckwalk mcp`, it talks to the running tray app over a local socket (a named pipe on Windows), never over the network.
+A coding agent (Claude Code, Codex and others) can check on Harold and switch keep-awake on and off, for example around a long build. Everything runs on your computer: no account, no sign-in, no network.
 
-| Tool | Does |
-|---|---|
-| `status` | Connection, keep-awake on or off, mode, walking or waiting while you work, your idle time |
-| `wake` / `sleep` | Keep-awake on or off, like OK on the Flipper |
-| `set_mode` | `subtle`, `walk` or `wander` |
+**1. Install the desktop app** and start it once (see [Use it](#use-it)). It is its own MCP server.
 
-Add it to **Claude Code**:
+**2. Add the MCP server.** In Claude Code:
 
 ```bash
 claude mcp add duckwalk -- duckwalk mcp
 ```
 
-On Windows, give the full path: `%LOCALAPPDATA%\Programs\Duckwalk\duckwalk.exe mcp`. For **Codex**, add to `~/.codex/config.toml`:
+On Windows, give the full path: `claude mcp add duckwalk -- "%LOCALAPPDATA%\Programs\Duckwalk\duckwalk.exe" mcp`. In Codex, add to `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.duckwalk]
@@ -75,7 +71,19 @@ command = "duckwalk"
 args = ["mcp"]
 ```
 
-The agent skill in [`skills/duckwalk`](../../skills/duckwalk/SKILL.md) tells an agent when to use these and how to install Duckwalk; add it with `npx skills add arudaev/duckwalk`.
+**3. Install the agent skill (optional).** It tells the agent when to wake Harold and when to let the computer lock again, and how to install Duckwalk:
+
+```bash
+npx skills add arudaev/duckwalk
+```
+
+| Tool | Does |
+|---|---|
+| `status` | Connection, keep-awake on or off, mode, walking or waiting while you work, your idle time |
+| `wake` / `sleep` | Keep-awake on or off, like OK on the Flipper |
+| `set_mode` | `subtle`, `walk` or `wander` |
+
+`duckwalk mcp` talks to the running tray app over a local socket (a named pipe on Windows), never over the network. Without the tray app or a connected Flipper, the tools say so.
 
 ## What it does, exactly
 
