@@ -8,9 +8,11 @@ It is optional. Without it, Duckwalk can't see your input and walks on its timer
 
 ## Use it
 
-1. Download the app for your computer from the [releases](https://github.com/arudaev/duckwalk/releases) and move it to a folder where it can stay: it starts from there at every login.
+1. Download the app for your computer from the [releases](https://github.com/arudaev/duckwalk/releases).
 2. Start Duckwalk on the Flipper, plugged in over USB or paired over Bluetooth.
-3. Start the desktop app. There is no window: Harold appears in the tray (the menu bar on macOS), in colour once he's connected. Windows may warn about an unknown app: **More info**, then **Run anyway**. On macOS and Linux, make it executable (`chmod +x`) and start it from a terminal the first time.
+3. Open the download. There is no window: Harold appears in the tray (the menu bar on macOS), in colour once he's connected.
+   - **Windows** may warn about an unknown app: **More info**, then **Run anyway**. The app then installs itself: it copies itself to `%LOCALAPPDATA%\Programs\Duckwalk`, adds **Duckwalk** to the Start menu (Windows Search finds it there) and runs from that copy, so you can delete the download. A newer download updates it the same way; quit the running one from Harold's menu first.
+   - **macOS and Linux:** move it to a folder where it can stay, since it starts from there at every login. Make it executable (`chmod +x`) and start it from a terminal the first time.
 4. The Flipper shows **USB+PC** or **BT+PC** in the corner. While you work, its status line says **You're working**.
 
 Harold's menu in the tray says how he's connected and whether you're working, and has:
@@ -19,6 +21,8 @@ Harold's menu in the tray says how he's connected and whether you're working, an
 - **Quit Duckwalk:** tells the Flipper goodbye, so it drops **+PC** at once.
 
 Only one copy runs at a time.
+
+**To remove it:** untick **Start at login** in Harold's menu, choose **Quit Duckwalk**, then delete the app. On Windows that's the folder `%LOCALAPPDATA%\Programs\Duckwalk` and the Start menu entry **Duckwalk**.
 
 **Tested on Windows 11** over USB and Bluetooth. The macOS and Linux builds are new; reports are welcome.
 
@@ -49,10 +53,10 @@ Why one app in Rust, and what stays per system: [decision 0002](../../docs/decis
 
 ```bash
 cd desktop/app
-cargo run --release -- --verbose
+cargo run --release -- --verbose --no-install
 ```
 
-`--verbose` lists every input device as yours or Duckwalk's and prints what it sends; started from a terminal it prints there. `--pretend-working` says you are working all the time, to check the link without touching anything: the Flipper's status line shows **You're working**.
+`--verbose` lists every input device as yours or Duckwalk's and prints what it sends; started from a terminal it prints there. Add `--no-install` so a build from source runs where it is instead of installing itself. `--pretend-working` says you are working all the time, to check the link without touching anything: the Flipper's status line shows **You're working**.
 
 ## Build
 
@@ -70,6 +74,7 @@ CI builds it on Windows, macOS and Linux for every pull request and uploads `duc
 | `src/main.rs` | Sends an idle packet every second and straight away when you are active, over USB when Duckwalk is plugged in, otherwise over Bluetooth; a goodbye on Quit |
 | `src/tray.rs`, `src/status.rs` | Harold in the tray, and the line his menu shows |
 | `src/login.rs` | Start at login |
+| `src/install.rs`, `build.rs`, `assets/` | Windows: installs itself and adds the Start menu entry; Harold's icon in the exe and the tray (drawn by `brand/tools/make_icon.py`) |
 | `src/input/` | Sees your input: Raw Input on Windows, IOHIDManager on macOS, evdev on Linux |
 | `src/protocol.rs` | The packets the app sends, the same as `app/helper_protocol.h` |
 | `src/flipper.rs` | The packets Duckwalk sends back: its state, each walk, a quack, closing; `--verbose` logs them |
