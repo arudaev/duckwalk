@@ -102,6 +102,8 @@ Choose **Bluetooth** on the first launch or in Settings. Duckwalk shows a checkl
 
 When the Flipper asks you to confirm a code, check it matches the one on the computer and press **OK** on both. After the first time, the computer reconnects by itself whenever Duckwalk runs in Bluetooth mode. In Bluetooth mode the USB port stays a normal Flipper port, so charging and qFlipper keep working.
 
+**Battery:** in Bluetooth mode, walking all day, the Flipper uses about 0.4% of its charge an hour, so a full charge lasts about a week or more. If the computer goes out of range, sleeps or loses the cable, the Flipper buzzes twice; Harold carries on by himself when it's back.
+
 **Starting over:** hold **OK** on the checklist to forget every paired computer, and remove Harold in the computer's Bluetooth settings too.
 
 ## Checking the connection
