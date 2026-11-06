@@ -55,6 +55,22 @@ impl Usb {
         self.device.is_some()
     }
 
+    /// Hand every packet Duckwalk sent since the last call to `receive`.
+    /// hidapi gives the report ID first, as it was on the wire.
+    pub fn poll(&mut self, mut receive: impl FnMut(&[u8])) {
+        let Some(device) = self.device.as_ref() else { return };
+        let mut buf = [0u8; 65];
+        while let Ok(n) = device.read_timeout(&mut buf, 0) {
+            if n == 0 {
+                break;
+            }
+            match buf[..n] {
+                [crate::protocol::USB_REPORT_ID, ref packet @ ..] => receive(packet),
+                ref packet => receive(packet),
+            }
+        }
+    }
+
     /// Send one report; on failure close, so the next tick looks again.
     pub fn send(&mut self, report: &[u8]) -> bool {
         let ok = self.device.as_ref().is_some_and(|d| d.write(report).is_ok());
