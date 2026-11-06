@@ -31,7 +31,7 @@ What Duckwalk is and how to install it: the [README](../README.md).
 | **08** | [Project board](contributing/project-board.md) | How is the work tracked? |
 | **09** | [Brand](brand.md) | Which colours, type and drawings do we use? |
 | **10** | [Sound design](sound-design.md) | What does each sound need to be, and how do I deliver it? |
-| **11** | [Decisions](decisions/0001-tell-duckwalk-from-the-user.md) | Why are things the way they are? |
+| **11** | Decisions: [0001](decisions/0001-tell-duckwalk-from-the-user.md), [0002](decisions/0002-one-desktop-app-in-rust.md) | Why are things the way they are? |
 
 ## Where things are
 
@@ -40,6 +40,7 @@ app/            the Flipper app (C, built with ufbt)
   usb/          the composite USB device: mouse, media keys, data channel
   images/       Harold's sprites (made by brand/tools/make_brand.py)
 desktop/helper/ the PC helper for Windows (C, Win32)
+desktop/app/    the desktop app for Windows, macOS and Linux (Rust), replacing the helper in v0.3
 tests/          host tests for the app's logic
 sim/            the screen simulator
 brand/          banner, sprite sources and the tool that draws the sprites
@@ -51,7 +52,7 @@ docs/           these pages; screens/ holds the simulator's renders
 | Milestone | What it brings | |
 |---|---|---|
 | **M1** v0.1 | The first release: Harold, Walk, Subtle and Wander keep-awake over USB or Bluetooth, Settings with Stop after, Remote, Preview, the connection check, the PC helper over USB or Bluetooth; Apps Catalog listing | [milestone](https://github.com/arudaev/duckwalk/milestone/2) |
-| **M3** v0.3 | The desktop side: Wander that knows the screen edges, then Harold on the computer screen | [milestone](https://github.com/arudaev/duckwalk/milestone/4) |
+| **M3** v0.3 | One desktop app for Windows, macOS and Linux: seeing your input on every system, the tray, Wander that knows the screen edges, then Harold on the computer screen | [milestone](https://github.com/arudaev/duckwalk/milestone/4) |
 | **M4** | Harold's extra jobs | [milestone](https://github.com/arudaev/duckwalk/milestone/5) |
 
 The [project board](https://github.com/users/arudaev/projects/9) shows what is being worked on right now.

@@ -1,6 +1,6 @@
 # 0001 – Telling Duckwalk's input apart from the user's
 
-[← Sound design](../sound-design.md) · [Docs home](../README.md)
+[← Sound design](../sound-design.md) · [Docs home](../README.md) · [Next: Decision 0002 →](0002-one-desktop-app-in-rust.md)
 
 Spike for issue #14, 3 November 2026. Windows 11 (Surface, ARM64), Duckwalk on official firmware 1.5.1.
 
@@ -42,4 +42,4 @@ Go. A small helper on the computer, in C on plain Win32, watches Raw Input, igno
 
 ---
 
-[← Sound design](../sound-design.md) · [Docs home](../README.md)
+[← Sound design](../sound-design.md) · [Docs home](../README.md) · [Next: Decision 0002 →](0002-one-desktop-app-in-rust.md)
