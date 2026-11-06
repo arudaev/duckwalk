@@ -68,3 +68,8 @@ void link_flush(void) {
 bool link_busy(void) {
     return false;
 }
+
+bool link_send_data(const uint8_t* packet) {
+    (void)packet;
+    return true;
+}

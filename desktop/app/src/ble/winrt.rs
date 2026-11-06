@@ -4,13 +4,17 @@
 
 use tokio::sync::watch;
 use windows::core::{Result, GUID};
+use windows::Devices::Bluetooth::BluetoothCacheMode;
 use windows::Devices::Bluetooth::GenericAttributeProfile::{
-    GattCharacteristic, GattCommunicationStatus, GattDeviceService, GattWriteOption,
+    GattCharacteristic, GattClientCharacteristicConfigurationDescriptorValue, GattCommunicationStatus,
+    GattDeviceService, GattValueChangedEventArgs, GattWriteOption,
 };
 use windows::Devices::Enumeration::DeviceInformation;
-use windows::Storage::Streams::DataWriter;
+use windows::Foundation::TypedEventHandler;
+use windows::Storage::Streams::{DataReader, DataWriter};
 
-use super::{linked, LOOK_AGAIN, PACKET, SERVICE};
+use super::{linked, LOOK_AGAIN, NOTIFY, PACKET, SERVICE};
+use crate::flipper::HAROLD;
 use crate::protocol::{HEARTBEAT, PACKET_LEN};
 
 pub async fn run(packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bool>, verbose: bool) {
@@ -20,17 +24,22 @@ pub async fn run(packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Re
 
 fn link(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bool>, verbose: bool) {
     let mut packet: Option<GattCharacteristic> = None;
+    // Duckwalk's notifications, kept alive while the link is.
+    let mut _listening: Option<GattCharacteristic> = None;
     // Linked means a write went through, not just that Windows knows him.
     loop {
         if *usb_busy.borrow() {
             packet = None; // USB is doing it
+            _listening = None;
             linked(false, true);
             std::thread::sleep(LOOK_AGAIN);
             continue;
         }
         let Some(target) = packet.as_ref() else {
-            packet = find(verbose).ok().flatten();
-            if packet.is_none() {
+            if let Some((p, n)) = find(verbose).ok().flatten() {
+                packet = Some(p);
+                _listening = n.filter(|n| listen(n, verbose).unwrap_or(false));
+            } else {
                 std::thread::sleep(LOOK_AGAIN);
             }
             continue;
@@ -42,6 +51,7 @@ fn link(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receive
         } else {
             linked(false, false);
             packet = None;
+            _listening = None;
             std::thread::sleep(LOOK_AGAIN);
         }
     }
@@ -59,8 +69,58 @@ fn guid(uuid: uuid::Uuid) -> GUID {
     GUID::from_u128(uuid.as_u128())
 }
 
-/// The packet characteristic of the first paired Harold that answers.
-fn find(verbose: bool) -> Result<Option<GattCharacteristic>> {
+/// Subscribe to Duckwalk's notifications; each one goes to `HAROLD`.
+fn listen(notify: &GattCharacteristic, verbose: bool) -> Result<bool> {
+    notify.ValueChanged(&TypedEventHandler::new(
+        move |_: &Option<GattCharacteristic>, args: &Option<GattValueChangedEventArgs>| {
+            if let Some(args) = args {
+                let buffer = args.CharacteristicValue()?;
+                let mut data = vec![0u8; buffer.Length()? as usize];
+                DataReader::FromBuffer(&buffer)?.ReadBytes(&mut data)?;
+                HAROLD.receive(&data, verbose);
+            }
+            Ok(())
+        },
+    ))?;
+    let status = notify
+        .WriteClientCharacteristicConfigurationDescriptorAsync(
+            GattClientCharacteristicConfigurationDescriptorValue::Notify,
+        )?
+        .get()?;
+    let ok = status == GattCommunicationStatus::Success;
+    if verbose {
+        println!(
+            "Bluetooth: {}",
+            if ok {
+                "listening to Duckwalk"
+            } else {
+                "Duckwalk doesn't talk back"
+            }
+        );
+    }
+    Ok(ok)
+}
+
+/// Asks the device itself, not Windows' cache: a Duckwalk update can add a
+/// characteristic the cache from pairing doesn't have.
+fn characteristic(service: &GattDeviceService, uuid: uuid::Uuid) -> Option<GattCharacteristic> {
+    let result = service
+        .GetCharacteristicsForUuidWithCacheModeAsync(guid(uuid), BluetoothCacheMode::Uncached)
+        .and_then(|op| op.get())
+        .ok()?;
+    if result.Status().ok()? != GattCommunicationStatus::Success {
+        return None;
+    }
+    let list = result.Characteristics().ok()?;
+    if list.Size().ok()? == 0 {
+        return None;
+    }
+    list.GetAt(0).ok()
+}
+
+/// The packet characteristic of the first paired Harold that answers, and
+/// his notify characteristic if his build has one.
+fn find(verbose: bool) -> Result<Option<(GattCharacteristic, Option<GattCharacteristic>)>> {
     let selector = GattDeviceService::GetDeviceSelectorFromUuid(guid(SERVICE))?;
     let services = DeviceInformation::FindAllAsyncAqsFilter(&selector)?.get()?;
     for info in services {
@@ -68,21 +128,15 @@ fn find(verbose: bool) -> Result<Option<GattCharacteristic>> {
         let Ok(service) = GattDeviceService::FromIdAsync(&id).and_then(|op| op.get()) else {
             continue;
         };
-        let Ok(result) = service
-            .GetCharacteristicsForUuidAsync(guid(PACKET))
-            .and_then(|op| op.get())
-        else {
-            continue;
-        };
-        if result.Status()? != GattCommunicationStatus::Success {
-            continue;
-        }
-        let list = result.Characteristics()?;
-        if list.Size()? > 0 {
+        if let Some(packet) = characteristic(&service, PACKET) {
             if verbose {
                 println!("Bluetooth: {id}");
             }
-            return Ok(Some(list.GetAt(0)?));
+            let notify = characteristic(&service, NOTIFY);
+            if verbose && notify.is_none() {
+                println!("Bluetooth: this Duckwalk build doesn't talk back (no notify)");
+            }
+            return Ok(Some((packet, notify)));
         }
     }
     Ok(None)

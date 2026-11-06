@@ -99,12 +99,12 @@ static HAROLDS: Mutex<Vec<String>> = Mutex::new(Vec::new());
 static HAROLDS_VERSION: AtomicU64 = AtomicU64::new(0);
 
 fn watch_harolds(verbose: bool) {
-    // The first lookup before any input arrives, then every 30 s.
+    // The first lookup before any input arrives, then every 30 s, quietly.
     *HAROLDS.lock().unwrap() = paired_harolds(verbose);
     HAROLDS_VERSION.fetch_add(1, Ordering::Relaxed);
     std::thread::spawn(move || loop {
         std::thread::sleep(REFRESH_HAROLD);
-        let found = paired_harolds(verbose);
+        let found = paired_harolds(false);
         let mut current = HAROLDS.lock().unwrap();
         if *current != found {
             *current = found;

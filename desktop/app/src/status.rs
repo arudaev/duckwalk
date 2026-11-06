@@ -1,7 +1,7 @@
 //! What the tray shows: how Harold is connected and whether you're working.
 //! Written by the link threads, read by the tray.
 
-use std::sync::atomic::{AtomicU32, AtomicU8, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU8, Ordering};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Connection {
@@ -19,6 +19,7 @@ pub const UNWATCHED: u32 = u32::MAX;
 pub struct Status {
     connection: AtomicU8,
     idle_s: AtomicU32,
+    asleep: AtomicBool,
 }
 
 impl Status {
@@ -26,6 +27,7 @@ impl Status {
         Status {
             connection: AtomicU8::new(0),
             idle_s: AtomicU32::new(UNWATCHED),
+            asleep: AtomicBool::new(false),
         }
     }
 
@@ -39,6 +41,11 @@ impl Status {
             2 => Connection::Bluetooth,
             _ => Connection::None,
         }
+    }
+
+    /// Duckwalk said Harold is asleep (keep-awake off).
+    pub fn set_asleep(&self, asleep: bool) {
+        self.asleep.store(asleep, Ordering::Relaxed);
     }
 
     pub fn set_idle_s(&self, s: u32) {
@@ -55,10 +62,15 @@ impl Status {
             s if s < 3600 => format!("idle {} min", s / 60),
             s => format!("idle {} h", s / 3600),
         };
+        let asleep = if self.asleep.load(Ordering::Relaxed) {
+            ", asleep"
+        } else {
+            ""
+        };
         match self.connection() {
             Connection::None => format!("Looking for Harold; {you}"),
-            Connection::Usb => format!("Harold on USB; {you}"),
-            Connection::Bluetooth => format!("Harold on Bluetooth; {you}"),
+            Connection::Usb => format!("Harold on USB{asleep}; {you}"),
+            Connection::Bluetooth => format!("Harold on Bluetooth{asleep}; {you}"),
         }
     }
 }
@@ -82,5 +94,7 @@ mod tests {
         assert_eq!(s.line(), "Harold on Bluetooth; idle 42 s");
         s.set_idle_s(600);
         assert_eq!(s.line(), "Harold on Bluetooth; idle 10 min");
+        s.set_asleep(true);
+        assert_eq!(s.line(), "Harold on Bluetooth, asleep; idle 10 min");
     }
 }

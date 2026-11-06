@@ -3,9 +3,11 @@
 
 use btleplug::api::{Central, CharPropFlags, Characteristic, Manager as _, Peripheral as _, ScanFilter, WriteType};
 use btleplug::platform::{Adapter, Manager, Peripheral};
+use futures::StreamExt;
 use tokio::sync::watch;
 
-use super::{linked, LOOK_AGAIN, NAME_PREFIX, PACKET, SERVICE};
+use super::{linked, LOOK_AGAIN, NAME_PREFIX, NOTIFY, PACKET, SERVICE};
+use crate::flipper::HAROLD;
 use crate::protocol::{HEARTBEAT, PACKET_LEN};
 
 pub async fn run(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bool>, verbose: bool) {
@@ -29,6 +31,7 @@ pub async fn run(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch
             tokio::time::sleep(LOOK_AGAIN).await;
             continue;
         };
+        listen(&harold, verbose).await;
         // Linked means a write went through, not just that he was found.
         loop {
             if *usb_busy.borrow() {
@@ -44,6 +47,34 @@ pub async fn run(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch
             let _ = tokio::time::timeout(HEARTBEAT, packets.changed()).await;
         }
     }
+}
+
+/// Subscribe to Duckwalk's notifications, if his build has them; each one
+/// goes to `HAROLD` until the link drops.
+async fn listen(harold: &Peripheral, verbose: bool) {
+    let Some(notify) = harold
+        .characteristics()
+        .into_iter()
+        .find(|c| c.uuid == NOTIFY && c.properties.contains(CharPropFlags::NOTIFY))
+    else {
+        return;
+    };
+    let Ok(mut stream) = harold.notifications().await else {
+        return;
+    };
+    if harold.subscribe(&notify).await.is_err() {
+        return;
+    }
+    if verbose {
+        println!("Bluetooth: listening to Duckwalk");
+    }
+    tokio::spawn(async move {
+        while let Some(n) = stream.next().await {
+            if n.uuid == NOTIFY {
+                HAROLD.receive(&n.value, verbose);
+            }
+        }
+    });
 }
 
 async fn first_adapter() -> Option<Adapter> {

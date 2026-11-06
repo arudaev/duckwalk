@@ -26,6 +26,7 @@ uuid = "1"
 # his paired GATT service through WinRT instead (decision record 0002).
 [target.'cfg(not(windows))'.dependencies]
 btleplug = "0.11"
+futures = "0.3"
 
 # Seeing your input on Linux.
 [target.'cfg(target_os = "linux")'.dependencies]

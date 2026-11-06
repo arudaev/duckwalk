@@ -1,5 +1,6 @@
 #include "link.h"
 #include "ble_duck.h"
+#include "helper_protocol.h"
 #include "util.h"
 #include "usb/usb_duck.h"
 
@@ -17,6 +18,8 @@
 #define BT_START_GRACE_MS 3000
 
 #define OUTBOX_SIZE 64
+/* Data packets: a full walk is 15, plus state and a quack. */
+#define DATA_OUTBOX 24
 
 /* The host sees "Harold <Flipper name>". The XOR keeps Duckwalk's address
  * apart from the firmware's own Bluetooth Remote app. */
@@ -58,6 +61,9 @@ static struct {
     int16_t owed_y;
     bool failing;
     /* The data channel */
+    uint8_t data_out[DATA_OUTBOX][HELPER_PACKET_LEN];
+    uint8_t data_head;
+    uint8_t data_count;
     LinkDataCallback data_callback;
     void* data_ctx;
 } link;
@@ -239,7 +245,21 @@ bool link_consumer_tap(uint16_t usage) {
 }
 
 bool link_busy(void) {
-    return link.count || link.owed_x || link.owed_y;
+    return link.count || link.owed_x || link.owed_y || link.data_count;
+}
+
+bool link_send_data(const uint8_t* packet) {
+    if(!link_is_connected() || link.data_count >= DATA_OUTBOX) return false;
+    memcpy(link.data_out[(link.data_head + link.data_count++) % DATA_OUTBOX], packet, HELPER_PACKET_LEN);
+    return true;
+}
+
+/* Over USB a packet that didn't go out stays queued for the next flush; over
+ * Bluetooth, as with the reports, a notification counts as sent. */
+static bool send_data(const uint8_t* packet) {
+    if(link.kind == LinkUsb) return usb_duck_vendor_send(packet, HELPER_PACKET_LEN);
+    ble_duck_notify(packet);
+    return true;
 }
 
 static int8_t clamp8(int16_t v) {
@@ -304,6 +324,7 @@ void link_flush(void) {
         /* What the computer never got must not arrive later as a jump. */
         link.count = 0;
         link.owed_x = link.owed_y = 0;
+        link.data_count = 0;
         return;
     }
     bool ok = true;
@@ -320,6 +341,13 @@ void link_flush(void) {
         }
     }
     while(ok && (link.owed_x || link.owed_y)) ok = send_owed();
+    while(ok && link.data_count) {
+        ok = send_data(link.data_out[link.data_head]);
+        if(ok) {
+            link.data_head = (link.data_head + 1) % DATA_OUTBOX;
+            link.data_count--;
+        }
+    }
 
     if(!ok && !link.failing) FURI_LOG_W(TAG, "Report not sent; retrying with the next one");
     link.failing = !ok;

@@ -71,7 +71,8 @@ CI builds it on Windows, macOS and Linux for every pull request and uploads `duc
 | `src/tray.rs`, `src/status.rs` | Harold in the tray, and the line his menu shows |
 | `src/login.rs` | Start at login |
 | `src/input/` | Sees your input: Raw Input on Windows, IOHIDManager on macOS, evdev on Linux |
-| `src/protocol.rs` | The packets, the same as `app/helper_protocol.h` |
+| `src/protocol.rs` | The packets the app sends, the same as `app/helper_protocol.h` |
+| `src/flipper.rs` | The packets Duckwalk sends back: its state, each walk, a quack, closing; `--verbose` logs them |
 | `src/usb.rs` | Finds Duckwalk's data channel with `hidapi` |
 | `src/ble/` | Finds Duckwalk's Bluetooth service: WinRT on Windows, `btleplug` on macOS and Linux |
 

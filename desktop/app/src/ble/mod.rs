@@ -1,5 +1,6 @@
 //! Duckwalk over Bluetooth: Duckwalk's own GATT service next to the mouse
-//! (see `app/ble_duck.c`). The app writes each packet to one characteristic.
+//! (see `app/ble_duck.c`). The app writes each packet to one characteristic,
+//! and Duckwalk notifies it on the same one (flipper.rs reads those).
 //!
 //! `run` keeps a link to Duckwalk while USB is not in use and writes the
 //! newest packet at least once a heartbeat. It runs until the program ends
@@ -12,6 +13,9 @@ use uuid::{uuid, Uuid};
 
 pub const SERVICE: Uuid = uuid!("15f18352-9e6d-4ff4-9f45-cd158a70941c");
 pub const PACKET: Uuid = uuid!("15f18352-9e6d-4ff4-9f45-cd158a70941d");
+/// Duckwalk's own packets arrive as notifications on the packet
+/// characteristic; older Flipper builds don't offer notify on it.
+pub const NOTIFY: Uuid = PACKET;
 
 /// Duckwalk pairs as "Harold <Flipper name>".
 #[cfg_attr(windows, allow(dead_code))]

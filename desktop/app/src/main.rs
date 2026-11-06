@@ -7,6 +7,7 @@
 #![cfg_attr(windows, windows_subsystem = "windows")]
 
 mod ble;
+mod flipper;
 mod input;
 mod login;
 mod protocol;
@@ -38,6 +39,9 @@ away. It lives in the tray and starts at login.
 
 /// When you are active, tell Harold straight away, but at most this often.
 const SEND_ACTIVE: Duration = Duration::from_millis(250);
+
+/// How often the app reads what Duckwalk sent over USB.
+const LISTEN: Duration = Duration::from_millis(50);
 
 /// How long Quit waits for the goodbye to reach the Flipper.
 const BYE_WAIT: Duration = Duration::from_millis(600);
@@ -122,8 +126,14 @@ async fn link(verbose: bool, pretend_working: bool, quit: Arc<Notify>) {
     let mut last_try = Instant::now() - RETRY_OPEN;
     let mut ticker = tokio::time::interval(HEARTBEAT);
     let mut sent = Instant::now() - SEND_ACTIVE;
+    // Duckwalk's own packets (flipper.rs) are read this often over USB.
+    let mut listen = tokio::time::interval(LISTEN);
     loop {
         tokio::select! {
+            _ = listen.tick() => {
+                usb.poll(|p| flipper::HAROLD.receive(p, verbose));
+                continue;
+            }
             _ = ticker.tick() => {}
             _ = activity.seen() => {
                 tokio::time::sleep(SEND_ACTIVE.saturating_sub(sent.elapsed())).await;
@@ -166,6 +176,7 @@ async fn link(verbose: bool, pretend_working: bool, quit: Arc<Notify>) {
         } else {
             Connection::None
         });
+        STATUS.set_asleep(flipper::HAROLD.heard() && !flipper::HAROLD.awake());
         STATUS.set_idle_s(if activity.is_watching() || pretend_working {
             idle.as_secs().min(u32::MAX as u64 - 1) as u32
         } else {

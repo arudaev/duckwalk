@@ -7,6 +7,7 @@
 #include "keep_awake.h"
 #include "settings.h"
 #include "sounds.h"
+#include "talk.h"
 
 typedef enum {
     ScreenHome,
@@ -131,6 +132,7 @@ typedef struct {
     uint32_t preview_started;
     Trail trail;
     PairingState pairing;
+    Talk talk;
 } Duckwalk;
 
 /* Each screen draws itself and handles its own buttons; ticks run on every
