@@ -1,9 +1,10 @@
-//! Duckwalk's desktop app. For now (issue #119) the skeleton: it finds Harold
-//! over USB or Bluetooth and sends the same idle packets as the Windows
-//! helper in `desktop/helper`. Seeing your own input comes next (#120); until
-//! then the app reports "away", so Harold walks as he would without it.
+//! Duckwalk's desktop app: it watches for your own input (not Duckwalk's) and
+//! tells Harold over USB or Bluetooth how long you have been idle, so he
+//! walks the pointer only while you are away. The packets are the same as the
+//! Windows helper's in `desktop/helper`.
 
 mod ble;
+mod input;
 mod protocol;
 mod usb;
 
@@ -18,20 +19,22 @@ const RETRY_OPEN: Duration = Duration::from_secs(2);
 const USAGE: &str = "\
 Usage: duckwalk [--verbose] [--pretend-working]
 
-Duckwalk's desktop app. Finds Harold over USB or Bluetooth and tells him
-how long you have been away. Leave it running.
+Duckwalk's desktop app. Tells Harold over USB or Bluetooth when you use
+your own mouse or keyboard, so he walks the pointer only while you are
+away. Leave it running.
 
   --verbose          print what it finds and sends
   --pretend-working  say you are working all the time, to check the link:
                      the Flipper should show \"You're working\"";
 
-/// Where the user's idle time comes from. Until #120 brings input on every
-/// system, the skeleton knows of no input and reports "away".
-fn user_idle(pretend_working: bool) -> Duration {
+/// When you are active, tell Harold straight away, but at most this often.
+const SEND_ACTIVE: Duration = Duration::from_millis(250);
+
+fn user_idle(activity: &input::Activity, pretend_working: bool) -> Duration {
     if pretend_working {
         Duration::ZERO
     } else {
-        Duration::from_millis(u32::MAX as u64)
+        activity.idle()
     }
 }
 
@@ -55,16 +58,26 @@ async fn main() {
         env!("CARGO_PKG_VERSION")
     );
 
-    let (packet_tx, packet_rx) = watch::channel(idle_packet(user_idle(pretend_working)));
+    let activity = input::Activity::new();
+    input::start(activity.clone(), verbose);
+
+    let (packet_tx, packet_rx) = watch::channel(idle_packet(user_idle(&activity, pretend_working)));
     let (usb_busy_tx, usb_busy_rx) = watch::channel(false);
     tokio::spawn(ble::run(packet_rx, usb_busy_rx, verbose));
 
     let mut usb = usb::Usb::new();
     let mut last_try = Instant::now() - RETRY_OPEN;
     let mut ticker = tokio::time::interval(HEARTBEAT);
+    let mut sent = Instant::now() - SEND_ACTIVE;
     loop {
-        ticker.tick().await;
-        let packet = idle_packet(user_idle(pretend_working));
+        tokio::select! {
+            _ = ticker.tick() => {}
+            _ = activity.seen() => {
+                tokio::time::sleep(SEND_ACTIVE.saturating_sub(sent.elapsed())).await;
+            }
+        }
+        sent = Instant::now();
+        let packet = idle_packet(user_idle(&activity, pretend_working));
         packet_tx.send_replace(packet);
 
         if !usb.is_open() && last_try.elapsed() >= RETRY_OPEN {
@@ -83,7 +96,11 @@ async fn main() {
         });
         if verbose {
             let ms = u32::from_le_bytes([packet[3], packet[4], packet[5], packet[6]]);
-            println!("idle {ms} ms");
+            println!(
+                "idle {:.1} s, {} of Duckwalk's own moves ignored",
+                ms as f64 / 1000.0,
+                input::ignored()
+            );
         }
     }
 }

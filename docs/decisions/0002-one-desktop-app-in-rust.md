@@ -43,7 +43,7 @@ Not yet checked: USB on Windows with the new app, and anything on a real Mac or 
 
 ## Limits
 
-- Until #120 the app can't see your input; it reports "away", so Harold walks as he would without it. `--pretend-working` reports the opposite, to check the link.
+- On macOS and Linux the app can't see your input yet (#120); it reports "away", so Harold walks as he would without it. On Windows it sees your input the same way as the C helper. `--pretend-working` reports "working", to check the link.
 - No tray icon and no start at login yet (#121).
 
 ---

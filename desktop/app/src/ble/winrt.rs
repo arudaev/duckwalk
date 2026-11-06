@@ -18,7 +18,7 @@ pub async fn run(packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Re
     let _ = tokio::task::spawn_blocking(move || link(packets, usb_busy, verbose)).await;
 }
 
-fn link(packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bool>, verbose: bool) {
+fn link(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bool>, verbose: bool) {
     let mut packet: Option<GattCharacteristic> = None;
     // Connected means a write went through, not just that Windows knows him.
     let mut connected = false;
@@ -36,13 +36,13 @@ fn link(packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bo
             }
             continue;
         };
-        let data = *packets.borrow();
+        let data = *packets.borrow_and_update();
         if matches!(write(target, &data), Ok(true)) {
             if !connected {
                 println!("{CONNECTED}");
                 connected = true;
             }
-            std::thread::sleep(HEARTBEAT);
+            wait_for_news(&mut packets);
         } else {
             if connected {
                 println!("{LOST}");
@@ -51,6 +51,14 @@ fn link(packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bo
             packet = None;
             std::thread::sleep(LOOK_AGAIN);
         }
+    }
+}
+
+/// Wait a heartbeat, or less when a new packet comes in (you are active).
+fn wait_for_news(packets: &mut watch::Receiver<[u8; PACKET_LEN]>) {
+    let until = std::time::Instant::now() + HEARTBEAT;
+    while std::time::Instant::now() < until && !packets.has_changed().unwrap_or(false) {
+        std::thread::sleep(std::time::Duration::from_millis(20));
     }
 }
 
