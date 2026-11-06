@@ -1,6 +1,6 @@
 # 03 · Contributing to Duckwalk
 
-[← PC helper](desktop/helper/README.md) · [Docs home](docs/README.md) · [Next: Architecture →](docs/architecture.md)
+[← Desktop app](desktop/app/README.md) · [Docs home](docs/README.md) · [Next: Architecture →](docs/architecture.md)
 
 Duckwalk is an open-source (GPL-3.0) Flipper Zero app: Harold, a rubber debugging duck, keeps your computer awake and works as its remote. Code, art, testing on different computers and documentation are all welcome.
 
@@ -76,4 +76,4 @@ What I don't want is a quick contribution that was easy to generate and never te
 
 ---
 
-[← PC helper](desktop/helper/README.md) · [Docs home](docs/README.md) · [Next: Architecture →](docs/architecture.md)
+[← Desktop app](desktop/app/README.md) · [Docs home](docs/README.md) · [Next: Architecture →](docs/architecture.md)

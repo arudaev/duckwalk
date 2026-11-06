@@ -6,4 +6,4 @@ v0.1:
  - Settings: how often, how far, work hours only, Stop after 1 to 8 hours, sound and vibration
  - Remote: media keys, slides and a D-pad mouse
  - Preview of the next walk on the Up button
- - Optional Windows helper: Harold lets go of the pointer while you use your own mouse or keyboard, over USB or Bluetooth
+ - Optional desktop app for Windows, macOS and Linux: Harold lets go of the pointer while you use your own mouse or keyboard, over USB or Bluetooth

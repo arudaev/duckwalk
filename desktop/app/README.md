@@ -1,12 +1,33 @@
-# Duckwalk desktop app
+# 02 · Desktop app
 
-One app for Windows, macOS and Linux that will replace the [PC helper](../helper/README.md). Why Rust, and what stays per system: [decision 0002](../../docs/decisions/0002-one-desktop-app-in-rust.md).
+[← User guide](../../docs/guide.md) · [Docs home](../../docs/README.md) · [Next: Contributing →](../../CONTRIBUTING.md)
 
-**It sees your input** on Windows, macOS and Linux: your own mouse, keyboard, touchpad, touch screen and pen, never Duckwalk's own moves. It tells Harold how long you have been idle, over USB or Bluetooth.
+A small app for Windows, macOS and Linux that tells Duckwalk when **you** are using your mouse or keyboard. With it running, Harold lets go of the pointer the moment you touch your own mouse, keyboard, touchpad, touch screen or pen, stays away for 30 seconds after your last input (**Resume after** in Duckwalk's Settings), and walks only while you are really away.
 
-**On macOS, allow Input Monitoring.** On first start the app asks for it; allow it in **System Settings > Privacy & Security > Input Monitoring** and start the app again. It reads only that an input happened and from which device, never which keys. Without it Harold walks on his timer.
+It is optional. Without it, Duckwalk can't see your input and walks on its timer whether you are there or not; the guide says [how to manage without it](../../docs/guide.md#without-the-desktop-app).
 
-**On Linux, join the `input` group first.** The app reads your devices from `/dev/input/`, which only that group may do:
+## Use it
+
+1. Start Duckwalk on the Flipper, plugged in over USB or paired over Bluetooth.
+2. Start the desktop app. There is no window: Harold appears in the tray (the menu bar on macOS), in colour once he's connected.
+3. The Flipper shows **USB+PC** or **BT+PC** in the corner. While you work, its status line says **You're working**.
+
+Harold's menu in the tray says how he's connected and whether you're working, and has:
+
+- **Start at login:** on after the first start. Windows uses the Run entry for your user, macOS a Launch Agent, Linux an autostart file in `~/.config/autostart/`.
+- **Quit Duckwalk:** tells the Flipper goodbye, so it drops **+PC** at once.
+
+Only one copy runs at a time.
+
+**Tested on Windows 11** over USB and Bluetooth. The macOS and Linux builds are new; reports are welcome.
+
+### macOS: allow Input Monitoring
+
+On first start the app asks for it. Allow it in **System Settings > Privacy & Security > Input Monitoring**, then start the app again. Without it Harold walks on his timer.
+
+### Linux: join the `input` group
+
+The app reads your devices from `/dev/input/`, which only that group may do:
 
 ```bash
 sudo usermod -aG input $USER
@@ -14,23 +35,23 @@ sudo usermod -aG input $USER
 
 Then log out and in again. Without it the app says it can't read any input device, and Harold walks on his timer.
 
-## In the tray
+## What it does, exactly
 
-Harold sits in the tray (the menu bar on macOS), in colour while he's connected and grey while the app looks for him. His menu says how he's connected and whether you're working, and has:
+- **It notices that you used a device, not what you did with it.** It never looks at which keys you press or where you move the pointer. Windows Raw Input, macOS IOHIDManager and Linux evdev each tell the app that an input happened and which device sent it.
+- **Touch screens and pens count too.** On Windows, taps and drags that the system turns into mouse input carry a mark of their own, which a low-level mouse hook spots; it looks only at the mark.
+- **It ignores Duckwalk's own devices:** over USB by their IDs (`VID_1209&PID_0001`), over Bluetooth by the paired "Harold <your Flipper's name>". Every other device counts as you. On Windows, so does input made by software (remote desktop, automation tools), which has no device at all.
+- **It sends one number,** the milliseconds since your last input, to the Flipper: over Duckwalk's USB data channel, or over Bluetooth to a small service of Duckwalk's own next to the mouse. It does that once a second, and straight away when you are active (at most four times a second). The format is in [`app/helper_protocol.h`](../../app/helper_protocol.h). Nothing goes anywhere else, and nothing is saved.
 
-- **Start at login:** on after the first start. Windows uses the Run entry for your user, macOS a Launch Agent, Linux an autostart file in `~/.config/autostart/`.
-- **Quit Duckwalk:** tells the Flipper goodbye, so it drops **+PC** at once instead of after 5 seconds.
+Why one app in Rust, and what stays per system: [decision 0002](../../docs/decisions/0002-one-desktop-app-in-rust.md).
 
-There is no window. Only one copy runs at a time.
-
-## Run it
+## Run it from source
 
 ```bash
 cd desktop/app
 cargo run --release -- --verbose
 ```
 
-The Flipper shows **USB+PC** or **BT+PC** in the corner, and **You're working** while you use the computer. `--verbose` lists every input device as yours or Duckwalk's. To check the link without touching anything, `--pretend-working` says you are working all the time, and the Flipper's status line shows **You're working**.
+`--verbose` lists every input device as yours or Duckwalk's and prints what it sends; started from a terminal it prints there. `--pretend-working` says you are working all the time, to check the link without touching anything: the Flipper's status line shows **You're working**.
 
 ## Build
 
@@ -52,3 +73,7 @@ CI builds it on Windows, macOS and Linux for every pull request and uploads `duc
 | `src/protocol.rs` | The packets, the same as `app/helper_protocol.h` |
 | `src/usb.rs` | Finds Duckwalk's data channel with `hidapi` |
 | `src/ble/` | Finds Duckwalk's Bluetooth service: WinRT on Windows, `btleplug` on macOS and Linux |
+
+---
+
+[← User guide](../../docs/guide.md) · [Docs home](../../docs/README.md) · [Next: Contributing →](../../CONTRIBUTING.md)

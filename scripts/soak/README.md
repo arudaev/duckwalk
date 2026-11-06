@@ -20,7 +20,7 @@ Close qFlipper: it holds the Flipper's serial port. Set Windows to turn the scre
 ## Bluetooth soak (Wander)
 
 1. Plug the Flipper in by USB, start Duckwalk, choose Bluetooth and Wander, and pair it.
-2. Start both loggers and the [PC helper](../../desktop/helper/README.md):
+2. Start both loggers and the [desktop app](../../desktop/app/README.md):
 
    ```bash
    soak_pc.exe pc-ble.csv 24

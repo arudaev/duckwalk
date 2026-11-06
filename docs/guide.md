@@ -1,6 +1,6 @@
 # 01 · User guide
 
-[Docs home](README.md) · [Next: PC helper →](../desktop/helper/README.md)
+[Docs home](README.md) · [Next: Desktop app →](../desktop/app/README.md)
 
 Duckwalk turns a Flipper Zero into Harold, a rubber debugging duck who keeps your computer awake. When you step away, he walks the mouse pointer on a short, random path, so Teams, the screen saver and the lock timer see someone at the desk. The same Flipper works as a remote for the computer.
 
@@ -21,7 +21,7 @@ Harold asks how to reach your computer. **Left** for a USB cable, **Right** for 
 | ![Harold walking](screens/home-walking@4x.png) | **Walking.** The pointer takes a short, curved walk and comes back to where it started. Harold walks along on the screen. |
 | ![Harold wandering](screens/home-wandering@4x.png) | **Wandering.** In Wander mode the pointer drifts around without stopping, and Harold drifts with it. |
 | ![Harold asleep](screens/home-asleep@4x.png) | **Asleep.** Keep-awake is off. **OK** wakes him; OK again puts him to sleep. |
-| ![You're working](screens/home-working@4x.png) | **You're working.** With the [PC helper](../desktop/helper/README.md) running, Harold lets go of the pointer while you use your own mouse or keyboard, and waits 30 seconds after you stop (**Resume after** in Settings). |
+| ![You're working](screens/home-working@4x.png) | **You're working.** With the [desktop app](../desktop/app/README.md) running, Harold lets go of the pointer while you use your own mouse or keyboard, and waits 30 seconds after you stop (**Resume after** in Settings). |
 
 | Button | Does |
 |---|---|
@@ -35,7 +35,7 @@ Harold asks how to reach your computer. **Left** for a USB cable, **Right** for 
 
 To come back, press the opposite button: **Down** from the preview, **Up** from the connection check, **Right** from the Remote's menu. **Back** works everywhere too. Settings is the exception: there Left and Right change the value, so only **Back** leaves.
 
-The corner shows the connection: **USB**, **BT**, **BT pairing**, **no USB**. **+PC** means the PC helper is talking to Duckwalk.
+The corner shows the connection: **USB**, **BT**, **BT pairing**, **no USB**. **+PC** means the desktop app is talking to Duckwalk.
 
 ## Settings
 
@@ -47,9 +47,9 @@ The corner shows the connection: **USB**, **BT**, **BT pairing**, **no USB**. **
 | Connection | USB or Bluetooth |
 | Every | 30–60 s, 1–3 min, 2–4 min between walks (Wander doesn't wait) |
 | Walk length | Short, Medium, Long: how far a walk or a wander strays |
-| Resume after | 10 s, 30 s (default), 1 min, 2 min, 5 min: with the PC helper, how long Harold waits after your last own input before he takes the pointer again |
+| Resume after | 10 s, 30 s (default), 1 min, 2 min, 5 min: with the desktop app, how long Harold waits after your last own input before he takes the pointer again |
 | Hours | Always, or Mon–Fri 8–18 only |
-| Stop after | 1 h, 2 h, 4 h (default), 8 h, Never: Harold goes to sleep when nobody has pressed a button on the Flipper (or, with the PC helper, used the computer) for that long, so a computer you walked away from still locks. The home screen then says **You were away**; **OK** wakes him. Without the helper only the Flipper's buttons count, even while you work at the computer. For a whole day away, choose **Never** |
+| Stop after | 1 h, 2 h, 4 h (default), 8 h, Never: Harold goes to sleep when nobody has pressed a button on the Flipper (or, with the desktop app, used the computer) for that long, so a computer you walked away from still locks. The home screen then says **You were away**; **OK** wakes him. Without the desktop app only the Flipper's buttons count, even while you work at the computer. For a whole day away, choose **Never** |
 | Baby lock | Off (default) or On: Back leaves only on a double tap or a 2-second hold, so a stray press doesn't close Duckwalk |
 | Sound | Off, Cues (default), Lively: see [Sounds](#sounds) |
 | Vibration | On or Off: a buzz for the two warnings, Stop after and a lost connection |
@@ -108,15 +108,15 @@ When the Flipper asks you to confirm a code, check it matches the one on the com
 
 ## Checking the connection
 
-**Down** on the home screen opens the same checklist for whichever connection you use. Over USB it reads **Harold has USB**, **PC sees Harold**, **Pointer moves**, and **Right** explains the open box (another app holding the port, a charge-only cable). Once everything is ticked, the last line says whether the [PC helper](../desktop/helper/README.md) is running, which is what lets Harold pause while you work.
+**Down** on the home screen opens the same checklist for whichever connection you use. Over USB it reads **Harold has USB**, **PC sees Harold**, **Pointer moves**, and **Right** explains the open box (another app holding the port, a charge-only cable). Once everything is ticked, the last line says whether the [desktop app](../desktop/app/README.md) is running, which is what lets Harold pause while you work.
 
 ![USB check](screens/pairing-usb-all-set@4x.png)
 
-## Without the PC helper
+## Without the desktop app
 
-The Flipper app works with any computer that takes a USB or Bluetooth mouse; nothing needs installing. The [PC helper](../desktop/helper/README.md) runs on Windows 10 and 11 only until v0.3, which brings macOS and Linux.
+The Flipper app works with any computer that takes a USB or Bluetooth mouse; nothing needs installing. The [desktop app](../desktop/app/README.md) is optional.
 
-Without the helper, Harold can't tell when you are working, so he walks on his timer whether you are there or not. Pick the mode to match:
+Without it, Harold can't tell when you are working, so he walks on his timer whether you are there or not. Pick the mode to match:
 
 - **While you work:** **Subtle**. One pixel out and back, which you won't notice. **Walk** works too if a short walk now and then doesn't bother you.
 - **When you're away:** **Wander**, or **Walk**.
@@ -128,4 +128,4 @@ A keep-awake tool can be against your employer's rules. Duckwalk makes your comp
 
 ---
 
-[Docs home](README.md) · [Next: PC helper →](../desktop/helper/README.md)
+[Docs home](README.md) · [Next: Desktop app →](../desktop/app/README.md)

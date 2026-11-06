@@ -10,7 +10,7 @@ The PC helper (`desktop/helper`) is C on plain Win32, so it runs on Windows only
 
 ## Decision
 
-One app, in Rust, in `desktop/app/`. It replaces the C helper once it does everything the helper does (#120); until then both live in the repository.
+One app, in Rust, in `desktop/app/`. It replaced the C helper once it did everything the helper did (#120).
 
 **Why Rust:**
 
@@ -35,16 +35,17 @@ Electron or Tauri would make Harold's on-screen window easier but cost a browser
 
 ## Checked
 
-- On Windows, over Bluetooth: the app found the paired "Harold Rgudalap", and every packet was written without an error.
-- The unit tests check that packets match the C helper byte for byte.
-- CI builds and tests the app on Windows, macOS and Linux.
+- Windows 11, over USB and Bluetooth: the Flipper shows +PC and "You're working" while you work; Harold's own walks are ignored, so the idle time keeps counting while he walks.
+- The tray, start at login and the goodbye on Quit, including a log-out and log-in (#121).
+- The unit tests check that packets match the C helper's byte for byte.
+- CI builds, lints and tests the app on Windows, macOS and Linux.
 
-Not yet checked: USB on Windows with the new app, and anything on a real Mac or Linux computer (#117).
+Not yet checked on a real Mac or Linux computer (#117).
 
 ## Limits
 
-- On macOS and Linux the app can't see your input yet (#120); it reports "away", so Harold walks as he would without it. On Windows it sees your input the same way as the C helper. `--pretend-working` reports "working", to check the link.
-- No tray icon and no start at login yet (#121).
+- On macOS the app needs Input Monitoring, and on Linux the `input` group; without them it reports "away", so Harold walks as he would without it.
+- **The tray's event loop and Raw Input share one registration** per device type in a program. The input watcher starts after the event loop, so its registration is the one that counts.
 
 ---
 

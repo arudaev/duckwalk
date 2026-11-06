@@ -26,9 +26,9 @@ When you step away, Harold moves the mouse pointer so the lock timer, the screen
 - **Stop after** 1 to 8 hours with nobody around, so a computer you walked away from still locks
 - Sound and vibration for the quack
 
-## The PC helper
+## The desktop app
 
-The optional Windows helper tells Harold when you use your own mouse or keyboard, so he lets go of the pointer while you work. Get it from the [Duckwalk repository](https://github.com/arudaev/duckwalk).
+The optional desktop app for Windows, macOS and Linux tells Harold when you use your own mouse or keyboard, so he lets go of the pointer while you work. It lives in the tray. Get it from the [Duckwalk releases](https://github.com/arudaev/duckwalk/releases).
 
 ## Before you use it at work
 

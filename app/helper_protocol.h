@@ -1,6 +1,6 @@
 #pragma once
 
-/* What the PC helper (desktop/helper) and the Flipper say to each other over
+/* What the desktop app (desktop/app) and the Flipper say to each other over
  * the USB data channel: 63-byte vendor reports, report ID 4 on the wire (see
  * usb/usb_duck.h). Shared by both sides; plain C, no Flipper headers.
  *

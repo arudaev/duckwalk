@@ -23,7 +23,7 @@ Harold lives on your desk. When you step away, he moves the mouse pointer so Tea
 - **Never the same path twice**, so it does not look like a jiggler.
 - **USB or Bluetooth.** Plug it in, or pair it and keep it in your pocket. A connection check shows whether the Flipper or the computer needs attention.
 - **Stops when you want it to.** Work hours only (Mon–Fri 8–18), and **Stop after** puts Harold to sleep when nobody has been around for 1 to 8 hours, so a PC you walked away from still locks.
-- **Lets go while you work.** With the optional [PC helper](desktop/helper/README.md), Harold pauses the moment you touch your own mouse or keyboard, over USB or Bluetooth. The helper runs on Windows 10 and 11 for now; macOS and Linux follow in v0.3.
+- **Lets go while you work.** With the optional [desktop app](desktop/app/README.md) for Windows, macOS and Linux, Harold pauses the moment you touch your own mouse or keyboard, over USB or Bluetooth. It lives in the tray and starts at login.
 - **A remote too.** Play, pause, volume and tracks; next and previous slide; a D-pad mouse.
 - **Harold is good company.** He reads code, types, sips coffee, hunts bugs and quacks at them.
 
@@ -60,7 +60,7 @@ On the first launch Harold asks how to reach the computer: **Left** for USB, **R
 
 The opposite button brings you back: Down from Preview, Up from the connection check, Right from the Remote's menu.
 
-The Flipper app needs nothing installed on the computer: it shows up as a normal USB or Bluetooth mouse, so it works with any computer that takes one. So far it has been tested on Windows 11. Only the PC helper is Windows only, until v0.3.
+The Flipper app needs nothing installed on the computer: it shows up as a normal USB or Bluetooth mouse, so it works with any computer that takes one. So far it has been tested on Windows 11.
 
 For a whole day away, set **Stop after** to **Never**. The [user guide](docs/guide.md) shows every screen.
 
@@ -68,7 +68,7 @@ For a whole day away, set **Stop after** to **Never**. The [user guide](docs/gui
 
 Most Flipper apps that talk to a computer turn the USB port into a single device, so a jiggler and a PC monitor cannot run at once. Over USB, Duckwalk is one device with three parts: a mouse, media keys and a small data channel, all standard USB HID. Over Bluetooth it pairs like any Bluetooth mouse, using the firmware's HID profile plus one small data service of Duckwalk's own, and the USB port stays free for charging and qFlipper.
 
-The lock timer and "away" status follow the computer's idle timer, and any mouse input resets it. The [PC helper](desktop/helper/README.md) uses Windows Raw Input to tell your own devices from Duckwalk's and sends one number over the data channel, on USB or Bluetooth: how long you have been idle. The [architecture page](docs/architecture.md) has the diagrams.
+The lock timer and "away" status follow the computer's idle timer, and any mouse input resets it. The [desktop app](desktop/app/README.md) asks the system which device each input came from (Raw Input on Windows, IOHIDManager on macOS, evdev on Linux) to tell your own devices from Duckwalk's and sends one number over the data channel, on USB or Bluetooth: how long you have been idle. The [architecture page](docs/architecture.md) has the diagrams.
 
 ## Before you use it at work
 
@@ -78,7 +78,7 @@ The lock timer and "away" status follow the computer's idle timer, and any mouse
 ## Docs and help
 
 - [User guide](docs/guide.md): every screen, Settings, the remote, pairing
-- [PC helper](desktop/helper/README.md): the optional program for Windows 10 and 11 (macOS and Linux in v0.3)
+- [Desktop app](desktop/app/README.md): the optional tray app for Windows, macOS and Linux
 - [All docs](docs/README.md), including the [architecture](docs/architecture.md) and [developer guide](docs/development.md)
 - Found a bug or tried it on macOS or Linux? [Open an issue](https://github.com/arudaev/duckwalk/issues/new/choose).
 
