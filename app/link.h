@@ -61,10 +61,15 @@ bool link_mouse_scroll(int8_t wheel);
 /* Press and release a consumer-page key (media keys, volume). */
 bool link_consumer_tap(uint16_t usage);
 
-/* Packets from the computer on the data channel (USB only for now): 63
- * bytes each, called from the USB interrupt, so keep the callback short. */
+/* Packets from the computer on the data channel: 63 bytes each, called from
+ * the USB interrupt or the Bluetooth thread, so keep the callback short. */
 typedef void (*LinkDataCallback)(const uint8_t* data, void* ctx);
 void link_set_data_callback(LinkDataCallback callback, void* ctx);
+
+/* Queue a 63-byte packet for the computer on the data channel (the vendor
+ * report over USB, a notification over Bluetooth). Returns false when there
+ * is no computer or the queue is full. */
+bool link_send_data(const uint8_t* packet);
 
 /* Send everything queued. Call from the main loop without the app lock. */
 void link_flush(void);

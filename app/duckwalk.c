@@ -104,6 +104,9 @@ void duckwalk_sound(Duckwalk* app, Sound sound) {
  * Bluetooth link that flickers at the edge of its range stays quiet. */
 #define LINK_SETTLE_MS 3000
 
+/* The desktop app reads the USB data channel every 50 ms. */
+#define CLOSING_MS 150
+
 /* Tells the user when the computer goes away and comes back, while Harold
  * is awake; asleep, nobody is counting on the link. */
 static void check_link(Duckwalk* app) {
@@ -116,6 +119,21 @@ static void check_link(Duckwalk* app) {
     if(!now && furi_get_tick() - app->link_seen_at < furi_ms_to_ticks(LINK_SETTLE_MS)) return;
     app->link_told = now;
     if(app->keep_awake.mode != KeepAwakeOff) duckwalk_sound(app, now ? SoundLinkBack : SoundLinkLost);
+}
+
+/* What Harold is doing, for the desktop app (talk.h). */
+static void tell_the_pc(Duckwalk* app) {
+    const KeepAwake* ka = &app->keep_awake;
+    TalkSeen seen = {
+        .awake = ka->mode != KeepAwakeOff,
+        .walking = keep_awake_is_walking(ka),
+        .waiting = ka->user_active,
+        .mode = (uint8_t)ka->mode,
+        .connection = (uint8_t)link_kind(),
+        .playing = keep_awake_is_playing(ka),
+        .quack_until = app->home.quack_until,
+    };
+    talk_tick(&app->talk, &seen, &ka->path, furi_get_tick());
 }
 
 /* Slow work the screens asked for, done without the app lock. */
@@ -151,6 +169,7 @@ int32_t duckwalk_app(void* p) {
     keep_awake_init(&app->keep_awake, 0, 0);
     duckwalk_apply_settings(app);
     helper_start();
+    talk_init(&app->talk);
     FURI_LOG_I(TAG, "Started, %s", app->screen == ScreenWelcome ? "first launch" : "settings loaded");
 
     FuriMessageQueue* queue = furi_message_queue_alloc(INPUT_QUEUE_LEN, sizeof(InputEvent));
@@ -181,6 +200,7 @@ int32_t duckwalk_app(void* p) {
         if(keep_awake_tick(&app->keep_awake)) home_on_move(app);
         home_tick(app);
         preview_tick(app);
+        tell_the_pc(app);
         busy = keep_awake_is_walking(&app->keep_awake) || app->remote.held || link_busy();
         furi_mutex_release(app->mutex);
 
@@ -206,6 +226,11 @@ int32_t duckwalk_app(void* p) {
     view_port_free(view_port);
     furi_record_close(RECORD_GUI);
 
+    /* Tell the desktop app, and give it a moment to read that before the
+     * USB port goes back to the Flipper's own mode. */
+    talk_closing();
+    link_flush();
+    furi_delay_ms(CLOSING_MS);
     helper_stop();
     link_stop();
     if(!app->skip_save) settings_save(&app->settings);

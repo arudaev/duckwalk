@@ -23,3 +23,14 @@ bool link_mouse_move(int8_t dx, int8_t dy) {
     fake_link_y += dy;
     return true;
 }
+
+/* Data packets the app queued for the computer, newest last. */
+#include <string.h>
+uint8_t fake_link_data[32][63];
+int fake_link_data_count = 0;
+
+bool link_send_data(const uint8_t* packet) {
+    if(!fake_link_connected || fake_link_data_count >= 32) return false;
+    memcpy(fake_link_data[fake_link_data_count++], packet, 63);
+    return true;
+}

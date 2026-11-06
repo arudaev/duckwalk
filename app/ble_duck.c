@@ -7,10 +7,12 @@
 #include <furi_ble/gatt.h>
 #include <ble/core/ble_defs.h>
 
-/* The helper's service: one characteristic it writes packets to. The
- * firmware's serial service would do, but its two 486-byte buffers don't fit
- * beside the HID service. UUIDs are Duckwalk's own, little-endian:
- * 15f18352-9e6d-4ff4-9f45-cd158a70941c (service) and ...941d (packets). */
+/* The desktop app's service: one characteristic it writes packets to and
+ * Duckwalk notifies it on. A second characteristic for Duckwalk's packets
+ * doesn't fit beside the HID service (the stack refuses it, error 152), and
+ * neither would the firmware's serial service with its two 486-byte buffers.
+ * UUIDs are Duckwalk's own, little-endian:
+ * 15f18352-9e6d-4ff4-9f45-cd158a70941c (service), ...941d (packets). */
 static const Service_UUID_t service_uuid = {
     .Service_UUID_128 =
         {0x1c, 0x94, 0x70, 0x8a, 0x15, 0xcd, 0x45, 0x9f, 0xf4, 0x4f, 0x6d, 0x9e, 0x52, 0x83, 0xf1, 0x15}};
@@ -22,7 +24,7 @@ static const BleGattCharacteristicParams packet_char = {
     .uuid.Char_UUID_128 =
         {0x1d, 0x94, 0x70, 0x8a, 0x15, 0xcd, 0x45, 0x9f, 0xf4, 0x4f, 0x6d, 0x9e, 0x52, 0x83, 0xf1, 0x15},
     .uuid_type = UUID_TYPE_128,
-    .char_properties = CHAR_PROP_WRITE | CHAR_PROP_WRITE_WITHOUT_RESP,
+    .char_properties = CHAR_PROP_WRITE | CHAR_PROP_WRITE_WITHOUT_RESP | CHAR_PROP_NOTIFY,
     /* Only the paired computer may write. */
     .security_permissions = ATTR_PERMISSION_AUTHEN_WRITE,
     .gatt_evt_mask = GATT_NOTIFY_ATTRIBUTE_WRITE,
@@ -76,9 +78,11 @@ static FuriHalBleProfileBase* duck_start(FuriHalBleProfileParams params) {
     FuriHalBleProfileBase* profile = ble_profile_hid->start(params);
     /* The dispatcher insists on a context. */
     duck.handler = ble_event_dispatcher_register_svc_handler(on_event, &duck);
+    /* Service, characteristic declaration, value, and the CCCD for notify. */
     duck.on_air = ble_gatt_service_add(UUID_TYPE_128, &service_uuid, PRIMARY_SERVICE, 4, &duck.svc_handle);
     if(duck.on_air) ble_gatt_characteristic_init(duck.svc_handle, &packet_char, &duck.packet);
-    FURI_LOG_I(TAG, "Helper channel %s", duck.on_air ? "on air" : "failed to start");
+    FURI_LOG_I(
+        TAG, "Data channel %s", duck.on_air && duck.packet.handle ? "on air, both ways" : "failed to start");
     return profile;
 }
 
@@ -101,6 +105,10 @@ void ble_duck_set_data_callback(BleDuckDataCallback callback, void* ctx) {
     duck.callback = NULL;
     duck.ctx = ctx;
     duck.callback = callback;
+}
+
+void ble_duck_notify(const uint8_t* packet) {
+    if(duck.on_air && duck.packet.handle) ble_gatt_characteristic_update(duck.svc_handle, &duck.packet, packet);
 }
 
 /* Must run before the firmware resets the stack, which checks that every

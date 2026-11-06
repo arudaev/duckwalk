@@ -12,7 +12,21 @@
  *   or keyboard other than Duckwalk, little-endian. Sent once a second, and
  *   straight away (at most every 250 ms) when the user is active.
  *   HELPER_MSG_BYE: no data. The helper is quitting; forget it now instead
- *   of after HELPER_TIMEOUT_MS. Older Flipper builds ignore it. */
+ *   of after HELPER_TIMEOUT_MS. Older Flipper builds ignore it.
+ *
+ * Flipper -> PC (types 0x81 and up, so the two directions never mix; each
+ * side ignores types it doesn't know)
+ *   HELPER_MSG_STATE: [3] flags (HELPER_STATE_*), [4] keep-awake mode
+ *   (0 off, 1 subtle, 2 walk, 3 wander), [5] connection (0 USB, 1 Bluetooth).
+ *   Sent when something changes and every HELPER_STATE_EVERY_MS.
+ *   HELPER_MSG_WALK: a walk starting, in pieces. [3..4] total steps, [5..6]
+ *   index of the first step here, [7] steps here (up to HELPER_WALK_STEPS),
+ *   [8] milliseconds per step, then (dx, dy) per step as signed bytes,
+ *   relative to the step before (the first to where the walk starts).
+ *   HELPER_MSG_QUACK: no data. Harold quacks.
+ *   HELPER_MSG_CLOSING: no data. Duckwalk is closing on the Flipper.
+ * Over Bluetooth both directions share one characteristic: the app writes
+ * to it, Duckwalk notifies on it. */
 
 #include <stdint.h>
 
@@ -21,6 +35,19 @@
 
 #define HELPER_MSG_IDLE 0x01
 #define HELPER_MSG_BYE  0x02
+
+#define HELPER_MSG_STATE   0x81
+#define HELPER_MSG_WALK    0x82
+#define HELPER_MSG_QUACK   0x83
+#define HELPER_MSG_CLOSING 0x84
+
+#define HELPER_STATE_AWAKE   (1 << 0) /* keep-awake is on */
+#define HELPER_STATE_WALKING (1 << 1) /* Harold has the pointer */
+#define HELPER_STATE_WAITING (1 << 2) /* holding back while the user works */
+
+#define HELPER_STATE_EVERY_MS 2000
+#define HELPER_WALK_HEADER    9
+#define HELPER_WALK_STEPS     27 /* (63 - 9) / 2 */
 
 #define HELPER_PACKET_LEN 63
 
@@ -38,4 +65,13 @@ static inline void helper_put_u32(uint8_t* p, uint32_t v) {
 
 static inline uint32_t helper_get_u32(const uint8_t* p) {
     return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24;
+}
+
+static inline void helper_put_u16(uint8_t* p, uint16_t v) {
+    p[0] = (uint8_t)v;
+    p[1] = (uint8_t)(v >> 8);
+}
+
+static inline uint16_t helper_get_u16(const uint8_t* p) {
+    return (uint16_t)(p[0] | p[1] << 8);
 }

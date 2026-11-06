@@ -48,7 +48,8 @@ flowchart LR
 | `link.c` | The connection: starts USB or Bluetooth, queues reports and sends them, carries dropped moves into the next report |
 | `usb/usb_duck.c` | One USB HID interface with three parts: mouse, media keys and a 63-byte data channel |
 | `ble_duck.c` | The Bluetooth profile: the firmware's HID mouse and media keys, plus a one-characteristic service the desktop app writes to |
-| `helper.c`, `helper_protocol.h` | Packets from the desktop app; the protocol both sides share (`desktop/app/src/protocol.rs` mirrors it) |
+| `helper.c`, `helper_protocol.h` | Packets from the desktop app; the protocol both sides share (`desktop/app/src/protocol.rs` and `flipper.rs` mirror it) |
+| `talk.c` | Packets to the desktop app: state, walks, quacks, closing |
 | `settings.c` | Reading and writing `settings.txt`, defaults line by line |
 | `util.h` | The log tag and tick helpers that survive the counter wrapping |
 
@@ -119,7 +120,11 @@ A walk is planned before it plays, so Preview shows the path that will really pl
 
 ## The data channel
 
-Over USB, Duckwalk's HID interface has a third collection: 63-byte vendor reports in both directions. The desktop app writes the user's idle time into it once a second, and says goodbye when it quits so the Flipper drops +PC at once; the format is in [`app/helper_protocol.h`](../app/helper_protocol.h). Over Bluetooth the same packets go to a service of Duckwalk's own (`ble_duck.c`): one write-only characteristic, 63 bytes, writable only by the paired computer. The firmware's serial service would have done, but its two 486-byte buffers don't fit beside the HID service. The profile wraps the firmware's HID profile, so its mouse and media functions work unchanged, and Windows picks the new service up without pairing again.
+Over USB, Duckwalk's HID interface has a third collection: 63-byte vendor reports in both directions. The desktop app writes the user's idle time into it once a second, and says goodbye when it quits so the Flipper drops +PC at once; the format is in [`app/helper_protocol.h`](../app/helper_protocol.h). Over Bluetooth the same packets go to a service of Duckwalk's own (`ble_duck.c`): one characteristic, 63 bytes, writable only by the paired computer. The firmware's serial service would have done, but its two 486-byte buffers don't fit beside the HID service. The profile wraps the firmware's HID profile, so its mouse and media functions work unchanged.
+
+**Harold talks back** (`talk.c`): Duckwalk tells the desktop app its state on every change and every 2 s, each walk's whole path as it starts (up to 15 packets of 27 steps), a quack, and that it's closing. Over USB these go the other way through the same vendor report; over Bluetooth they are notifications on the same characteristic. A second characteristic doesn't fit: the radio stack refuses it beside the HID service (error 152). Each side ignores message types it doesn't know, so older builds and apps keep working.
+
+**Changing the Bluetooth layout:** Windows keeps a paired device's GATT layout from pairing time. When a Duckwalk build changes its service (adding notify did), Windows marks the service "Unknown" and the app can't find it until Harold is removed in Windows' Bluetooth settings and paired again. Avoid layout changes after a release; if one can't be avoided, say so in the release notes.
 
 How the desktop app tells Duckwalk's own input from yours is written up in [decision 0001](decisions/0001-tell-duckwalk-from-the-user.md) and [decision 0002](decisions/0002-one-desktop-app-in-rust.md).
 

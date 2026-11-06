@@ -41,9 +41,13 @@ target_link_libraries(test_settings shim)
 add_executable(test_helper test_helper.c fake_link.c ${APP}/helper.c ${APP}/keep_awake.c ${APP}/walk.c ${APP}/wander.c)
 target_link_libraries(test_helper shim $<$<BOOL:${MATH}>:${MATH}>)
 
+add_executable(test_talk test_talk.c fake_link.c ${APP}/talk.c)
+target_link_libraries(test_talk shim $<$<BOOL:${MATH}>:${MATH}>)
+
 enable_testing()
 add_test(NAME walk COMMAND test_walk)
 add_test(NAME wander COMMAND test_wander)
 add_test(NAME keep_awake COMMAND test_keep_awake)
 add_test(NAME helper COMMAND test_helper)
+add_test(NAME talk COMMAND test_talk)
 add_test(NAME settings COMMAND test_settings WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
