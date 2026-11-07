@@ -29,9 +29,9 @@ The desktop app runs on work computers. A download that Windows or macOS calls "
 
 ## Status
 
-- SignPath: applied on 6 November 2026; waiting for their review. Until a release is signed, the Windows build is unsigned and the site says so.
+- SignPath: applied on 6 November 2026, declined on 7 November. The Foundation wants a project to show public adoption first (stars, forks, contributors, articles); Duckwalk is too new. Their paid plan is ruled out above. The project applies again after v0.1, once the Apps Catalog listing and the posts are out. Until then the Windows build is unsigned, and the site and the [code signing page](../code-signing.md) say so.
+- winget: an unsigned package is allowed, so this doesn't have to wait for signing; it waits for v0.1.
 - Homebrew: the tap works with `--HEAD`; after v0.1 its formula points at the release's source.
-- winget: after the first signed release.
 
 ---
 
