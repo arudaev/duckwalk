@@ -1,8 +1,9 @@
 //! Where the pointer is and where Harold may take it (`HELPER_MSG_AREA`):
 //! the safe area is the middle of the active window, clear of its title bar
 //! and edges and never over the taskbar, and the screen is the one the
-//! pointer is on. Wander keeps to the safe area, a walk to the screen, and
-//! both land on the pixel they set off from.
+//! pointer is on. Wander keeps to the safe area, a walk to the screen. A
+//! window on another screen than the pointer doesn't count: the middle of
+//! the pointer's screen is used instead.
 //!
 //! Windows only for now; elsewhere the app sends no area and Harold wanders
 //! as before.
@@ -146,13 +147,13 @@ pub fn current() -> Option<Area> {
 
     let mut pt = POINT::default();
     unsafe { GetCursorPos(&mut pt) }.ok()?;
-    let (screen, pointer_work) = monitor(unsafe { MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST) })?;
+    let pointer_monitor = unsafe { MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST) };
+    let (screen, work) = monitor(pointer_monitor)?;
 
-    // The active window, unless it is the desktop or the taskbar, hidden or
-    // minimised: then the work area of the pointer's screen.
+    // The active window, unless it is the desktop or the taskbar, hidden,
+    // minimised or on another screen: then the pointer's screen.
     let fg = unsafe { GetForegroundWindow() };
     let mut window = None;
-    let mut work = pointer_work;
     if !fg.is_invalid() && unsafe { IsWindowVisible(fg) }.as_bool() && !unsafe { IsIconic(fg) }.as_bool() {
         let mut class = [0u16; 64];
         let n = unsafe { GetClassNameW(fg, &mut class) } as usize;
@@ -162,10 +163,8 @@ pub fn current() -> Option<Area> {
             "Progman" | "WorkerW" | "Shell_TrayWnd" | "Shell_SecondaryTrayWnd"
         );
         let mut r = RECT::default();
-        if !shell && unsafe { GetWindowRect(fg, &mut r) }.is_ok() {
-            if let Some((_, w)) = monitor(unsafe { MonitorFromWindow(fg, MONITOR_DEFAULTTONEAREST) }) {
-                work = w;
-            }
+        let same_screen = unsafe { MonitorFromWindow(fg, MONITOR_DEFAULTTONEAREST) } == pointer_monitor;
+        if !shell && same_screen && unsafe { GetWindowRect(fg, &mut r) }.is_ok() {
             window = Some(rect(r));
         }
     }

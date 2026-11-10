@@ -11,9 +11,11 @@ static volatile bool heard;
 /* A command waiting for the main loop: 0 when there is none. */
 static volatile uint8_t command;
 static volatile uint8_t command_arg;
-/* The latest area report. The interrupt bumps `area_seq` to odd before it
- * writes and back to even after, so a reader that sees the same even number
- * before and after copying got a whole report. */
+/* The latest area report, written from the USB interrupt or the Bluetooth
+ * thread. The writer bumps `area_seq` to odd before it writes and back to
+ * even after, so a reader that sees the same even number before and after
+ * copying got a whole report. The reader gives up after a few tries rather
+ * than wait on a writer it may have interrupted. */
 static volatile uint32_t area_seq;
 static volatile uint32_t area_at;
 static volatile PointerArea area_report;
@@ -86,13 +88,15 @@ bool helper_present(void) {
 
 bool helper_area(PointerArea* area, uint32_t* at) {
     if(!helper_present()) return false;
-    uint32_t seq;
-    do {
-        seq = area_seq;
+    for(int tries = 0; tries < 4; tries++) {
+        uint32_t seq = area_seq;
         *area = area_report;
         *at = area_at;
-    } while((seq & 1) || seq != area_seq);
-    return seq && tick_before(*at + furi_ms_to_ticks(HELPER_AREA_FRESH_MS));
+        if(!(seq & 1) && seq == area_seq) {
+            return seq && tick_before(*at + furi_ms_to_ticks(HELPER_AREA_FRESH_MS));
+        }
+    }
+    return false;
 }
 
 bool helper_take_command(uint8_t* cmd, uint8_t* arg) {

@@ -35,30 +35,55 @@ static float wrap_angle(float a) {
     return a;
 }
 
-static float clamp(float v, float lo, float hi) {
-    return v < lo ? lo : v > hi ? hi : v;
+/* Is (x, y) where spots are picked? */
+static bool in_spots(const Wander* w, float x, float y) {
+    return !w->has_area || (x >= w->x0 && x <= w->x1 && y >= w->y0 && y <= w->y1);
 }
 
-static bool in_area(const Wander* w, float x, float y) {
-    return !w->bounded || (x >= w->left && x < w->right && y >= w->top && y < w->bottom);
+/* Along one axis: where spots may be, given the area [lo, hi). The reach
+ * [-r, r] moves towards the area, a quarter of a reach at most (so the way
+ * home still fits WANDER_HOME_STEPS), until they overlap enough to wander
+ * in: half a reach, or the whole area if it is smaller. Then spots are
+ * picked in the overlap. Too far for that, they are picked in the reach on
+ * the area's side of the start, so the wander heads that way. Returns true
+ * when the spots are inside the area. */
+static bool fit_axis(float lo, float hi, float r, float* from, float* to) {
+    float need = fminf(r / 2, hi - 1 - lo);
+    float dir = lo + hi > 0 ? 1.0f : -1.0f;
+    for(int k = 0; k <= 2; k++) {
+        float s = dir * k * r / 8;
+        *from = fmaxf(lo, -r + s);
+        *to = fminf(hi - 1, r + s);
+        if(*to - *from >= need) return true;
+    }
+    *from = dir > 0 ? 0 : -r;
+    *to = dir > 0 ? r : 0;
+    return false;
 }
 
-/* A spot in the area: within reach of the start where the area comes that
- * close, otherwise within reach of the nearest part of it. */
+/* Where spots may be, from the area: computed when the area or the reach
+ * changes. A wander strays little further than it would without one, so
+ * the way home stays short. */
+static void check_reach(Wander* w) {
+    if(!w->has_area) {
+        w->bounded = false;
+        return;
+    }
+    bool in_x = fit_axis(w->left, w->right, w->range, &w->x0, &w->x1);
+    bool in_y = fit_axis(w->top, w->bottom, w->range, &w->y0, &w->y1);
+    w->bounded = in_x && in_y;
+}
+
 static void spot_in_area(Wander* w) {
-    float r = w->range;
-    float cx = clamp(0, w->left, w->right - 1), cy = clamp(0, w->top, w->bottom - 1);
-    float x0 = fmaxf(w->left, cx - r), x1 = fminf(w->right - 1, cx + r);
-    float y0 = fmaxf(w->top, cy - r), y1 = fminf(w->bottom - 1, cy + r);
-    w->tx = random_float(x0, x1);
-    w->ty = random_float(y0, y1);
+    w->tx = random_float(w->x0, w->x1);
+    w->ty = random_float(w->y0, w->y1);
 }
 
 /* A new spot somewhere in range, far enough from here to be worth the trip,
  * and maybe a new pace to get there. */
 static void pick_target(Wander* w) {
     for(int tries = 0; tries < 8; tries++) {
-        if(w->bounded) {
+        if(w->has_area) {
             spot_in_area(w);
         } else {
             float a = random_float(0, 2.0f * (float)M_PI);
@@ -75,7 +100,7 @@ static void pick_target(Wander* w) {
     /* Its turning circle has to fit the range and the area, or it swings far
      * out on every turn: a short wander, or one in a small window, ambles. */
     float room = w->range;
-    if(w->bounded) room = fminf(room, fminf(w->right - w->left, w->bottom - w->top) / 2.0f);
+    if(w->has_area) room = fminf(room, fminf(w->x1 - w->x0, w->y1 - w->y0) / 2.0f);
     float fastest = fmaxf(TURN_PER_STEP * room / 4.0f, 0.8f);
     if(w->cruise > fastest) w->cruise = fastest;
     w->target_steps = 0;
@@ -90,6 +115,7 @@ void wander_start(Wander* w, WalkLength length) {
     w->speed = 0;
     w->cruise = cruise_speeds[1];
     w->homing = false;
+    w->has_area = false;
     w->bounded = false;
     w->target_steps = 0;
     pick_target(w);
@@ -97,30 +123,19 @@ void wander_start(Wander* w, WalkLength length) {
 
 void wander_set_area(Wander* w, int16_t left, int16_t top, int16_t right, int16_t bottom) {
     if(left >= right || top >= bottom) return;
-    w->bounded = true;
+    w->has_area = true;
     w->left = left;
     w->top = top;
     w->right = right;
     w->bottom = bottom;
-    if(!w->homing && !in_area(w, w->tx, w->ty)) pick_target(w);
-}
-
-void wander_shift(Wander* w, int16_t dx, int16_t dy) {
-    if(!dx && !dy) return;
-    w->x += dx;
-    w->y += dy;
-    w->sent_x += dx;
-    w->sent_y += dy;
-    if(w->homing && w->speed < 0.6f) {
-        /* Stopped at home, or nearly: the slowest homing pace, straight back. */
-        w->speed = 0.6f;
-        w->heading = atan2f(-w->y, -w->x);
-    }
+    check_reach(w);
+    if(!w->homing && !in_spots(w, w->tx, w->ty)) pick_target(w);
 }
 
 void wander_set_length(Wander* w, WalkLength length) {
     furi_check(length < WalkLengthCount);
     w->range = wander_ranges[length];
+    check_reach(w);
     /* Head somewhere in the new reach now, at a pace that fits it. */
     if(!w->homing) pick_target(w);
 }

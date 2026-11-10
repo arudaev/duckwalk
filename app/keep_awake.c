@@ -3,20 +3,14 @@
 #include "util.h"
 
 #include <furi_hal_random.h>
-#include <stdlib.h>
 
 /* After the Remote moves the pointer, a wander keeps off it this long. */
 #define REMOTE_HOLD_MS 30000
 
-/* With the desktop app's reports a wander knows the pixel it set off from
- * and where the pointer really is, and keeps its own idea of where it is in
- * step with that: pointer acceleration turns counts into pixels at a rate
- * that depends on speed, so counting moves alone drifts. Home by that
- * reckoning, it waits for a report sent after the pointer stopped, and
- * steps onto the start pixel if it isn't there yet, a few times at most. */
-#define SETTLE_TRIES   3
-#define SETTLE_WAIT_MS 250
-#define SETTLE_MAX_MS  1000
+/* A walk keeps this far from the screen's edges: its path is in mouse
+ * counts and the screen in pixels, and pointer acceleration makes a fast
+ * count go a little further than a pixel. */
+#define EDGE_MARGIN 16
 
 static uint32_t random_between(uint32_t lo, uint32_t hi) {
     if(hi <= lo) return lo;
@@ -41,7 +35,6 @@ void keep_awake_init(KeepAwake* ka, uint32_t min_s, uint32_t max_s) {
     ka->step = 0;
     ka->wandering = false;
     ka->has_area = false;
-    ka->has_start = false;
     walk_plan(&ka->path, ka->walk_length);
     schedule(ka);
 }
@@ -67,27 +60,19 @@ static int16_t to_i16(int32_t v) {
     return v > INT16_MAX ? INT16_MAX : v < INT16_MIN ? INT16_MIN : (int16_t)v;
 }
 
-/* A new report while wandering: where the pointer really is now becomes
- * where the wander thinks it is, and the safe area is taken relative to the
- * start. A wander that set off before the first report learns its start
- * pixel from it. */
+/* The safe area, relative to the wander's start: the report's pixels
+ * moved so the pointer lands where the moves sent so far put it. */
 static void wander_take_area(KeepAwake* ka) {
-    if(!ka->wandering || !ka->has_area) return;
+    if(!ka->wandering || !ka->has_area || ka->wander.homing) return;
     const PointerArea* a = &ka->area;
     WalkPoint at = wander_position(&ka->wander);
-    if(!ka->has_start) {
-        ka->has_start = true;
-        ka->start_x = to_i16(a->x - at.x);
-        ka->start_y = to_i16(a->y - at.y);
-    }
-    wander_shift(&ka->wander, to_i16(a->x - ka->start_x - at.x), to_i16(a->y - ka->start_y - at.y));
-    if(ka->wander.homing) return;
+    int32_t ox = at.x - a->x, oy = at.y - a->y;
     wander_set_area(
         &ka->wander,
-        to_i16(a->safe.left - ka->start_x),
-        to_i16(a->safe.top - ka->start_y),
-        to_i16(a->safe.right - ka->start_x),
-        to_i16(a->safe.bottom - ka->start_y));
+        to_i16(a->safe.left + ox),
+        to_i16(a->safe.top + oy),
+        to_i16(a->safe.right + ox),
+        to_i16(a->safe.bottom + oy));
 }
 
 void keep_awake_set_area(KeepAwake* ka, const PointerArea* area, uint32_t at) {
@@ -102,16 +87,28 @@ void keep_awake_set_area(KeepAwake* ka, const PointerArea* area, uint32_t at) {
     wander_take_area(ka);
 }
 
-/* A walk that would run off the screen goes the other way. */
+/* Room from the pointer to an edge, short of the margin; a pointer already
+ * inside the margin keeps the room it has. */
+static int16_t room_before(int32_t edge, int32_t at) {
+    int32_t r = edge + EDGE_MARGIN - at;
+    return to_i16(r > 0 ? 0 : r);
+}
+
+static int16_t room_after(int32_t edge, int32_t at) {
+    int32_t r = edge - EDGE_MARGIN - at;
+    return to_i16(r < 1 ? 1 : r);
+}
+
+/* A walk that would run off the screen goes the other way, or is squeezed. */
 static void fit_walk(KeepAwake* ka) {
     if(!ka->has_area) return;
     const PointerArea* a = &ka->area;
     walk_fit(
         &ka->path,
-        to_i16(a->screen.left - a->x),
-        to_i16(a->screen.top - a->y),
-        to_i16(a->screen.right - a->x),
-        to_i16(a->screen.bottom - a->y));
+        room_before(a->screen.left, a->x),
+        room_before(a->screen.top, a->y),
+        room_after(a->screen.right, a->x),
+        room_after(a->screen.bottom, a->y));
 }
 
 void keep_awake_set_mode(KeepAwake* ka, KeepAwakeMode mode) {
@@ -270,24 +267,6 @@ static bool walk_step(KeepAwake* ka) {
     return moved;
 }
 
-/* Home by the count: true while it waits to hear where the pointer really
- * is. A report that finds it off shifts the wander (wander_take_area), and
- * it sets off again for the last few pixels. */
-static bool settle_home(KeepAwake* ka) {
-    if(!ka->has_start) return false;
-    uint32_t now = furi_get_tick();
-    if(!ka->settling) {
-        if(ka->settles >= SETTLE_TRIES) return false;
-        ka->settling = true;
-        ka->settles++;
-        ka->home_at = now;
-        return true;
-    }
-    if(!ka->has_area || tick_reached(ka->home_at + furi_ms_to_ticks(SETTLE_MAX_MS))) return false;
-    /* Still waiting for a report from after the pointer stopped. */
-    return (int32_t)(ka->area_at - (ka->home_at + furi_ms_to_ticks(SETTLE_WAIT_MS))) < 0;
-}
-
 static bool wander_tick(KeepAwake* ka) {
     if(!link_is_connected()) {
         drop_wander(ka);
@@ -304,9 +283,7 @@ static bool wander_tick(KeepAwake* ka) {
         WalkPoint m = wander_step(&ka->wander);
         moved |= move_by(m.x, m.y);
         ka->step_tick += furi_ms_to_ticks(WALK_STEP_MS);
-        if(!wander_is_home(&ka->wander)) {
-            ka->settling = false;
-        } else if(!settle_home(ka)) {
+        if(wander_is_home(&ka->wander)) {
             drop_wander(ka);
             schedule(ka);
         }
@@ -329,11 +306,6 @@ bool keep_awake_tick(KeepAwake* ka) {
         }
         wander_start(&ka->wander, ka->walk_length);
         ka->wandering = true;
-        ka->has_start = ka->has_area;
-        ka->start_x = ka->area.x;
-        ka->start_y = ka->area.y;
-        ka->settling = false;
-        ka->settles = 0;
         wander_take_area(ka);
         ka->step_tick = furi_get_tick();
         return wander_tick(ka);

@@ -93,8 +93,8 @@ static void check_area(WalkLength length, uint32_t seed) {
     case 2: /* the pointer next to the taskbar, the window above */
         left = -400, top = -500, right = 400, bottom = -80;
         break;
-    default: /* the pointer far right of the window */
-        left = -900, top = -200, right = -300, bottom = 200;
+    default: /* the pointer right of the window, within reach */
+        left = -900, top = -200, right = -50, bottom = 200;
         break;
     }
     Wander w;
@@ -102,23 +102,29 @@ static void check_area(WalkLength length, uint32_t seed) {
     wander_set_area(&w, left, top, right, bottom);
     int16_t x = 0, y = 0;
     bool inside = seed % 4 < 2, came_in = inside;
+    /* How far it may stray, as without an area: the corner of its reach
+     * square and a turning circle. */
+    float limit = wander_reach(&w) * 1.25f * 1.42f + wander_reach(&w) * 0.5f + 5;
     int out_after_in = 0;
     /* How far a turn can carry it past an edge: its turning circle, at most
      * a quarter of the room it has. */
-    float room = fminf(wander_reach(&w), fminf(right - left, bottom - top) / 2.0f);
-    float swing = room / 2.0f + 5;
+    float r = wander_reach(&w);
+    float room = fminf(r, fminf(w.x1 - w.x0, w.y1 - w.y0) / 2.0f);
+    float swing = fmaxf(room / 2.0f, 8.0f) + 5; /* the slowest pace still turns in 8 */
     for(int i = 0; i < STEPS; i++) {
-        CHECK(target_inside(&w, left, top, right, bottom), "seed %lu: heads for (%.0f,%.0f) outside the area",
+        /* An area out of reach is ignored: check_far_area covers that. */
+        CHECK(!w.bounded || target_inside(&w, left, top, right, bottom), "seed %lu: heads for (%.0f,%.0f) outside the area",
               (unsigned long)seed, w.tx, w.ty);
         WalkPoint m = wander_step(&w);
         x += m.x;
         y += m.y;
+        CHECK(hypotf(x, y) <= limit, "seed %lu: strayed %.0f from the start", (unsigned long)seed, hypotf(x, y));
         bool in = x >= left && x < right && y >= top && y < bottom;
         if(in) came_in = true;
         bool near = x >= left - swing && x < right + swing && y >= top - swing && y < bottom + swing;
-        if(came_in && !near) out_after_in++;
+        if(w.bounded && came_in && !near) out_after_in++;
     }
-    CHECK(came_in, "seed %lu: never got into the area", (unsigned long)seed);
+    CHECK(came_in || !w.bounded, "seed %lu: never got into the area", (unsigned long)seed);
     CHECK(out_after_in == 0, "seed %lu: strayed out of the area %d steps", (unsigned long)seed, out_after_in);
 
     wander_go_home(&w);
@@ -130,29 +136,35 @@ static void check_area(WalkLength length, uint32_t seed) {
         steps++;
     }
     CHECK(wander_is_home(&w) && x == 0 && y == 0, "seed %lu: home at (%d,%d)", (unsigned long)seed, x, y);
+    CHECK(steps <= WANDER_HOME_STEPS, "seed %lu: %d steps home", (unsigned long)seed, steps);
 }
 
-/* Home by the count but a few pixels off: told so, it steps onto the start
- * slowly and lands on it. */
-static void check_correct(uint32_t seed) {
+/* Towards an area out of reach it only heads that way: it strays at most
+ * a quarter of a reach further than without one, and gets home in time. */
+static void check_far_area(uint32_t seed) {
     Wander w;
-    wander_start(&w, WalkLengthMedium);
+    wander_start(&w, (WalkLength)(seed % WalkLengthCount));
+    wander_set_area(&w, 1000, 1000, 1400, 1300);
+    CHECK(!w.bounded, "seed %lu: a far area counted as in reach", (unsigned long)seed);
+    int16_t x = 0, y = 0;
+    float r = wander_reach(&w), farthest = 0;
+    for(int i = 0; i < STEPS; i++) {
+        CHECK(w.tx >= 0 && w.ty >= 0, "seed %lu: heads away from the area (%.0f,%.0f)", (unsigned long)seed, w.tx, w.ty);
+        WalkPoint m = wander_step(&w);
+        x += m.x;
+        y += m.y;
+        if(hypotf(x, y) > farthest) farthest = hypotf(x, y);
+    }
+    CHECK(farthest <= r * 1.25f * 1.42f + r * 0.5f + 5, "seed %lu: strayed %.0f for reach %.0f", (unsigned long)seed, farthest, r);
     wander_go_home(&w);
-    int guard = 0;
-    while(!wander_is_home(&w) && guard++ < 1000) wander_step(&w);
-    int16_t dx = (int16_t)(seed % 81) - 40, dy = (int16_t)(seed % 37) - 18;
-    wander_shift(&w, dx, dy);
-    int16_t x = dx, y = dy;
     int steps = 0;
     while(!wander_is_home(&w) && steps < WANDER_HOME_STEPS) {
         WalkPoint m = wander_step(&w);
-        CHECK(abs(m.x) <= 3 && abs(m.y) <= 3, "seed %lu: correction jumped (%d,%d)", (unsigned long)seed, m.x, m.y);
         x += m.x;
         y += m.y;
         steps++;
     }
-    CHECK(wander_is_home(&w) && x == 0 && y == 0, "seed %lu: corrected from (%d,%d) to (%d,%d) in %d steps",
-          (unsigned long)seed, dx, dy, x, y, steps);
+    CHECK(wander_is_home(&w) && x == 0 && y == 0, "seed %lu: not home in time, at (%d,%d)", (unsigned long)seed, x, y);
 }
 
 int main(void) {
@@ -178,7 +190,7 @@ int main(void) {
     }
     for(uint32_t seed = 1; seed <= SEEDS; seed++) {
         shim_random_seed(seed);
-        check_correct(seed);
+        check_far_area(seed);
     }
 
     /* Preview's sample fits a path, starts and ends at the start. */

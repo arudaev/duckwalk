@@ -20,9 +20,8 @@
  *   the computer's pixels, signed 16-bit little-endian: [3..6] the pointer
  *   (x, y), [7..14] the safe area to wander in (left, top, right, bottom:
  *   the middle of the active window, clear of its edges and the taskbar),
- *   [15..22] the screen the pointer is on. Sent with each idle packet and
- *   every HELPER_AREA_EVERY_MS while Harold has the pointer. Older Flipper
- *   builds ignore it.
+ *   [15..22] the screen the pointer is on. Sent with each idle packet.
+ *   Older Flipper builds ignore it.
  *
  * Flipper -> PC (types 0x81 and up, so the two directions never mix; each
  * side ignores types it doesn't know)
@@ -72,9 +71,7 @@
 #define HELPER_HEARTBEAT_MS 1000
 #define HELPER_TIMEOUT_MS   5000
 
-/* While Harold has the pointer the helper reports the area this often, and
- * the Flipper trusts a report this long. */
-#define HELPER_AREA_EVERY_MS 100
+/* The Flipper trusts an area report this long. */
 #define HELPER_AREA_FRESH_MS 2000
 
 static inline void helper_put_u32(uint8_t* p, uint32_t v) {

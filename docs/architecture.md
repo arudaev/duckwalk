@@ -118,7 +118,7 @@ flowchart TD
 
 A walk is planned before it plays, so Preview shows the path that will really play. If a report doesn't get through, its movement is added to the next one (`link.c`), so a walk always ends where it started. A wander isn't planned: `wander.c` works out each step from where the cursor is, turning a little at a time so it moves in arcs, and keeps count of what it sent, so going home lands on the start.
 
-With the desktop app, a wander also knows where the pointer really is. The app reports the pointer, the middle of the active window and the screen (`HELPER_MSG_AREA`) with every idle packet and ten times a second while Harold has the pointer. The wander only picks spots in that middle, drifts into it when it starts outside, and takes each report as its new idea of where it is: Windows' pointer acceleration turns counts into pixels at a rate that depends on speed, so counting alone drifts by tens of pixels a minute. Home by the count, it waits for a report sent after the pointer stopped and steps onto the pixel it set off from. A walk that would run off the screen is mirrored, or squeezed if neither way fits. Without the app, or on macOS and Linux for now, nothing changes.
+With the desktop app, a wander also knows where the pointer is on the screen. The app reports the pointer, the middle of the active window and the screen (`HELPER_MSG_AREA`) with every idle packet. The wander only picks spots in that middle, drifts into it when it starts outside, and heads towards it when it is further off, straying at most a quarter of its reach further than without a report, so the way home stays as short. A walk that would run off the screen is mirrored, or squeezed if neither way fits, keeping 16 px from the edge. Without the app, or on macOS and Linux for now, nothing changes.
 
 ## The data channel
 
@@ -126,7 +126,7 @@ Over USB, Duckwalk's HID interface has a third collection: 63-byte vendor report
 
 **Harold talks back** (`talk.c`): Duckwalk tells the desktop app its state on every change and every 2 s, each walk's whole path as it starts (up to 15 packets of 27 steps), a quack, and that it's closing. Over USB these go the other way through the same vendor report; over Bluetooth they are notifications on the same characteristic. A second characteristic doesn't fit: the radio stack refuses it beside the HID service (error 152). Each side ignores message types it doesn't know, so older builds and apps keep working.
 
-**Where the pointer is** (`HELPER_MSG_AREA`): the pointer, the safe area to wander in and the screen, in the computer's pixels. Written in the USB interrupt, read by the main loop, so `helper.c` guards the copy with a counter that is odd while it writes.
+**Where the pointer is** (`HELPER_MSG_AREA`): the pointer, the safe area to wander in and the screen, in the computer's pixels. Written in the USB interrupt or the Bluetooth thread and read by the main loop, so `helper.c` guards the copy with a counter that is odd while it writes; the reader gives up after a few tries rather than wait.
 
 **Commands from the PC** (`HELPER_MSG_COMMAND`): wake, sleep or a mode, sent by the desktop app when an agent asks through `duckwalk mcp`. The packet arrives in the USB interrupt or the Bluetooth thread, so `helper.c` only parks it; the main loop takes it and acts as if OK had been pressed, or a mode chosen in Settings, and it counts as somebody around for Stop after.
 
