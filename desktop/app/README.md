@@ -75,7 +75,7 @@ Then ask your agent to set Duckwalk up: the skill tells it to check for the desk
 
 - **It notices that you used a device, not what you did with it.** It never looks at which keys you press or where you move the pointer. Windows Raw Input, macOS IOHIDManager and Linux evdev each tell the app that an input happened and which device sent it.
 - **Touch screens and pens count too.** On Windows, taps and drags that the system turns into mouse input carry a mark of their own, which a low-level mouse hook spots; it looks only at the mark.
-- **It ignores Duckwalk's own devices:** over USB by their IDs (`VID_1209&PID_0001`), over Bluetooth by the paired "Harold <your Flipper's name>". Every other device counts as you. On Windows, so does input made by software (remote desktop, automation tools), which has no device at all.
+- **It ignores Duckwalk's own devices:** over USB by their IDs (`VID_1209&PID_D0C4`), over Bluetooth by the paired "Harold <your Flipper's name>". Every other device counts as you. On Windows, so does input made by software (remote desktop, automation tools), which has no device at all.
 - **It sends one number,** the milliseconds since your last input, to the Flipper: over Duckwalk's USB data channel, or over Bluetooth to a small service of Duckwalk's own next to the mouse. It does that once a second, and straight away when you are active (at most four times a second). The format is in [`app/helper_protocol.h`](../../app/helper_protocol.h). Nothing goes anywhere else, and nothing is saved.
 
 Why one app in Rust, and what stays per system: [decision 0002](../../docs/decisions/0002-one-desktop-app-in-rust.md).
