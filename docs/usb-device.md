@@ -8,6 +8,12 @@ What Duckwalk looks like to a computer over USB, which hardware it runs on, and 
 
 Duckwalk is software only. It runs on an unmodified [Flipper Zero](https://flipperzero.one/) with the official firmware (1.5 or newer), plugged into the computer with a USB-C cable. There is no extra board, no wiring and nothing to solder.
 
+<p align="center">
+  <img src="photos/flipper-duckwalk.jpg" width="80%" alt="A Flipper Zero in an orange case showing Duckwalk's home screen: Harold the duck at his desk, with Remote, Link and Settings along the bottom, in front of a laptop">
+</p>
+
+<p align="center"><em>Duckwalk on a Flipper Zero. Here the cable is out, so the status corner reads "no USB"; plugged in, the Flipper shows up as the USB device described below.</em></p>
+
 | | |
 |---|---|
 | Device | Flipper Zero, any hardware revision sold by Flipper Devices |
