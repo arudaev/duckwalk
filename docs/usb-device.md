@@ -19,7 +19,7 @@ Duckwalk is software only. It runs on an unmodified [Flipper Zero](https://flipp
 | Device | Flipper Zero, any hardware revision sold by Flipper Devices |
 | Microcontroller | STM32WB55RG (Arm Cortex-M4 application core, Cortex-M0+ radio core) |
 | USB | Full-speed device on the STM32WB55's own USB peripheral, USB-C connector |
-| Schematics | Published by Flipper Devices: [Flipper Zero schematic](https://docs.flipper.net/zero/development/hardware/schematic), [technical specifications](https://docs.flipper.net/zero/development/hardware/tech-specs) |
+| Schematics | Published by Flipper Devices as PDFs for every board, including the STM32WB55 MCU sheet: [Flipper Zero schematics](https://docs.flipper.net/zero/development/hardware/schematic), [technical specifications](https://docs.flipper.net/zero/development/hardware/tech-specs) |
 | Firmware | Official Flipper Zero firmware, [flipperdevices/flipperzero-firmware](https://github.com/flipperdevices/flipperzero-firmware), GPL-3.0 |
 
 Duckwalk is an app (`.fap`) that the firmware loads from the SD card. While it runs over USB, it replaces the Flipper's normal USB device (serial console) with its own; when you leave the app, the firmware's own device comes back.
