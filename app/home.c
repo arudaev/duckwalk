@@ -8,6 +8,13 @@
  * breathes slowly and the z's float. During a walk or a wander he leaves the
  * desk and moves in step with the cursor. A long OK makes him quack.
  *
+ * He keeps his desk going too: at each Subtle nudge a small job at his seat
+ * (a wiggle, a stretch, a few taps at the laptop, topping up his coffee),
+ * and at a walk's pause a job at the object he's nearest (watering the
+ * plant, straightening the books he knocked on the way, the mug, the
+ * laptop). For that he may leave the cursor's track on screen and catch up
+ * after; the cursor itself never waits.
+ *
  * With Sound on Lively he is heard too: the bug hunt, his hops and his
  * footsteps on a walk, but only while you can see him.
  *
@@ -21,7 +28,7 @@
 
 #include <furi_hal_random.h>
 
-/* Layout, left to right: plant, mug, Harold, laptop. */
+/* Layout, left to right: plant, books, mug, Harold, laptop. */
 #define HOME_X     56 /* Harold's seat at the desk */
 #define HAROLD_Y   28 /* his flat bottom sits on the desk line */
 #define DESK_Y     52
@@ -34,6 +41,9 @@
 #define MUG_X      38
 #define MUG_Y      44
 #define PLANT_X    10
+#define BOOKS_X    24
+#define BOOKS_W    10
+#define HAROLD_W   24
 
 /* The code on the laptop: rows 3 px apart, scrolling up one pixel at a time. */
 #define CODE_X      (LAPTOP_X + 3)
@@ -44,7 +54,6 @@
 #define SCROLL_MS   500
 
 /* Timing */
-#define WADDLE_MS  900
 #define QUACK_MS   700
 #define BLINK_MS   140
 #define STRIDE_MS  150
@@ -56,6 +65,10 @@
 #define SPOT_MS    1200
 #define FOOTSTEP_MS 300
 #define FIXED_MS   1400
+#define CATCH_PX_S 150 /* how fast he goes to a job and back on the cursor's track */
+#define WALK_JOB_MS      1400 /* a job at a walk's pause, getting there included */
+#define WALK_JOB_MIN_MS  1000 /* only with this much of the walk left */
+#define WALK_JOB_BACK_MS 400 /* kept to catch up before the walk ends */
 #define BUG_MIN_MS 10000
 #define BUG_MAX_MS 25000
 /* Baby lock */
@@ -122,14 +135,36 @@ static bool at_desk(const Duckwalk* app) {
     return !keep_awake_is_walking(&app->keep_awake) && app->keep_awake.mode != KeepAwakeOff;
 }
 
-/* Harold's horizontal place on screen: his seat, or his share of the walk. */
-static int32_t harold_x(const Duckwalk* app) {
-    const KeepAwake* ka = &app->keep_awake;
-    if(!keep_awake_is_walking(ka)) return HOME_X;
+/* Where the cursor's walk puts him on screen, from his seat. */
+static int32_t track_dx(const KeepAwake* ka) {
     int32_t reach = keep_awake_reach(ka);
     if(reach < 1) reach = 1;
     int32_t x = keep_awake_position(ka).x;
-    return HOME_X + x * (x < 0 ? WALK_LEFT : WALK_RIGHT) / reach;
+    return x * (x < 0 ? WALK_LEFT : WALK_RIGHT) / reach;
+}
+
+/* Where he stands for each job away from his seat, and which way he faces. */
+static const struct {
+    int16_t x;
+    int16_t middle; /* the object's middle, for finding the nearest */
+    bool left;
+} spots[JobCount] = {
+    [JobWater] = {PLANT_X + 10, PLANT_X + 4, true},
+    [JobBooks] = {BOOKS_X + BOOKS_W, BOOKS_X + BOOKS_W / 2, true},
+    [JobTopUp] = {MUG_X + 10, MUG_X + 4, true},
+    [JobTap] = {LAPTOP_X - 26, LAPTOP_X + LAPTOP_W / 2, false},
+};
+
+/* Where he is heading: his seat, a job, or the cursor's share of the walk. */
+static int32_t goal_dx(const Duckwalk* app) {
+    const HomeAnim* anim = &app->home;
+    if(!keep_awake_is_walking(&app->keep_awake)) return 0;
+    if(anim->job != JobNone && anim->job_away) return spots[anim->job].x - HOME_X;
+    return track_dx(&app->keep_awake);
+}
+
+static int32_t harold_x(const Duckwalk* app) {
+    return HOME_X + app->home.dx;
 }
 
 typedef enum {
@@ -137,6 +172,7 @@ typedef enum {
     PoseBob,
     PoseBlink,
     PoseQuack,
+    PoseReach,
 } Pose;
 
 /* Each pose facing right and left, and the masks that blank out whatever
@@ -146,12 +182,14 @@ static const Icon* const sprites[][2] = {
     [PoseBob] = {&I_harold_bob_24x25, &I_harold_bob_l_24x25},
     [PoseBlink] = {&I_harold_blink_24x25, &I_harold_blink_l_24x25},
     [PoseQuack] = {&I_harold_quack_24x25, &I_harold_quack_l_24x25},
+    [PoseReach] = {&I_harold_reach_24x25, &I_harold_reach_l_24x25},
 };
 static const Icon* const masks[][2] = {
     [PoseIdle] = {&I_harold_idle_mask_24x25, &I_harold_idle_l_mask_24x25},
     [PoseBob] = {&I_harold_bob_mask_24x25, &I_harold_bob_l_mask_24x25},
     [PoseBlink] = {&I_harold_blink_mask_24x25, &I_harold_blink_l_mask_24x25},
     [PoseQuack] = {&I_harold_quack_mask_24x25, &I_harold_quack_l_mask_24x25},
+    [PoseReach] = {&I_harold_reach_mask_24x25, &I_harold_reach_l_mask_24x25},
 };
 
 typedef struct {
@@ -181,13 +219,45 @@ static Frame routine_frame(const HomeAnim* anim) {
     }
 }
 
+/* Milliseconds he has been at his job. */
+static uint32_t job_ms(const HomeAnim* anim) {
+    return (furi_get_tick() - anim->job_start) * 1000 / furi_kernel_get_tick_frequency();
+}
+
+static Frame job_frame(const HomeAnim* anim, bool stride) {
+    uint32_t t = job_ms(anim);
+    bool left = anim->job_away ? spots[anim->job].left : anim->job == JobTopUp;
+    switch(anim->job) {
+    case JobStretch:
+        /* Up on his toes, wing out, then a contented blink. */
+        if(t < 300) return (Frame){PoseIdle, false, 0};
+        if(t < 900) return (Frame){PoseReach, false, 1};
+        return (Frame){PoseBlink, false, 0};
+    case JobTap:
+        return (Frame){(t / STRIDE_MS) % 2 ? PoseReach : PoseIdle, left, 0};
+    case JobTopUp:
+        return (Frame){t < 800 ? PoseReach : PoseBlink, left, 0};
+    case JobWater:
+        return (Frame){PoseReach, left, 0};
+    case JobBooks:
+        /* A nudge, another, and they're straight. */
+        return (Frame){(t / 250) % 2 ? PoseIdle : PoseReach, left, 0};
+    default:
+        return (Frame){stride ? PoseBob : PoseIdle, left, 0};
+    }
+}
+
 static Frame harold_frame(const Duckwalk* app) {
     const HomeAnim* anim = &app->home;
     const KeepAwake* ka = &app->keep_awake;
     bool stride = (furi_get_tick() / ms(STRIDE_MS)) % 2;
 
     if(tick_before(anim->quack_until)) return (Frame){PoseQuack, false, 0};
+    if(anim->job != JobNone && anim->at_job) return job_frame(anim, stride);
     if(keep_awake_is_walking(ka)) {
+        /* Off to a job or catching up with the cursor: facing where he goes. */
+        int32_t goal = goal_dx(app);
+        if(goal != anim->dx) return (Frame){stride ? PoseBob : PoseIdle, goal < anim->dx, 0};
         /* A rubber duck doesn't step, he bobs along. */
         return (Frame){stride ? PoseBob : PoseIdle, !anim->facing_right, 0};
     }
@@ -195,7 +265,6 @@ static Frame harold_frame(const Duckwalk* app) {
         /* Asleep: a slow breath in and out. */
         return (Frame){PoseBlink, false, (furi_get_tick() / ms(BREATH_MS)) % 2};
     }
-    if(tick_before(anim->waddle_until)) return (Frame){stride ? PoseBob : PoseIdle, false, 0};
     /* The bug hunt: he turns round and quacks at you. */
     if(anim->desk == DeskQuack) return (Frame){PoseQuack, true, 0};
     /* You're at the computer: he turns to watch you work. */
@@ -228,9 +297,86 @@ static void lively(Duckwalk* app, Sound sound) {
 static void footsteps(Duckwalk* app) {
     HomeAnim* anim = &app->home;
     if(!keep_awake_is_playing(&app->keep_awake) || !tick_reached(anim->step_at)) return;
+    if(anim->job != JobNone && anim->at_job) return; /* standing at his job */
     anim->step_left = !anim->step_left;
     lively(app, anim->step_left ? SoundStepLeft : SoundStepRight);
     anim->step_at = tick_in_ms(FOOTSTEP_MS);
+}
+
+static void start_job(HomeAnim* anim, Job job, bool away, uint32_t length_ms) {
+    anim->job = job;
+    anim->job_away = away;
+    anim->at_job = !away;
+    anim->job_start = furi_get_tick();
+    anim->job_until = tick_in_ms(length_ms);
+    anim->routine = RoutineNone;
+}
+
+/* The object nearest to where he is on screen. */
+static Job nearest_job(int32_t dx) {
+    static const Job objects[] = {JobWater, JobBooks, JobTopUp, JobTap};
+    int32_t middle = HOME_X + dx + HAROLD_W / 2;
+    Job best = JobTap;
+    int32_t best_far = INT32_MAX;
+    for(size_t i = 0; i < sizeof(objects) / sizeof(objects[0]); i++) {
+        int32_t far = middle - spots[objects[i]].middle;
+        if(far < 0) far = -far;
+        if(far < best_far) {
+            best_far = far;
+            best = objects[i];
+        }
+    }
+    return best;
+}
+
+/* Jobs end at once when you start working, he goes to sleep, or the walk
+ * ends (or starts, for one at his seat). A walk's job starts at its pause,
+ * if the walk has time left for it. */
+static void jobs_tick(Duckwalk* app) {
+    HomeAnim* anim = &app->home;
+    KeepAwake* ka = &app->keep_awake;
+    bool walking = keep_awake_is_walking(ka);
+    if(anim->job != JobNone &&
+       (tick_reached(anim->job_until) || ka->user_active || ka->mode == KeepAwakeOff || walking != anim->job_away)) {
+        anim->job = JobNone;
+    }
+    if(!walking) anim->walk_job_done = false;
+    if(keep_awake_is_playing(ka) && !anim->walk_job_done && ka->step > ka->path.pause_at) {
+        anim->walk_job_done = true;
+        uint32_t left_ms = (uint32_t)(ka->path.count - ka->step) * WALK_STEP_MS;
+        if(left_ms >= WALK_JOB_MIN_MS && !ka->user_active) {
+            uint32_t length = left_ms - WALK_JOB_BACK_MS;
+            start_job(anim, nearest_job(anim->dx), true, length < WALK_JOB_MS ? length : WALK_JOB_MS);
+        }
+    }
+    if(anim->job == JobBooks && anim->at_job && job_ms(anim) > 500) anim->books_askew = false;
+}
+
+/* Moves him on screen towards where he's heading, no faster than he can
+ * waddle. Walking past his books knocks them askew, on the way out. */
+static void move_harold(Duckwalk* app) {
+    HomeAnim* anim = &app->home;
+    uint32_t now = furi_get_tick();
+    int32_t step = (now - anim->moved_at) * CATCH_PX_S / furi_kernel_get_tick_frequency();
+    anim->moved_at = now;
+    int32_t goal = goal_dx(app);
+    if(step < 1) step = 1;
+    if(goal > anim->dx + step) {
+        anim->dx += step;
+    } else if(goal < anim->dx - step) {
+        anim->dx -= step;
+    } else {
+        anim->dx = goal;
+        if(anim->job != JobNone && !anim->at_job) {
+            anim->at_job = true;
+            anim->job_start = now;
+        }
+    }
+    int32_t x = harold_x(app);
+    if(keep_awake_is_walking(&app->keep_awake) && !anim->walk_job_done && x < BOOKS_X + BOOKS_W &&
+       x + HAROLD_W > BOOKS_X) {
+        anim->books_askew = true;
+    }
 }
 
 void home_tick(Duckwalk* app) {
@@ -246,6 +392,8 @@ void home_tick(Duckwalk* app) {
     } else {
         anim->last_x = 0;
     }
+    jobs_tick(app);
+    move_harold(app);
     footsteps(app);
 
     /* Blink every few seconds. */
@@ -256,14 +404,15 @@ void home_tick(Duckwalk* app) {
 
     /* The code scrolls while he reads, quicker while he types. */
     bool reading = at_desk(app) && !ka->user_active && anim->desk == DeskReading;
-    if(reading && tick_reached(anim->scroll_at)) {
+    bool tapping = anim->job == JobTap && anim->at_job;
+    if((reading || tapping) && tick_reached(anim->scroll_at)) {
         anim->scroll++;
-        anim->scroll_at = tick_in_ms(anim->routine == RoutineType ? SCROLL_MS / 3 : SCROLL_MS);
+        anim->scroll_at = tick_in_ms(anim->routine == RoutineType || tapping ? SCROLL_MS / 3 : SCROLL_MS);
     }
 
     /* A routine every few seconds while he reads; none while he's away,
-     * busy with a bug or watching you work. */
-    if(!reading) {
+     * at a job, busy with a bug or watching you work. */
+    if(!reading || anim->job != JobNone) {
         anim->routine = RoutineNone;
         if(!anim->routine_at) schedule_routine(anim);
     } else if(anim->routine != RoutineNone) {
@@ -284,7 +433,7 @@ void home_tick(Duckwalk* app) {
     case DeskReading:
         if(!anim->bug_at) {
             schedule_bug(anim);
-        } else if(tick_reached(anim->bug_at) && anim->routine == RoutineNone) {
+        } else if(tick_reached(anim->bug_at) && anim->routine == RoutineNone && anim->job == JobNone) {
             anim->desk = DeskSpotted;
             anim->bug_row = 2 + furi_hal_random_get() % 3;
             anim->desk_until = tick_in_ms(SPOT_MS);
@@ -370,7 +519,8 @@ static void draw_mug(Canvas* canvas, const Duckwalk* app) {
     canvas_draw_line(canvas, MUG_X + 7, MUG_Y + 5, MUG_X + 8, MUG_Y + 5);
     if(app->keep_awake.mode == KeepAwakeOff) return;
     /* Steam that drifts up and sways; more of it while he sips. */
-    bool sip = app->home.routine == RoutineSip;
+    const HomeAnim* anim = &app->home;
+    bool sip = anim->routine == RoutineSip || (anim->job == JobTopUp && anim->at_job);
     uint32_t t = furi_get_tick() / ms(sip ? 120 : 250);
     for(uint32_t i = 0; i < (sip ? 3u : 2u); i++) {
         uint32_t phase = (t + i * 2) % 6;
@@ -379,7 +529,8 @@ static void draw_mug(Canvas* canvas, const Duckwalk* app) {
     }
 }
 
-/* A potted plant whose leaves sway, faster while Harold bounces. */
+/* A potted plant whose leaves sway, faster while Harold bounces or waters
+ * it. */
 static void draw_plant(Canvas* canvas, const Duckwalk* app) {
     int32_t x = PLANT_X, y = DESK_Y;
     canvas_draw_line(canvas, x - 1, y - 8, x + 9, y - 8);
@@ -388,7 +539,9 @@ static void draw_plant(Canvas* canvas, const Duckwalk* app) {
     canvas_draw_line(canvas, x + 1, y - 1, x + 7, y - 1);
 
     bool asleep = app->keep_awake.mode == KeepAwakeOff;
-    bool hop = app->home.routine == RoutineHop;
+    const HomeAnim* anim = &app->home;
+    bool watering = anim->job == JobWater && anim->at_job;
+    bool hop = anim->routine == RoutineHop || watering;
     uint32_t period = asleep ? SWAY_MS * 3 : hop ? SWAY_MS / 4 : SWAY_MS;
     int32_t s = (furi_get_tick() / ms(period)) % 2;
     int32_t cx = x + 4;
@@ -399,6 +552,23 @@ static void draw_plant(Canvas* canvas, const Duckwalk* app) {
     canvas_draw_line(canvas, cx - 4 + s, y - 15, cx - 6 + s, y - 15);
     canvas_draw_line(canvas, cx, y - 12, cx + 4 + s, y - 16);
     canvas_draw_line(canvas, cx + 4 + s, y - 16, cx + 6 + s, y - 17);
+
+    /* Drops falling on the leaves. */
+    if(watering) {
+        uint32_t t = furi_get_tick() / ms(80);
+        for(uint32_t i = 0; i < 3; i++) {
+            int32_t fall = (t + i * 3) % 8;
+            canvas_draw_dot(canvas, cx - 3 + (int32_t)i * 3, y - 29 + fall);
+        }
+    }
+}
+
+/* Three books in a stack; walking past, Harold knocks the top one askew. */
+static void draw_books(Canvas* canvas, const Duckwalk* app) {
+    int32_t askew = app->home.books_askew ? 3 : 0;
+    canvas_draw_frame(canvas, BOOKS_X, DESK_Y - 3, BOOKS_W, 3);
+    canvas_draw_frame(canvas, BOOKS_X + 1, DESK_Y - 6, BOOKS_W - 2, 3);
+    canvas_draw_frame(canvas, BOOKS_X + askew, DESK_Y - 9, BOOKS_W - 1, 3);
 }
 
 static void draw_zzz(Canvas* canvas, int32_t x) {
@@ -479,6 +649,7 @@ void home_draw(Canvas* canvas, Duckwalk* app) {
     canvas_draw_str_aligned(canvas, 126, 21, AlignRight, AlignBottom, "^ Preview");
 
     draw_plant(canvas, app);
+    draw_books(canvas, app);
     draw_mug(canvas, app);
     draw_laptop(canvas, app);
     draw_harold(canvas, x, harold_frame(app));
@@ -566,10 +737,27 @@ void home_input(Duckwalk* app, const InputEvent* input) {
     }
 }
 
-/* A Subtle nudge just went out: Harold wiggles in his seat. */
+/* How long each job at his seat lasts. */
+static const uint16_t seat_job_ms[JobCount] = {
+    [JobWiggle] = 900,
+    [JobStretch] = 1200,
+    [JobTap] = 1200,
+    [JobTopUp] = 1200,
+};
+
+/* A Subtle nudge just went out: Harold does a job in his seat, never the
+ * same one twice in a row. Busy with a bug, he just wiggles. */
 void home_on_move(Duckwalk* app) {
-    if(!keep_awake_is_walking(&app->keep_awake)) {
-        app->home.waddle_until = tick_in_ms(WADDLE_MS);
-        lively(app, SoundNudge);
+    HomeAnim* anim = &app->home;
+    if(keep_awake_is_walking(&app->keep_awake)) return;
+    Job job = JobWiggle;
+    if(anim->desk == DeskReading && !app->keep_awake.user_active) {
+        static const Job seat[] = {JobWiggle, JobStretch, JobTap, JobTopUp};
+        do {
+            job = seat[furi_hal_random_get() % (sizeof(seat) / sizeof(seat[0]))];
+        } while(job == anim->last_job);
+        anim->last_job = job;
     }
+    start_job(anim, job, false, seat_job_ms[job]);
+    lively(app, SoundNudge);
 }
