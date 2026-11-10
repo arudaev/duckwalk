@@ -8,6 +8,7 @@
 
 struct Canvas {
     u8g2_t fb;
+    bool alpha; /* icons transparent: empty pixels left alone */
 };
 
 static Canvas sim_canvas;
@@ -115,12 +116,19 @@ uint16_t canvas_string_width(Canvas* canvas, const char* str) {
     return str ? u8g2_GetUTF8Width(&canvas->fb, str) : 0;
 }
 
-/* Icons are opaque, as on the Flipper: empty pixels paint the other colour. */
+/* Icons are opaque, as on the Flipper: empty pixels paint the other colour,
+ * unless canvas_set_bitmap_mode made them transparent. */
+void canvas_set_bitmap_mode(Canvas* canvas, bool alpha) {
+    canvas->alpha = alpha;
+}
+
 void canvas_draw_icon(Canvas* canvas, int32_t x, int32_t y, const Icon* icon) {
     uint8_t color = u8g2_GetDrawColor(&canvas->fb);
     for(int32_t j = 0; j < icon->height; j++) {
         for(int32_t i = 0; i < icon->width; i++) {
-            u8g2_SetDrawColor(&canvas->fb, icon->pixels[j * icon->width + i] ? color : !color);
+            bool on = icon->pixels[j * icon->width + i];
+            if(!on && canvas->alpha) continue;
+            u8g2_SetDrawColor(&canvas->fb, on ? color : !color);
             u8g2_DrawPixel(&canvas->fb, x + i, y + j);
         }
     }
