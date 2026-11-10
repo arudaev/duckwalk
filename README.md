@@ -66,7 +66,7 @@ For a whole day away, set **Stop after** to **Never**. The [user guide](docs/gui
 
 ## How it works
 
-Most Flipper apps that talk to a computer turn the USB port into a single device, so a jiggler and a PC monitor cannot run at once. Over USB, Duckwalk is one device with three parts: a mouse, media keys and a small data channel, all standard USB HID. Over Bluetooth it pairs like any Bluetooth mouse, using the firmware's HID profile plus one small data service of Duckwalk's own, and the USB port stays free for charging and qFlipper.
+Most Flipper apps that talk to a computer turn the USB port into a single device, so a jiggler and a PC monitor cannot run at once. Over USB, Duckwalk is one device with three parts: a mouse, media keys and a small data channel, all standard USB HID ([USB device](docs/usb-device.md) has the descriptor and IDs). Over Bluetooth it pairs like any Bluetooth mouse, using the firmware's HID profile plus one small data service of Duckwalk's own, and the USB port stays free for charging and qFlipper.
 
 The lock timer and "away" status follow the computer's idle timer, and any mouse input resets it. The [desktop app](desktop/app/README.md) asks the system which device each input came from (Raw Input on Windows, IOHIDManager on macOS, evdev on Linux) to tell your own devices from Duckwalk's and sends one number over the data channel, on USB or Bluetooth: how long you have been idle. The [architecture page](docs/architecture.md) has the diagrams.
 

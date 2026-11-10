@@ -33,6 +33,7 @@ What Duckwalk is and how to install it: the [README](../README.md).
 | **10** | [Sound design](sound-design.md) | What does each sound need to be, and how do I deliver it? |
 | **11** | Decisions: [0001](decisions/0001-tell-duckwalk-from-the-user.md), [0002](decisions/0002-one-desktop-app-in-rust.md), [0003](decisions/0003-trusted-install-for-free.md) | Why are things the way they are? |
 | **12** | [Code signing](code-signing.md) | Why the Windows builds aren't signed yet, and what Duckwalk sends over the network (nothing) |
+| **13** | [USB device](usb-device.md) | What does Duckwalk look like over USB, on which hardware, and why does it have its own USB ID? |
 
 ## Where things are
 

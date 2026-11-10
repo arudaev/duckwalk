@@ -10,8 +10,9 @@
  * The host OS owns the mouse and consumer collections; the vendor collection
  * gets its own device path that hidapi can open. */
 
-/* pid.codes test IDs for development. A dedicated pid.codes PID is
- * requested before the first catalog release (see the M1 milestone). */
+/* pid.codes test IDs for development. Duckwalk's own ID, 1209:D0C4, is
+ * requested at pid.codes and replaces these before v0.1; every place that
+ * changes with it is listed in docs/usb-device.md. */
 #define USB_DUCK_VID 0x1209
 #define USB_DUCK_PID 0x0001
 
