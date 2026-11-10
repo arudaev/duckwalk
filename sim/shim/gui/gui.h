@@ -43,6 +43,7 @@ void canvas_draw_str(Canvas* canvas, int32_t x, int32_t y, const char* str);
 void canvas_draw_str_aligned(Canvas* canvas, int32_t x, int32_t y, Align horizontal, Align vertical, const char* str);
 uint16_t canvas_string_width(Canvas* canvas, const char* str);
 void canvas_draw_icon(Canvas* canvas, int32_t x, int32_t y, const Icon* icon);
+void canvas_set_bitmap_mode(Canvas* canvas, bool alpha);
 void canvas_draw_dot(Canvas* canvas, int32_t x, int32_t y);
 void canvas_draw_box(Canvas* canvas, int32_t x, int32_t y, size_t width, size_t height);
 void canvas_draw_rbox(Canvas* canvas, int32_t x, int32_t y, size_t width, size_t height, size_t radius);

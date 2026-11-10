@@ -159,6 +159,20 @@ static void home_walking(void) {
     keep_awake_walk_now(&app.keep_awake);
     run_for(1300);
 }
+/* Mid-walk with Harold in front of the laptop: only his shape hides it. */
+static void home_walking_laptop(void) {
+    bool over = false;
+    for(int walk = 0; walk < 40 && !over; walk++) {
+        keep_awake_walk_now(&app.keep_awake);
+        while(keep_awake_is_walking(&app.keep_awake) && !over) {
+            run_for(WALK_STEP_MS);
+            int32_t reach = keep_awake_reach(&app.keep_awake);
+            over = reach > 0 && keep_awake_position(&app.keep_awake).x * 20 / reach >= 17;
+        }
+        if(!over) run_for(2000);
+    }
+    expect(over, "home-walking-laptop: Harold never reached the laptop");
+}
 static void wander_mode(void) {
     app.settings.values[SettingMode] = KeepAwakeWander;
     duckwalk_apply_settings(&app);
@@ -303,6 +317,7 @@ static const struct {
     {"home-asleep", home_asleep},
     {"home-stopped", home_stopped},
     {"home-walking", home_walking},
+    {"home-walking-laptop", home_walking_laptop},
     {"home-wandering", home_wandering},
     {"home-wander-homing", home_wander_homing},
     {"home-quack", home_quack},

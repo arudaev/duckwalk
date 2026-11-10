@@ -205,12 +205,17 @@ static Frame harold_frame(const Duckwalk* app) {
     return (Frame){blink ? PoseBlink : PoseIdle, false, 0};
 }
 
+/* Icons are opaque unless told otherwise: their empty pixels would paint a
+ * white square round him over the desk. Transparent, the mask blanks just
+ * his shape and the outline goes on top. */
 static void draw_harold(Canvas* canvas, int32_t x, Frame frame) {
     int32_t y = HAROLD_Y - frame.lift;
+    canvas_set_bitmap_mode(canvas, true);
     canvas_set_color(canvas, ColorWhite);
     canvas_draw_icon(canvas, x, y, masks[frame.pose][frame.left]);
     canvas_set_color(canvas, ColorBlack);
     canvas_draw_icon(canvas, x, y, sprites[frame.pose][frame.left]);
+    canvas_set_bitmap_mode(canvas, false);
 }
 
 /* Harold's own sounds, only while he is on screen. */
