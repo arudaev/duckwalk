@@ -1,5 +1,6 @@
-// Pull-request conventions: Conventional Commits title, a linked issue, and
-// assignment of the PR author to the PR and the issues it completes.
+// Pull-request conventions: Conventional Commits title, a linked issue, the
+// PR template's sections in the body, and assignment of the PR author to the
+// PR and the issues it completes.
 // Runs from the default branch under pull_request_target; never executes PR code.
 
 const TYPES = ['feat', 'fix', 'docs', 'refactor', 'test', 'chore', 'ci', 'perf', 'build', 'revert', 'art'];
@@ -16,6 +17,20 @@ function checkTitle(title) {
   if ((title || '').length > MAX_TITLE) problems.push(`Title is ${title.length} characters; keep it at most ${MAX_TITLE}.`);
   if (/\.$/.test(title || '')) problems.push('Title must not end with a period.');
   return problems;
+}
+
+// The sections of .github/PULL_REQUEST_TEMPLATE.md every body keeps; a
+// stacked PR (title `[n/N] ...`) also lists its stack.
+const SECTIONS = ['What and why', 'Issue', 'Verification'];
+
+function checkBody(title, body) {
+  const text = (body || '').replace(/```[\s\S]*?```/g, '').replace(/<!--[\s\S]*?-->/g, '');
+  const has = (name) => new RegExp(`^##\\s+${name}\\s*$`, 'mi').test(text);
+  const wanted = /^\[\d+\/\d+\] /.test(title || '') ? [...SECTIONS, 'Stack'] : SECTIONS;
+  const missing = wanted.filter((name) => !has(name));
+  return missing.length
+    ? [`Fill in the PR template (.github/PULL_REQUEST_TEMPLATE.md); missing ${missing.map((n) => `\`## ${n}\``).join(', ')}.`]
+    : [];
 }
 
 // Returns { closes: [n], refs: [n] } for same-repository references outside code blocks.
@@ -39,6 +54,7 @@ function evaluate(pr, owner, repo) {
   if (!exempt && refs.closes.length + refs.refs.length === 0) {
     problems.push('Link an issue in the description: `Closes #n` for the issue this PR completes, or `Refs #n`. Add the `no-issue` label only for trivial fixes.');
   }
+  if (!exempt) problems.push(...checkBody(pr.title, pr.body));
   return { problems, refs, exempt };
 }
 
@@ -67,7 +83,7 @@ async function run({ github, context, core }) {
 
   await core.summary
     .addHeading('PR conventions', 3)
-    .addList(problems.length ? problems : ['Title and issue link look good.'])
+    .addList(problems.length ? problems : ['Title, issue link and description look good.'])
     .write();
   if (problems.length) core.setFailed(problems.join('\n'));
 }
@@ -75,4 +91,5 @@ async function run({ github, context, core }) {
 module.exports = run;
 module.exports.checkTitle = checkTitle;
 module.exports.issueReferences = issueReferences;
+module.exports.checkBody = checkBody;
 module.exports.evaluate = evaluate;

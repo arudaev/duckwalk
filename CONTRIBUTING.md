@@ -36,7 +36,7 @@ Before every push: `ufbt` builds without warnings, the host tests pass and `pyth
 1. **Start from an issue.** Pick one labelled `type:story`, `type:task` or `type:spike` with no assignee and comment to say you are on it. Epics (`[M1]`) are not taken directly; take one of their sub-issues. No issue for what you want to do? Open one first, so we can agree on it before you write the code.
 2. **Fork the repository** (a star is appreciated too) and branch from `main` in your fork: `feat/<issue>-<slug>`, `fix/…`, `docs/…`, `chore/…` or `art/…`.
 3. **Open a draft PR early** with `Closes #<issue>` in the description, so the issue shows up under **Development** in the PR's sidebar.
-4. **Make it ready for review** when the acceptance criteria are met and the checks pass. Describe what changed, why, and how you tested it, with screenshots for anything you can see. The PR conventions check labels the PR by the files it touches and assigns it to you. Request a review from [arudaev](https://github.com/arudaev), or mention me in the PR if GitHub doesn't let you.
+4. **Make it ready for review** when the acceptance criteria are met and the checks pass. Fill in [the PR template](.github/PULL_REQUEST_TEMPLATE.md): what changed and why, the issue, the stack if there is one, and a verification checklist, with screenshots for anything you can see. The PR conventions check labels the PR by the files it touches and assigns it to you. Request a review from [arudaev](https://github.com/arudaev), or mention me in the PR if GitHub doesn't let you.
 5. **Then give me a little time.** If you haven't heard from me within 72 hours, send me an email; the address is on [my GitHub profile](https://github.com/arudaev).
 
 Pull requests are merged with a merge commit, so your commits land on `main` as you wrote them.
@@ -49,6 +49,7 @@ Work that needs several PRs is a **stack**: each PR is based on the one below it
 |---|---|
 | PR titles follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat(app): add walk mode`), at most 72 characters; types `feat fix docs refactor test chore ci perf build revert art` | The title becomes the merge commit on `main`; CI checks it |
 | Every PR links an issue (`Closes #n` or `Refs #n`) | Traceability; CI checks it |
+| Every PR body follows [the template](.github/PULL_REQUEST_TEMPLATE.md): What and why, Issue, Stack for a stacked PR, Verification | Every PR reads the same way; CI checks the sections |
 | Official firmware only. Nothing that bypasses the Flipper's intentional limits | The Apps Catalog rejects it, and so do we |
 | Prose passes `scripts/check_text.py`: en dashes (–) not em dashes, no invisible characters, no stock phrasing | Public text should read like a person wrote it; CI checks it |
 | Harold's look follows [the brand notes](docs/contributing/README.md#brand) | One recognisable duck |

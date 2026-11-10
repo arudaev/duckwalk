@@ -26,6 +26,17 @@ Every issue and pull request lands on the [project board](project-board.md), whi
 - Commit messages and PR titles follow Conventional Commits. `art:` is for sprites, icons and other drawings.
 - Pull requests merge with a **merge commit**; squash and rebase merges are off.
 
+## Pull request descriptions
+
+Every PR body follows [the template](../../.github/PULL_REQUEST_TEMPLATE.md), also when the PR is opened from the command line, where `gh pr create --body-file` skips it. [#149](https://github.com/arudaev/duckwalk/pull/149) is a good example.
+
+- `## What and why`: a paragraph on the behaviour and why, then the changes grouped by part (**Flipper**, **Desktop app**, …) with the files in backticks.
+- `## Issue`: `Closes #n`, or `Refs #n` / `Part of #n` for related work.
+- `## Stack`: only in a stack, `[2/3], based on #n` and the whole stack as a numbered list.
+- `## Verification`: a checklist; tick what was done, leave the rest unticked.
+
+The PR conventions check fails a body without these sections. Trivial fixes labelled `no-issue` only need a title.
+
 ## Stacked pull requests
 
 When a change needs several PRs, stack them:
