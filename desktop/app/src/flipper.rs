@@ -5,6 +5,7 @@
 
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 use crate::protocol::{MAGIC, PACKET_LEN, VERSION};
 
@@ -144,6 +145,7 @@ pub struct Harold {
     waiting: AtomicBool,
     mode: AtomicU8,
     walk: Mutex<WalkBuilder>,
+    quacked: Mutex<Option<Instant>>,
 }
 
 pub static HAROLD: Harold = Harold {
@@ -157,6 +159,7 @@ pub static HAROLD: Harold = Harold {
         step_ms: 0,
         steps: Vec::new(),
     }),
+    quacked: Mutex::new(None),
 };
 
 impl Harold {
@@ -209,6 +212,8 @@ impl Harold {
             Message::Quack | Message::Closing => {
                 if matches!(msg, Message::Closing) {
                     self.heard.store(false, Ordering::Relaxed);
+                } else {
+                    *self.quacked.lock().unwrap() = Some(Instant::now());
                 }
                 if verbose {
                     println!("Harold: {msg:?}");
@@ -232,6 +237,11 @@ impl Harold {
 
     pub fn waiting(&self) -> bool {
         self.waiting.load(Ordering::Relaxed)
+    }
+
+    /// Did he quack within the last `d`?
+    pub fn quacked_within(&self, d: Duration) -> bool {
+        self.quacked.lock().unwrap().is_some_and(|t| t.elapsed() < d)
     }
 
     /// The keep-awake mode, by name.
