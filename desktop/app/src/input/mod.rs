@@ -31,9 +31,9 @@ mod unsupported;
 #[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
 pub use self::unsupported::{ignored, start};
 
-/// Duckwalk over USB (pid.codes test IDs, see `app/usb/usb_duck.h`).
+/// Duckwalk over USB (its pid.codes ID, see `app/usb/usb_duck.h`).
 pub const DUCKWALK_VID: u16 = 0x1209;
-pub const DUCKWALK_PID: u16 = 0x0001;
+pub const DUCKWALK_PID: u16 = 0xD0C4;
 /// Duckwalk over Bluetooth pairs as "Harold <Flipper name>".
 pub const HAROLD_NAME: &str = "Harold ";
 
@@ -107,12 +107,12 @@ mod tests {
 
     #[test]
     fn duckwalk_devices() {
-        assert!(is_duckwalk_device(0x1209, 0x0001, "arudaev Duckwalk Mouse"));
+        assert!(is_duckwalk_device(0x1209, 0xD0C4, "arudaev Duckwalk Mouse"));
         assert!(is_duckwalk_device(0, 0, "Harold Rgudalap Mouse"));
         assert!(!is_duckwalk_device(0x045e, 0x0932, "Surface Arc Mouse"));
         assert!(!is_duckwalk_device(
             0x1209,
-            0x0002,
+            0x0001,
             "Someone else's pid.codes test device"
         ));
     }

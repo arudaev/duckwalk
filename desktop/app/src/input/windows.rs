@@ -4,7 +4,7 @@
 //! by software, which has no device at all.
 //!
 //! Duckwalk's devices:
-//!   over USB        `HID#VID_1209&PID_0001&Col01#...`
+//!   over USB        `HID#VID_1209&PID_D0C4&Col01#...`
 //!   over Bluetooth  `HID#{00001812-...}_80E12780C2E2&Col02#...`, named after
 //!                   the address of a paired "Harold <Flipper name>"
 
@@ -31,7 +31,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 
 use super::{Activity, HAROLD_NAME, IGNORED};
 
-const DUCKWALK_USB: &str = "vid_1209&pid_0001";
+const DUCKWALK_USB: &str = "vid_1209&pid_d0c4";
 const REFRESH_HAROLD: Duration = Duration::from_secs(30);
 const DEVICE_CACHE: usize = 64;
 
@@ -328,7 +328,7 @@ mod tests {
     #[test]
     fn usb_paths_are_duckwalk() {
         assert!(is_duckwalk_path(
-            r"\\?\HID#VID_1209&PID_0001&Col01#7&1&0&0000#{378de44c}",
+            r"\\?\HID#VID_1209&PID_D0C4&Col01#7&1&0&0000#{378de44c}",
             &[]
         ));
         assert!(!is_duckwalk_path(

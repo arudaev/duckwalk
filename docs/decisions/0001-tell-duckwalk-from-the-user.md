@@ -16,7 +16,7 @@ Duckwalk moves the pointer through a real mouse device, so the system idle timer
 
 | Connection | Device paths Windows creates | How to recognise them |
 |---|---|---|
-| USB | `HID\VID_1209&PID_0001&COL01` (mouse), `&COL02` (media keys), `&COL03` (data channel) | The vendor and product ID |
+| USB | `HID\VID_1209&PID_D0C4&COL01` (mouse), `&COL02` (media keys), `&COL03` (data channel) | The vendor and product ID |
 | Bluetooth | `HID\{00001812-0000-1000-8000-00805F9B34FB}_80E12780C2E2&COL01` (keyboard), `&COL02` (mouse), `&COL03` (media keys) | The Bluetooth address. The firmware's HID profile has no PnP ID, so there is no vendor ID in the path |
 
 The paired Bluetooth device itself is `BTHLE\DEV_80E12780C2E2\...` with the friendly name "Harold Rgudalap". So the address can be found from the name, without asking the Flipper.

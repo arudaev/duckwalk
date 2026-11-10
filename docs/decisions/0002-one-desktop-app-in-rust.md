@@ -26,7 +26,7 @@ Electron or Tauri would make Harold's on-screen window easier but cost a browser
 | Part | Shared | Per system |
 |---|---|---|
 | The protocol (`protocol.rs`) | The same 63-byte packets as `app/helper_protocol.h` | – |
-| USB (`usb.rs`) | `hidapi`: vendor 0x1209, product 0x0001, the vendor collection 0xFF00 | Windows lists each collection on its own; macOS and Linux list the interface once |
+| USB (`usb.rs`) | `hidapi`: vendor 0x1209, product 0xD0C4, the vendor collection 0xFF00 | Windows lists each collection on its own; macOS and Linux list the interface once |
 | Bluetooth (`ble/`) | Duckwalk's service and its packet characteristic | Windows: WinRT. macOS and Linux: `btleplug` |
 | Seeing your input (#120) | The idle-time logic | Raw Input on Windows, IOHIDManager on macOS, evdev on Linux |
 | Harold on the screen (#123) | The drawing | Window flags; GNOME on Wayland can't float a window over others, so Harold stays in the tray there |

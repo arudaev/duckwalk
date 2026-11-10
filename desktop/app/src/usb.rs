@@ -2,9 +2,9 @@
 
 use hidapi::{HidApi, HidDevice};
 
-/// pid.codes test IDs for now (see `app/usb/usb_duck.h`).
+/// Duckwalk's pid.codes ID (see `app/usb/usb_duck.h`).
 pub const VID: u16 = 0x1209;
-pub const PID: u16 = 0x0001;
+pub const PID: u16 = 0xD0C4;
 
 /// The data channel is a vendor-defined collection (usage page 0xFF00 and
 /// up). Windows lists every collection on its own; macOS and Linux list the
