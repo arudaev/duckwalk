@@ -12,8 +12,9 @@
  * (a wiggle, a stretch, a few taps at the laptop, topping up his coffee),
  * and at a walk's pause a job at the object he's nearest (watering the
  * plant, straightening the books he knocked on the way, the mug, the
- * laptop). For that he may leave the cursor's track on screen and catch up
- * after; the cursor itself never waits.
+ * laptop). While he wanders he stops for one every so often, the books
+ * first if he knocked them. For that he may leave the cursor's track on
+ * screen and catch up after; the cursor itself never waits.
  *
  * With Sound on Lively he is heard too: the bug hunt, his hops and his
  * footsteps on a walk, but only while you can see him.
@@ -69,6 +70,9 @@
 #define WALK_JOB_MS      1400 /* a job at a walk's pause, getting there included */
 #define WALK_JOB_MIN_MS  1000 /* only with this much of the walk left */
 #define WALK_JOB_BACK_MS 400 /* kept to catch up before the walk ends */
+#define WANDER_JOB_MS     2000 /* a job while he wanders, getting there included */
+#define WANDER_JOB_MIN_MS 6000 /* the time between two of them */
+#define WANDER_JOB_MAX_MS 12000
 #define BUG_MIN_MS 10000
 #define BUG_MAX_MS 25000
 /* Baby lock */
@@ -329,15 +333,36 @@ static Job nearest_job(int32_t dx) {
     return best;
 }
 
+/* While he wanders, a job at the object he's nearest every so often; the
+ * books first if he knocked them. */
+static void wander_jobs(Duckwalk* app) {
+    HomeAnim* anim = &app->home;
+    KeepAwake* ka = &app->keep_awake;
+    if(!keep_awake_is_wandering(ka) || keep_awake_is_homing(ka)) {
+        anim->wander_job_set = false;
+        return;
+    }
+    if(!anim->wander_job_set || anim->job != JobNone || ka->user_active) {
+        anim->wander_job_set = true;
+        anim->wander_job_at = tick_in_ms(random_ms(WANDER_JOB_MIN_MS, WANDER_JOB_MAX_MS));
+        return;
+    }
+    if(!tick_reached(anim->wander_job_at)) return;
+    anim->wander_job_set = false;
+    start_job(anim, anim->books_askew ? JobBooks : nearest_job(anim->dx), true, WANDER_JOB_MS);
+}
+
 /* Jobs end at once when you start working, he goes to sleep, or the walk
- * ends (or starts, for one at his seat). A walk's job starts at its pause,
- * if the walk has time left for it. */
+ * or wander ends (or one starts, for a job at his seat). A walk's job
+ * starts at its pause, if the walk has time left for it. A wander stops
+ * for one every so often until it heads home. */
 static void jobs_tick(Duckwalk* app) {
     HomeAnim* anim = &app->home;
     KeepAwake* ka = &app->keep_awake;
     bool walking = keep_awake_is_walking(ka);
     if(anim->job != JobNone &&
-       (tick_reached(anim->job_until) || ka->user_active || ka->mode == KeepAwakeOff || walking != anim->job_away)) {
+       (tick_reached(anim->job_until) || ka->user_active || ka->mode == KeepAwakeOff || walking != anim->job_away ||
+        (anim->job_away && keep_awake_is_homing(ka)))) {
         anim->job = JobNone;
     }
     if(!walking) anim->walk_job_done = false;
@@ -349,6 +374,7 @@ static void jobs_tick(Duckwalk* app) {
             start_job(anim, nearest_job(anim->dx), true, length < WALK_JOB_MS ? length : WALK_JOB_MS);
         }
     }
+    wander_jobs(app);
     if(anim->job == JobBooks && anim->at_job && job_ms(anim) > 500) anim->books_askew = false;
 }
 
