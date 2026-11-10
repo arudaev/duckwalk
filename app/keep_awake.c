@@ -3,6 +3,7 @@
 #include "util.h"
 
 #include <furi_hal_random.h>
+#include <stdlib.h>
 
 /* After the Remote moves the pointer, a wander keeps off it this long. */
 #define REMOTE_HOLD_MS 30000
@@ -11,6 +12,18 @@
  * counts and the screen in pixels, and pointer acceleration makes a fast
  * count go a little further than a pixel. */
 #define EDGE_MARGIN 16
+
+/* Home by the count, a wander checks the desktop app's report of where the
+ * pointer really is: pointer acceleration turns counts into pixels at a
+ * rate that depends on speed, so counting alone drifts. It only trusts a
+ * report that came a while after the pointer stopped, so a late report
+ * can't mislead it, and steps onto the pixel it set off from, a few times
+ * at most. A pointer much further off was moved by someone else: it is
+ * left where it is. */
+#define SETTLE_TRIES   4
+#define SETTLE_WAIT_MS 400
+#define SETTLE_MAX_MS  1500
+#define SETTLE_FAR     400
 
 static uint32_t random_between(uint32_t lo, uint32_t hi) {
     if(hi <= lo) return lo;
@@ -35,6 +48,7 @@ void keep_awake_init(KeepAwake* ka, uint32_t min_s, uint32_t max_s) {
     ka->step = 0;
     ka->wandering = false;
     ka->has_area = false;
+    ka->has_start = false;
     walk_plan(&ka->path, ka->walk_length);
     schedule(ka);
 }
@@ -267,6 +281,28 @@ static bool walk_step(KeepAwake* ka) {
     return moved;
 }
 
+/* Home by the count: true while there is still work to do there (see
+ * SETTLE_TRIES). */
+static bool settle_home(KeepAwake* ka) {
+    if(!ka->has_start || ka->settles >= SETTLE_TRIES) return false;
+    uint32_t now = furi_get_tick();
+    if(!ka->settling) {
+        ka->settling = true;
+        ka->home_at = now;
+        return true;
+    }
+    if(!ka->has_area || tick_reached(ka->home_at + furi_ms_to_ticks(SETTLE_MAX_MS))) return false;
+    /* Still waiting for a report from well after the pointer stopped. */
+    if((int32_t)(ka->area_at - (ka->home_at + furi_ms_to_ticks(SETTLE_WAIT_MS))) < 0) return true;
+    int32_t dx = ka->area.x - ka->start_x, dy = ka->area.y - ka->start_y;
+    ka->settling = false;
+    ka->settles++;
+    if(!dx && !dy) return false; /* on the very pixel */
+    if(abs(dx) > SETTLE_FAR || abs(dy) > SETTLE_FAR) return false;
+    wander_shift(&ka->wander, (int16_t)dx, (int16_t)dy);
+    return true;
+}
+
 static bool wander_tick(KeepAwake* ka) {
     if(!link_is_connected()) {
         drop_wander(ka);
@@ -283,7 +319,9 @@ static bool wander_tick(KeepAwake* ka) {
         WalkPoint m = wander_step(&ka->wander);
         moved |= move_by(m.x, m.y);
         ka->step_tick += furi_ms_to_ticks(WALK_STEP_MS);
-        if(wander_is_home(&ka->wander)) {
+        if(!wander_is_home(&ka->wander)) {
+            ka->settling = false;
+        } else if(!settle_home(ka)) {
             drop_wander(ka);
             schedule(ka);
         }
@@ -306,6 +344,11 @@ bool keep_awake_tick(KeepAwake* ka) {
         }
         wander_start(&ka->wander, ka->walk_length);
         ka->wandering = true;
+        ka->has_start = ka->has_area;
+        ka->start_x = ka->area.x;
+        ka->start_y = ka->area.y;
+        ka->settling = false;
+        ka->settles = 0;
         wander_take_area(ka);
         ka->step_tick = furi_get_tick();
         return wander_tick(ka);

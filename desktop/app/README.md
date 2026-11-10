@@ -4,7 +4,7 @@
 
 A small app for Windows, macOS and Linux that tells Duckwalk when **you** are using your mouse or keyboard. With it running, Harold lets go of the pointer the moment you touch your own mouse, keyboard, touchpad, touch screen or pen, stays away for 30 seconds after your last input (**Resume after** in Duckwalk's Settings), and walks only while you are really away.
 
-On Windows it also tells Harold where the pointer is: **Wander** then stays in the middle of the window you're in, clear of its title bar, its edges and the taskbar, and a **Walk** never runs off the screen.
+On Windows it also tells Harold where the pointer is: **Wander** then stays in the middle of the window you're in, clear of its title bar, its edges and the taskbar, and comes back to the exact pixel it set off from, and a **Walk** never runs off the screen.
 
 It is optional. Without it, Duckwalk can't see your input and walks on its timer whether you are there or not; the guide says [how to manage without it](../../docs/guide.md#without-the-desktop-app).
 

@@ -1,7 +1,8 @@
 //! Where the pointer is and where Harold may take it (`HELPER_MSG_AREA`):
 //! the safe area is the middle of the active window, clear of its title bar
 //! and edges and never over the taskbar, and the screen is the one the
-//! pointer is on. Wander keeps to the safe area, a walk to the screen. A
+//! pointer is on. Wander keeps to the safe area and lands on the pixel it
+//! set off from, a walk keeps to the screen. A
 //! window on another screen than the pointer doesn't count: the middle of
 //! the pointer's screen is used instead.
 //!

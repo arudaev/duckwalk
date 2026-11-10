@@ -53,6 +53,12 @@ WalkPoint wander_step(Wander* wander);
  * and bottom ones just outside. A spot outside it is given up at once. */
 void wander_set_area(Wander* wander, int16_t left, int16_t top, int16_t right, int16_t bottom);
 
+/* The pointer turned out to be (dx, dy) away from where the moves sent so
+ * far put it (pointer acceleration turns counts into pixels at a rate that
+ * depends on speed): carry on from where it really is. Nothing moves now;
+ * a wander home by the count sets off again for the last few pixels. */
+void wander_shift(Wander* wander, int16_t dx, int16_t dy);
+
 /* Glide back to the start from here on. */
 void wander_go_home(Wander* wander);
 

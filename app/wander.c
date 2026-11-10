@@ -132,6 +132,19 @@ void wander_set_area(Wander* w, int16_t left, int16_t top, int16_t right, int16_
     if(!w->homing && !in_spots(w, w->tx, w->ty)) pick_target(w);
 }
 
+void wander_shift(Wander* w, int16_t dx, int16_t dy) {
+    if(!dx && !dy) return;
+    w->x += dx;
+    w->y += dy;
+    w->sent_x += dx;
+    w->sent_y += dy;
+    if(w->homing && w->speed < 0.6f) {
+        /* Stopped at home, or nearly: the slowest homing pace, straight back. */
+        w->speed = 0.6f;
+        w->heading = atan2f(-w->y, -w->x);
+    }
+}
+
 void wander_set_length(Wander* w, WalkLength length) {
     furi_check(length < WalkLengthCount);
     w->range = wander_ranges[length];

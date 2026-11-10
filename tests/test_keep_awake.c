@@ -34,10 +34,19 @@ static void wander_mode(KeepAwake* ka) {
  * than a slow one (about as much as measured on Windows' default). It reports the pointer and a window to the Flipper every
  * HELPER_AREA_EVERY_MS, as the desktop app does. */
 static float pixel_x, pixel_y;
+static bool harsh; /* stronger acceleration than Windows' default */
+static uint32_t latency; /* how late each report reaches the Flipper, ms */
 
 static float accelerate(int d) {
+    if(harsh) return abs(d) >= 3 ? d * 1.3f : abs(d) == 2 ? d * 1.1f : d * 0.8f;
     return abs(d) >= 3 ? d * 1.1f : abs(d) == 2 ? d * 1.0f : d * 0.9f;
 }
+
+/* Reports on their way to the Flipper. */
+#define IN_FLIGHT 16
+static PointerArea flight[IN_FLIGHT];
+static uint32_t flight_due[IN_FLIGHT];
+static int flight_n;
 
 static void run_with_pc(KeepAwake* ka, uint32_t ms) {
     for(uint32_t t = 0; t < ms; t += WALK_STEP_MS) {
@@ -47,14 +56,22 @@ static void run_with_pc(KeepAwake* ka, uint32_t ms) {
         keep_awake_tick(ka);
         pixel_x += accelerate(fake_link_x - x);
         pixel_y += accelerate(fake_link_y - y);
-        if(t % 100 == 0) {
-            PointerArea a = {
+        if(t % 100 == 0 && flight_n < IN_FLIGHT) {
+            flight[flight_n] = (PointerArea){
                 .x = (int16_t)lroundf(pixel_x),
                 .y = (int16_t)lroundf(pixel_y),
                 .safe = {600, 400, 1400, 900},
                 .screen = {0, 0, 1920, 1080},
             };
-            keep_awake_set_area(ka, &a, now);
+            flight_due[flight_n++] = now + latency;
+        }
+        while(flight_n && (int32_t)(now - flight_due[0]) >= 0) {
+            keep_awake_set_area(ka, &flight[0], now);
+            flight_n--;
+            for(int i = 0; i < flight_n; i++) {
+                flight[i] = flight[i + 1];
+                flight_due[i] = flight_due[i + 1];
+            }
         }
     }
 }
@@ -150,7 +167,7 @@ int main(void) {
     CHECK(keep_awake_is_wandering(&ka), "didn't wander again after a month without the PC");
 
     /* With the desktop app: the wander keeps to the window, despite pointer
-     * acceleration, and its moves still add up to its start. */
+     * acceleration, and lands on the very pixel it set off from. */
     for(uint32_t seed = 1; seed <= 50; seed++) {
         shim_random_seed(seed * 2246822519u);
         pixel_x = 1000;
@@ -169,9 +186,56 @@ int main(void) {
         keep_awake_set_mode(&ka, KeepAwakeSubtle);
         run_with_pc(&ka, WANDER_HOME_STEPS * WALK_STEP_MS + 4000);
         CHECK(!keep_awake_is_walking(&ka), "seed %lu: still walking", (unsigned long)seed);
-        CHECK(fake_link_x == 0 && fake_link_y == 0, "seed %lu: home at (%d,%d) counts", (unsigned long)seed,
-              fake_link_x, fake_link_y);
+        int ex = (int)lroundf(pixel_x) - 1000, ey = (int)lroundf(pixel_y) - 650;
+        CHECK(ex == 0 && ey == 0, "seed %lu: home %d,%d px off", (unsigned long)seed, ex, ey);
     }
+
+    /* Stronger acceleration and late reports (Bluetooth): it still lands on
+     * the very pixel, since it only trusts a report from after it stopped. */
+    harsh = true;
+    const uint32_t latencies[] = {0, 40, 100, 250};
+    for(size_t l = 0; l < sizeof(latencies) / sizeof(latencies[0]); l++) {
+        latency = latencies[l];
+        for(uint32_t seed = 1; seed <= 25; seed++) {
+            shim_random_seed(seed * 2654435761u + l);
+            pixel_x = 1000;
+            pixel_y = 650;
+            fake_link_x = fake_link_y = 0;
+            flight_n = 0;
+            keep_awake_init(&ka, 30, 60);
+            keep_awake_set_walk_length(&ka, WalkLengthLong);
+            run_with_pc(&ka, 600);
+            keep_awake_set_mode(&ka, KeepAwakeWander);
+            run_with_pc(&ka, 30000);
+            keep_awake_set_mode(&ka, KeepAwakeSubtle);
+            run_with_pc(&ka, WANDER_HOME_STEPS * WALK_STEP_MS + 8000);
+            CHECK(!keep_awake_is_walking(&ka), "latency %lu, seed %lu: still walking", (unsigned long)latency,
+                  (unsigned long)seed);
+            int ex = (int)lroundf(pixel_x) - 1000, ey = (int)lroundf(pixel_y) - 650;
+            CHECK(ex == 0 && ey == 0, "latency %lu, seed %lu: home %d,%d px off", (unsigned long)latency,
+                  (unsigned long)seed, ex, ey);
+        }
+    }
+    harsh = false;
+    latency = 0;
+
+    /* The user grabs the mouse while Harold settles: he lets go at once and
+     * doesn't pull it back. */
+    shim_random_seed(5);
+    pixel_x = 1000;
+    pixel_y = 650;
+    fake_link_x = fake_link_y = 0;
+    flight_n = 0;
+    keep_awake_init(&ka, 30, 60);
+    run_with_pc(&ka, 600);
+    keep_awake_set_mode(&ka, KeepAwakeWander);
+    run_with_pc(&ka, 10000);
+    keep_awake_set_mode(&ka, KeepAwakeSubtle);
+    pixel_x += 300; /* the user's hand */
+    keep_awake_set_user_active(&ka, true);
+    int moves_before = fake_link_x;
+    run_with_pc(&ka, 3000);
+    CHECK(!keep_awake_is_walking(&ka) && fake_link_x == moves_before, "kept moving after the user took the mouse");
 
     /* Next to the right edge, a walk goes left. */
     shim_random_seed(11);
