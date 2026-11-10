@@ -1,17 +1,18 @@
 """Draw Harold for the tray: the frames the desktop app's tray icon shows.
 
 Same master drawings as the Flipper sprites and the app icon
-(brand/source/harold-24*.txt), in Harold's colours (make_icon.py), one cell
-per pixel, centred on 32x32.
+(brand/source/harold-24*.txt), in Harold's colours (make_icon.py). Harold
+fills the frame: 26x26 cells, with just room to hop and lean, each cell 2x2
+pixels so Windows scales the icon down to tray size smoothly.
 
     pip install pillow
     python brand/tools/make_tray.py [--preview DIR]
 
 Frames, left to right in desktop/app/assets/harold-tray.png:
     idle       standing: awake, or waiting while you work
-    waddle1-4  walking: lean back, hop, lean forward, hop
-    asleep     eyes shut: keep-awake off
-    quack      bill open, for a moment
+    waddle1-4  walking: lean back, hop two cells, lean forward, hop
+    asleep     eyes shut and an orange "z" over his head: keep-awake off
+    quack      bill wide open, for a moment
     grey       standing, grey: no Flipper connected
 """
 
@@ -27,8 +28,15 @@ ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "brand" / "source"
 OUT = ROOT / "desktop" / "app" / "assets" / "harold-tray.png"
 
-SIZE = 32
-OX, OY = 4, 4  # where the 24x24 drawing sits
+CELLS = 26  # frame size in cells
+SCALE = 2  # pixels per cell
+SIZE = CELLS * SCALE
+OX, OY = 1, 2  # where the 24x24 drawing sits: a cell each side to lean, two above to hop
+
+# The sleeping "z", in BEAK orange so it reads on light and dark taskbars,
+# in the empty corner above his bill: canvas cells 21-25 of rows 0-4.
+Z = ["#####", "...#.", "..#..", ".#...", "#####"]
+Z_AT = (21, 0)
 
 NAMES = ["idle", "waddle1", "waddle2", "waddle3", "waddle4", "asleep", "quack", "grey"]
 
@@ -74,17 +82,38 @@ def grey(c):
     return (level, level, level, 140)
 
 
-def frame(pixels, dy=0, lean=0, tint=None) -> Image.Image:
-    """Harold on a 32x32 canvas. `lean` shifts his upper half one pixel back
-    (-1) or forward (+1), the way a waddling duck rocks; `dy` lifts him."""
-    img = Image.new("RGBA", (SIZE, SIZE), CLEAR)
+def wide_quack(pixels):
+    """Open the bill wider: the lower jaw (right of the head, rows 8-10)
+    drops one cell."""
+    out = [row[:] for row in pixels]
+    jaw = [(y, x) for y in range(8, 11) for x in range(18, 24) if pixels[y][x][3]]
+    for y, x in jaw:
+        out[y][x] = CLEAR
+    for y, x in jaw:
+        out[y + 1][x] = pixels[y][x]
+    return out
+
+
+def frame(pixels, dy=0, lean=0, tint=None, z=False) -> Image.Image:
+    """Harold on the canvas. `lean` shifts his upper half one cell back (-1)
+    or forward (+1), the way a waddling duck rocks; `dy` lifts him."""
+    cells = [[CLEAR] * CELLS for _ in range(CELLS)]
     h = len(pixels)
     for y, row in enumerate(pixels):
         shift = lean if y < h // 2 else 0
         for x, c in enumerate(row):
             if c[3]:
-                img.putpixel((OX + x + shift, OY + y + dy), tint(c) if tint else c)
-    return img
+                cells[OY + y + dy][OX + x + shift] = tint(c) if tint else c
+    if z:
+        for r, line in enumerate(Z):
+            for c, ch in enumerate(line):
+                if ch == "#":
+                    cells[Z_AT[1] + r][Z_AT[0] + c] = BEAK
+    img = Image.new("RGBA", (CELLS, CELLS), CLEAR)
+    for y, row in enumerate(cells):
+        for x, c in enumerate(row):
+            img.putpixel((x, y), c)
+    return img.resize((SIZE, SIZE), Image.NEAREST)
 
 
 def frames() -> list[Image.Image]:
@@ -94,11 +123,11 @@ def frames() -> list[Image.Image]:
     return [
         frame(idle),
         frame(idle, lean=-1),
-        frame(idle, dy=-1),
+        frame(idle, dy=-2),
         frame(idle, lean=1),
-        frame(idle, dy=-1),
-        frame(asleep),
-        frame(quack),
+        frame(idle, dy=-2),
+        frame(asleep, z=True),
+        frame(wide_quack(quack)),
         frame(idle, tint=grey),
     ]
 
@@ -118,27 +147,29 @@ def main() -> None:
 
 
 def preview(fs, out: Path) -> None:
-    """Every frame at 1x, 2x and 4x, on a light and a dark taskbar, and the
+    """Every frame at the tray's sizes (16, 20 and 24 px, scaled the way
+    Windows does) and full size, on a light and a dark taskbar, and the
     waddle as a GIF."""
-    pad, scales = 8, (1, 2, 4)
-    w = len(fs) * (SIZE * 4 + pad) + pad
-    h = sum(SIZE * s + pad for s in scales) + pad
+    pad, sizes = 8, (16, 20, 24, SIZE)
+    w = len(fs) * (SIZE + pad) + pad
+    h = sum(s + pad for s in sizes) + pad
     sheet = Image.new("RGBA", (w, h * 2), (243, 243, 243, 255))
     sheet.paste((32, 32, 32, 255), (0, h, w, h * 2))
     for half in (0, h):
         y = half + pad
-        for s in scales:
+        for s in sizes:
             for i, f in enumerate(fs):
-                big = f.resize((SIZE * s, SIZE * s), Image.NEAREST)
-                sheet.paste(big, (pad + i * (SIZE * 4 + pad), y), big)
-            y += SIZE * s + pad
+                small = f.resize((s, s), Image.LANCZOS)
+                sheet.paste(small, (pad + i * (SIZE + pad), y), small)
+            y += s + pad
+    sheet = sheet.resize((sheet.width * 3, sheet.height * 3), Image.NEAREST)
     sheet.save(out / "harold-tray-sheet.png")
 
-    walk = [fs[1], fs[2], fs[3], fs[4]] * 3 + [fs[0]] * 4 + [fs[6]] * 2 + [fs[0]] * 4
+    walk = [fs[1], fs[2], fs[3], fs[4]] * 3 + [fs[0]] * 4 + [fs[6]] * 4 + [fs[0]] * 4 + [fs[5]] * 6
     gif = []
     for f in walk:
-        bg = Image.new("RGBA", (SIZE * 4, SIZE * 4), (32, 32, 32, 255))
-        big = f.resize((SIZE * 4, SIZE * 4), Image.NEAREST)
+        bg = Image.new("RGBA", (SIZE * 2, SIZE * 2), (32, 32, 32, 255))
+        big = f.resize((SIZE * 2, SIZE * 2), Image.NEAREST)
         bg.paste(big, (0, 0), big)
         gif.append(bg.convert("P", palette=Image.ADAPTIVE))
     gif[0].save(out / "harold-tray-walk.gif", save_all=True, append_images=gif[1:], duration=250, loop=0)
