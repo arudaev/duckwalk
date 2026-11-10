@@ -8,10 +8,8 @@ grid cell becomes a square block, never smoothed.
     pip install pillow
     python brand/tools/make_icon.py
 
-Writes:
+The tray icon's frames come from make_tray.py. Writes:
     desktop/app/assets/duckwalk.ico        16 to 256 px, for the Windows exe
-    desktop/app/assets/harold-32.png       the tray icon, lit
-    desktop/app/assets/harold-32-grey.png  the tray icon while looking for him
     .claude-plugin/icon.png                the Claude Code plugin's icon, 512 px
 """
 
@@ -102,11 +100,9 @@ def main() -> None:
     sizes = [16, 24, 32, 48, 64, 128, 256]
     big = render(pixels, 256)
     big.save(OUT / "duckwalk.ico", sizes=[(s, s) for s in sizes], append_images=[render(pixels, s) for s in sizes])
-    render(pixels, 32).save(OUT / "harold-32.png")
-    render(pixels, 32, grey=True).save(OUT / "harold-32-grey.png")
     # The Claude Code plugin's icon (.claude-plugin/icon.png): 512 px, square.
     render(pixels, 512).save(ROOT / ".claude-plugin" / "icon.png")
-    print(f"wrote {OUT.relative_to(ROOT)}: duckwalk.ico, harold-32.png, harold-32-grey.png")
+    print(f"wrote {OUT.relative_to(ROOT)}: duckwalk.ico")
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ It is optional. Without it, Duckwalk can't see your input and walks on its timer
      ```
      Or download the binary from the releases.
 2. Start Duckwalk on the Flipper, plugged in over USB or paired over Bluetooth.
-3. Start it: open the download on Windows, run `duckwalk` on macOS and Linux. There is no window: Harold appears in the tray (the menu bar on macOS), in colour once he's connected.
+3. Start it: open the download on Windows, run `duckwalk` on macOS and Linux. There is no window: Harold appears in the tray (the menu bar on macOS) and does what he does on the Flipper: he stands while awake, waddles while he walks the pointer, shuts his eyes while asleep, opens his bill when he quacks, and stays grey while there's no Flipper.
    - **Windows** may warn about an unknown app: **More info**, then **Run anyway**. The app then installs itself: it copies itself to `%LOCALAPPDATA%\Programs\Duckwalk`, adds **Duckwalk** to the Start menu (Windows Search finds it there) and runs from that copy, so you can delete the download. A newer download updates it the same way; quit the running one from Harold's menu first.
    - **macOS and Linux:** Homebrew and cargo put it where it can stay. A Linux binary from the releases: move it to such a folder first, since it starts from there at every login, and make it executable (`chmod +x`).
 4. The Flipper shows **USB+PC** or **BT+PC** in the corner. While you work, its status line says **You're working**.
@@ -106,7 +106,7 @@ CI builds it on Windows, macOS and Linux for every pull request and uploads `duc
 | `src/tray.rs`, `src/status.rs` | Harold in the tray, and the line his menu shows |
 | `src/login.rs` | Start at login |
 | `src/control.rs`, `src/mcp.rs` | The local control socket, and `duckwalk mcp` on top of it |
-| `src/install.rs`, `build.rs`, `assets/` | Windows: installs itself and adds the Start menu entry; Harold's icon in the exe and the tray (drawn by `brand/tools/make_icon.py`) |
+| `src/install.rs`, `build.rs`, `assets/` | Windows: installs itself and adds the Start menu entry; Harold's icon in the exe (drawn by `brand/tools/make_icon.py`) and his tray frames (`brand/tools/make_tray.py`) |
 | `src/input/` | Sees your input: Raw Input on Windows, IOHIDManager on macOS, evdev on Linux |
 | `src/protocol.rs` | The packets the app sends, the same as `app/helper_protocol.h` |
 | `src/flipper.rs` | The packets Duckwalk sends back: its state, each walk, a quack, closing; `--verbose` logs them |
