@@ -70,7 +70,9 @@
 #define WALK_JOB_MS      1400 /* a job at a walk's pause, getting there included */
 #define WALK_JOB_MIN_MS  1000 /* only with this much of the walk left */
 #define WALK_JOB_BACK_MS 400 /* kept to catch up before the walk ends */
-#define WANDER_JOB_MS     2000 /* a job while he wanders, getting there included */
+#define WANDER_PX_S       50 /* how fast he waddles while he wanders */
+#define WANDER_GET_THERE_MS 4000 /* gives up on a wander's job he can't reach by then */
+#define WANDER_JOB_MS     1500 /* a job while he wanders, once he's there */
 #define WANDER_JOB_MIN_MS 6000 /* the time between two of them */
 #define WANDER_JOB_MAX_MS 12000
 #define BUG_MIN_MS 10000
@@ -334,7 +336,7 @@ static Job nearest_job(int32_t dx) {
 }
 
 /* While he wanders, a job at the object he's nearest every so often; the
- * books first if he knocked them. */
+ * books first if a walk knocked them. */
 static void wander_jobs(Duckwalk* app) {
     HomeAnim* anim = &app->home;
     KeepAwake* ka = &app->keep_awake;
@@ -349,7 +351,7 @@ static void wander_jobs(Duckwalk* app) {
     }
     if(!tick_reached(anim->wander_job_at)) return;
     anim->wander_job_set = false;
-    start_job(anim, anim->books_askew ? JobBooks : nearest_job(anim->dx), true, WANDER_JOB_MS);
+    start_job(anim, anim->books_askew ? JobBooks : nearest_job(anim->dx), true, WANDER_GET_THERE_MS);
 }
 
 /* Jobs end at once when you start working, he goes to sleep, or the walk
@@ -383,7 +385,9 @@ static void jobs_tick(Duckwalk* app) {
 static void move_harold(Duckwalk* app) {
     HomeAnim* anim = &app->home;
     uint32_t now = furi_get_tick();
-    int32_t step = (now - anim->moved_at) * CATCH_PX_S / furi_kernel_get_tick_frequency();
+    /* A wander drifts slowly: a dash beside it would look like a jump. */
+    int32_t speed = keep_awake_is_wandering(&app->keep_awake) ? WANDER_PX_S : CATCH_PX_S;
+    int32_t step = (now - anim->moved_at) * speed / furi_kernel_get_tick_frequency();
     anim->moved_at = now;
     int32_t goal = goal_dx(app);
     if(step < 1) step = 1;
@@ -396,10 +400,12 @@ static void move_harold(Duckwalk* app) {
         if(anim->job != JobNone && !anim->at_job) {
             anim->at_job = true;
             anim->job_start = now;
+            /* A wander isn't in a hurry: its job starts when he gets there. */
+            if(keep_awake_is_wandering(&app->keep_awake)) anim->job_until = tick_in_ms(WANDER_JOB_MS);
         }
     }
     int32_t x = harold_x(app);
-    if(keep_awake_is_walking(&app->keep_awake) && !anim->walk_job_done && x < BOOKS_X + BOOKS_W &&
+    if(keep_awake_is_playing(&app->keep_awake) && !anim->walk_job_done && x < BOOKS_X + BOOKS_W &&
        x + HAROLD_W > BOOKS_X) {
         anim->books_askew = true;
     }
