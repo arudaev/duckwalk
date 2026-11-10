@@ -25,6 +25,7 @@ typedef struct {
 typedef struct {
     WalkPoint points[WALK_MAX_STEPS]; /* cursor offset from the start, one per step */
     uint16_t count;
+    uint16_t pause_at; /* the first step of the pause; count when there is none */
     int16_t min_x, max_x, min_y, max_y;
 } WalkPath;
 

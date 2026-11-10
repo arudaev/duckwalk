@@ -88,6 +88,7 @@ void walk_plan(WalkPath* path, WalkLength length) {
     path->min_x = path->max_x = path->min_y = path->max_y = 0;
     for(size_t s = 0; s + 1 < n; s++) {
         if(s == pause_at) {
+            path->pause_at = path->count;
             for(uint16_t k = 0; k < pause_steps; k++) add_point(path, way[s]);
         }
         Vec p0 = way[s > 0 ? s - 1 : 0];
@@ -109,6 +110,7 @@ void walk_circle(WalkPath* path, int16_t radius, uint16_t steps) {
         float a = 2.0f * (float)M_PI * k / steps;
         add_point(path, (Vec){radius * sinf(a), radius * (1.0f - cosf(a))});
     }
+    path->pause_at = path->count;
 }
 
 /* How far a path from `lo` to `hi` sticks out of [left, right). */

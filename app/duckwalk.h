@@ -55,10 +55,22 @@ typedef enum {
     RoutineCount,
 } Routine;
 
+/* Harold's small jobs around the desk, one at each Subtle nudge (at his
+ * seat) and one at a walk's pause (at the object he's nearest). */
+typedef enum {
+    JobNone,
+    JobWiggle, /* a wiggle in his seat */
+    JobStretch, /* a stretch, wing out */
+    JobTap, /* taps at the laptop; the code scrolls */
+    JobTopUp, /* tops up his coffee; the mug steams */
+    JobWater, /* waters the plant */
+    JobBooks, /* straightens his books */
+    JobCount,
+} Job;
+
 /* Harold's moods on the home screen; all times are ticks. Changed only by
  * home_tick and home_input, read by home_draw. */
 typedef struct {
-    uint32_t waddle_until;
     uint32_t quack_until;
     uint32_t blink_at; /* the next blink starts here */
     uint32_t blink_until;
@@ -68,6 +80,18 @@ typedef struct {
     uint32_t routine_at; /* the next routine starts here */
     int16_t last_x;
     bool facing_right;
+    /* Jobs. On screen Harold may leave the cursor's track for one and
+     * catch up after; the cursor itself never waits. */
+    Job job;
+    Job last_job; /* never the same seat job twice in a row */
+    uint32_t job_start; /* when he got to it */
+    uint32_t job_until;
+    bool job_away; /* a walk's job, at an object; else one at his seat */
+    bool at_job; /* he got there and is at it */
+    bool walk_job_done; /* one job per walk */
+    int16_t dx; /* where he is on screen, from his seat */
+    uint32_t moved_at;
+    bool books_askew; /* he knocked them walking past */
     /* The laptop */
     uint32_t scroll; /* pixels the code has scrolled */
     uint32_t scroll_at;
