@@ -2,6 +2,8 @@
 //! advertise, and a connected Harold doesn't; Windows lists the GATT service
 //! of every paired device instead, which is how the C helper finds him too.
 
+use std::time::Instant;
+
 use tokio::sync::watch;
 use windows::core::{Result, GUID};
 use windows::Devices::Bluetooth::BluetoothCacheMode;
@@ -27,6 +29,7 @@ fn link(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receive
     // Duckwalk's notifications, kept alive while the link is.
     let mut _listening: Option<GattCharacteristic> = None;
     // Linked means a write went through, not just that Windows knows him.
+    let mut idle_sent = Instant::now() - HEARTBEAT;
     loop {
         if *usb_busy.borrow() {
             packet = None; // USB is doing it
@@ -47,10 +50,18 @@ fn link(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receive
         while let Some(once) = take_once() {
             let _ = write(target, &once);
         }
+        // The idle packet goes again only when it changed or a heartbeat is
+        // up: written again later, an idle time would read as newer than it
+        // is, as if you had just touched the mouse.
+        if !packets.has_changed().unwrap_or(false) && idle_sent.elapsed() < HEARTBEAT {
+            wait_for_news(&mut packets, idle_sent + HEARTBEAT);
+            continue;
+        }
         let data = *packets.borrow_and_update();
         if matches!(write(target, &data), Ok(true)) {
             linked(true, false);
-            wait_for_news(&mut packets);
+            idle_sent = Instant::now();
+            wait_for_news(&mut packets, idle_sent + HEARTBEAT);
         } else {
             linked(false, false);
             packet = None;
@@ -60,10 +71,9 @@ fn link(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receive
     }
 }
 
-/// Wait a heartbeat, or less when a new packet comes in (you are active).
-fn wait_for_news(packets: &mut watch::Receiver<[u8; PACKET_LEN]>) {
-    let until = std::time::Instant::now() + HEARTBEAT;
-    while std::time::Instant::now() < until && !packets.has_changed().unwrap_or(false) && !has_once() {
+/// Wait until `until`, or less when a new packet comes in (you are active).
+fn wait_for_news(packets: &mut watch::Receiver<[u8; PACKET_LEN]>, until: Instant) {
+    while Instant::now() < until && !packets.has_changed().unwrap_or(false) && !has_once() {
         std::thread::sleep(std::time::Duration::from_millis(20));
     }
 }

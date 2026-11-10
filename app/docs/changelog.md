@@ -7,3 +7,4 @@ v0.1:
  - Remote: media keys, slides and a D-pad mouse
  - Preview of the next walk on the Up button
  - Optional desktop app for Windows, macOS and Linux: Harold lets go of the pointer while you use your own mouse or keyboard, over USB or Bluetooth
+ - With the desktop app on Windows, Wander stays in the middle of the active window and comes back to the exact pixel it started from, and a walk never runs off the screen

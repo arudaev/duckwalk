@@ -96,5 +96,33 @@ int main(void) {
     CHECK(path.points[40].x == 0 && path.points[40].y == 0, "circle ends at (%d,%d)", path.points[40].x, path.points[40].y);
     CHECK(walk_reach(&path) == 48, "circle reach %d", walk_reach(&path));
 
+    /* Next to a screen edge a walk goes the other way, or is squeezed where
+     * neither way fits; it stays on the screen and still ends at the start. */
+    for(uint32_t seed = 1; seed <= 400; seed++) {
+        shim_random_seed(seed);
+        walk_plan(&path, (WalkLength)(seed % WalkLengthCount));
+        /* The pointer near the top right corner, or in a narrow gap. */
+        int16_t left = seed % 2 ? -1000 : -40, top = -30, right = 20, bottom = 1000;
+        walk_fit(&path, left, top, right, bottom);
+        int16_t min_x = 0, max_x = 0, min_y = 0, max_y = 0;
+        for(uint16_t i = 0; i < path.count; i++) {
+            WalkPoint p = path.points[i];
+            if(p.x < min_x) min_x = p.x;
+            if(p.x > max_x) max_x = p.x;
+            if(p.y < min_y) min_y = p.y;
+            if(p.y > max_y) max_y = p.y;
+        }
+        CHECK(min_x == path.min_x && max_x == path.max_x && min_y == path.min_y && max_y == path.max_y,
+              "seed %lu: bounds don't match the points", (unsigned long)seed);
+        CHECK(min_x >= left && max_x < right && min_y >= top && max_y < bottom,
+              "seed %lu: walk off the screen: x %d..%d, y %d..%d", (unsigned long)seed, min_x, max_x, min_y, max_y);
+        WalkPoint last = path.points[path.count - 1];
+        CHECK(abs(last.x) <= 2 && abs(last.y) <= 2, "seed %lu: fitted walk ends at (%d,%d)", (unsigned long)seed, last.x, last.y);
+    }
+    /* With room all round, a walk is left alone. */
+    shim_random_seed(7);
+    walk_plan(&path, WalkLengthLong);
+    CHECK(!walk_fit(&path, -2000, -2000, 2000, 2000), "a walk with room was mirrored");
+
     return check_result("walk");
 }

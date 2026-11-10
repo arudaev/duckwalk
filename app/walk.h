@@ -34,5 +34,11 @@ void walk_plan(WalkPath* path, WalkLength length);
  * `steps` steps. The pairing screen's pointer test. */
 void walk_circle(WalkPath* path, int16_t radius, uint16_t steps);
 
+/* Keep the path on the screen: the room around the start, in pixels, the
+ * right and bottom edges just outside. It is mirrored left to right or top
+ * to bottom where that keeps more of it on, then squeezed on an axis that
+ * still runs off. Returns true if it changed the path. */
+bool walk_fit(WalkPath* path, int16_t left, int16_t top, int16_t right, int16_t bottom);
+
 /* Widest distance from the start, for scaling the path onto the screen. */
 int16_t walk_reach(const WalkPath* path);

@@ -2,6 +2,7 @@
 
 #include <furi.h>
 
+#include "area.h"
 #include "walk.h"
 #include "wander.h"
 
@@ -35,6 +36,14 @@ typedef struct {
     uint32_t step_tick;
     Wander wander;
     bool wandering;
+    PointerArea area; /* the desktop app's latest report, if has_area */
+    bool has_area;
+    uint32_t area_at; /* when it came, in ticks */
+    bool has_start; /* the pixel the wander set off from is known */
+    int16_t start_x, start_y;
+    bool settling; /* home by the count, waiting to see where the pointer is */
+    uint8_t settles;
+    uint32_t home_at;
 } KeepAwake;
 
 void keep_awake_init(KeepAwake* ka, uint32_t min_s, uint32_t max_s);
@@ -54,6 +63,13 @@ uint32_t keep_awake_seconds_left(const KeepAwake* ka);
 /* While the user works, nothing is scheduled and a walk or wander in
  * progress stops on the spot; once they stop, a fresh wait starts. */
 void keep_awake_set_user_active(KeepAwake* ka, bool active);
+
+/* The desktop app's latest report of the pointer and the area Harold may
+ * take it to (helper_area), or NULL when there is none. With it a wander
+ * keeps to the middle of the active window where that is within its reach
+ * and lands on the very pixel it set off from, and a walk is mirrored or
+ * squeezed to stay on the screen. Without it nothing changes. */
+void keep_awake_set_area(KeepAwake* ka, const PointerArea* area, uint32_t at);
 
 /* Start the wait over, e.g. after the user sent input from the remote. A
  * wander lets go of the pointer and waits 30 s. */

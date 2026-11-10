@@ -6,6 +6,7 @@
 // No console window on Windows; `--verbose` from a terminal still prints.
 #![cfg_attr(windows, windows_subsystem = "windows")]
 
+mod area;
 mod ble;
 mod control;
 mod flipper;
@@ -50,6 +51,12 @@ const SEND_ACTIVE: Duration = Duration::from_millis(250);
 
 /// How often the app reads what Duckwalk sent over USB.
 const LISTEN: Duration = Duration::from_millis(50);
+
+/// While Harold has the pointer, where it is goes to him this often over
+/// USB (`HELPER_AREA_EVERY_MS`), so he hears soon where he stopped, and over
+/// Bluetooth at most this often.
+const AREA_WALKING: Duration = Duration::from_millis(100);
+const AREA_BLUETOOTH: Duration = Duration::from_millis(250);
 
 /// How long Quit waits for the goodbye to reach the Flipper.
 const BYE_WAIT: Duration = Duration::from_millis(600);
@@ -150,6 +157,21 @@ fn main() {
     });
 }
 
+/// Tell Harold where the pointer is and where he may take it (area.rs):
+/// over USB each time, over Bluetooth at most every `AREA_BLUETOOTH`.
+fn send_area(usb: &mut usb::Usb, sent: &mut Instant) {
+    let Some(area) = area::current() else { return };
+    let packet = area::packet(&area);
+    if usb.is_open() {
+        usb.send(&usb_report(&packet));
+    } else if STATUS.connection() == Connection::Bluetooth && sent.elapsed() >= AREA_BLUETOOTH {
+        ble::send_latest(packet);
+    } else {
+        return;
+    }
+    *sent = Instant::now();
+}
+
 /// Keep Harold told: an idle packet every second and straight away when you
 /// are active, over USB when he's plugged in, otherwise over Bluetooth. On
 /// `quit`, say goodbye and return.
@@ -179,10 +201,18 @@ async fn link(verbose: bool, pretend_working: bool, quit: Arc<Notify>) {
     let mut sent = Instant::now() - SEND_ACTIVE;
     // Duckwalk's own packets (flipper.rs) are read this often over USB.
     let mut listen = tokio::time::interval(LISTEN);
+    let mut area_tick = tokio::time::interval(AREA_WALKING);
+    let mut area_sent = Instant::now();
     loop {
         tokio::select! {
             _ = listen.tick() => {
                 usb.poll(|p| flipper::HAROLD.receive(p, verbose));
+                continue;
+            }
+            _ = area_tick.tick() => {
+                if flipper::HAROLD.walking() {
+                    send_area(&mut usb, &mut area_sent);
+                }
                 continue;
             }
             Some(cmd) = cmd_rx.recv() => {
@@ -223,6 +253,7 @@ async fn link(verbose: bool, pretend_working: bool, quit: Arc<Notify>) {
         if usb.is_open() && !usb.send(&usb_report(&packet)) {
             println!("Lost Duckwalk over USB (unplugged, or closed). Waiting for it...");
         }
+        send_area(&mut usb, &mut area_sent);
         usb_busy_tx.send_if_modified(|busy| {
             let changed = *busy != usb.is_open();
             *busy = usb.is_open();

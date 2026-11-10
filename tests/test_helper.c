@@ -90,6 +90,32 @@ int main(void) {
     CHECK(!helper_receive(p, t), "command 7 accepted");
     CHECK(!helper_take_command(&cmd, &arg), "a refused command was parked");
 
+    /* Area reports: kept while fresh, refused when an area is empty. */
+    PointerArea a;
+    uint32_t at;
+    packet(p, 60000);
+    helper_receive(p, t);
+    CHECK(!helper_area(&a, &at), "an area before any report");
+    memset(p, 0, HELPER_PACKET_LEN);
+    p[0] = HELPER_MAGIC;
+    p[1] = HELPER_VERSION;
+    p[2] = HELPER_MSG_AREA;
+    const int16_t report[10] = {-5, 700, -300, 200, 900, 800, -1920, 0, 0, 1080};
+    for(int i = 0; i < 10; i++) helper_put_u16(&p[3 + i * 2], (uint16_t)report[i]);
+    CHECK(helper_receive(p, t), "area report refused");
+    CHECK(helper_area(&a, &at), "no area after a report");
+    CHECK(a.x == -5 && a.y == 700 && a.safe.left == -300 && a.safe.top == 200 && a.safe.right == 900 &&
+              a.safe.bottom == 800 && a.screen.left == -1920 && a.screen.bottom == 1080 && at == t,
+          "area read back wrong: (%d,%d) safe %d,%d,%d,%d", a.x, a.y, a.safe.left, a.safe.top, a.safe.right, a.safe.bottom);
+    helper_put_u16(&p[7], 900); /* left at the right edge: empty */
+    CHECK(!helper_receive(p, t), "an empty area accepted");
+    CHECK(helper_area(&a, &at) && a.safe.left == -300, "an empty area replaced the last one");
+    shim_tick_set(t + HELPER_AREA_FRESH_MS + 1);
+    packet(p, 60000);
+    helper_receive(p, t + HELPER_AREA_FRESH_MS + 1);
+    CHECK(!helper_area(&a, &at), "a stale area still used");
+    shim_tick_set(t);
+
     /* An idle time longer than the Flipper's uptime is just "long ago". */
     packet(p, 0xFFFFFFFF);
     helper_receive(p, t);
