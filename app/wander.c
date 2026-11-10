@@ -35,23 +35,48 @@ static float wrap_angle(float a) {
     return a;
 }
 
+static float clamp(float v, float lo, float hi) {
+    return v < lo ? lo : v > hi ? hi : v;
+}
+
+static bool in_area(const Wander* w, float x, float y) {
+    return !w->bounded || (x >= w->left && x < w->right && y >= w->top && y < w->bottom);
+}
+
+/* A spot in the area: within reach of the start where the area comes that
+ * close, otherwise within reach of the nearest part of it. */
+static void spot_in_area(Wander* w) {
+    float r = w->range;
+    float cx = clamp(0, w->left, w->right - 1), cy = clamp(0, w->top, w->bottom - 1);
+    float x0 = fmaxf(w->left, cx - r), x1 = fminf(w->right - 1, cx + r);
+    float y0 = fmaxf(w->top, cy - r), y1 = fminf(w->bottom - 1, cy + r);
+    w->tx = random_float(x0, x1);
+    w->ty = random_float(y0, y1);
+}
+
 /* A new spot somewhere in range, far enough from here to be worth the trip,
  * and maybe a new pace to get there. */
 static void pick_target(Wander* w) {
     for(int tries = 0; tries < 8; tries++) {
-        float a = random_float(0, 2.0f * (float)M_PI);
-        /* sqrt spreads the spots evenly over the disc, not bunched in the middle */
-        float r = sqrtf(random_float(0, 1)) * w->range;
-        w->tx = cosf(a) * r;
-        w->ty = sinf(a) * r;
+        if(w->bounded) {
+            spot_in_area(w);
+        } else {
+            float a = random_float(0, 2.0f * (float)M_PI);
+            /* sqrt spreads the spots evenly over the disc, not bunched in the middle */
+            float r = sqrtf(random_float(0, 1)) * w->range;
+            w->tx = cosf(a) * r;
+            w->ty = sinf(a) * r;
+        }
         if(hypotf(w->tx - w->x, w->ty - w->y) > w->range * 0.35f) break;
     }
     if(furi_hal_random_get() % 3 == 0) {
         w->cruise = cruise_speeds[furi_hal_random_get() % COUNT_OF(cruise_speeds)];
     }
-    /* Its turning circle has to fit the range, or it swings far out on every
-     * turn: a short wander ambles. */
-    float fastest = TURN_PER_STEP * w->range / 4.0f;
+    /* Its turning circle has to fit the range and the area, or it swings far
+     * out on every turn: a short wander, or one in a small window, ambles. */
+    float room = w->range;
+    if(w->bounded) room = fminf(room, fminf(w->right - w->left, w->bottom - w->top) / 2.0f);
+    float fastest = fmaxf(TURN_PER_STEP * room / 4.0f, 0.8f);
     if(w->cruise > fastest) w->cruise = fastest;
     w->target_steps = 0;
 }
@@ -65,8 +90,32 @@ void wander_start(Wander* w, WalkLength length) {
     w->speed = 0;
     w->cruise = cruise_speeds[1];
     w->homing = false;
+    w->bounded = false;
     w->target_steps = 0;
     pick_target(w);
+}
+
+void wander_set_area(Wander* w, int16_t left, int16_t top, int16_t right, int16_t bottom) {
+    if(left >= right || top >= bottom) return;
+    w->bounded = true;
+    w->left = left;
+    w->top = top;
+    w->right = right;
+    w->bottom = bottom;
+    if(!w->homing && !in_area(w, w->tx, w->ty)) pick_target(w);
+}
+
+void wander_shift(Wander* w, int16_t dx, int16_t dy) {
+    if(!dx && !dy) return;
+    w->x += dx;
+    w->y += dy;
+    w->sent_x += dx;
+    w->sent_y += dy;
+    if(w->homing && w->speed < 0.6f) {
+        /* Stopped at home, or nearly: the slowest homing pace, straight back. */
+        w->speed = 0.6f;
+        w->heading = atan2f(-w->y, -w->x);
+    }
 }
 
 void wander_set_length(Wander* w, WalkLength length) {

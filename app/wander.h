@@ -11,7 +11,10 @@
  * of the start; told to go home, it glides back to exactly where it began.
  *
  * Unlike a walk it is not planned ahead: each call to wander_step works out
- * the next 20 ms move from where the cursor is now. */
+ * the next 20 ms move from where the cursor is now.
+ *
+ * Given an area (the middle of the active window, from the desktop app), it
+ * only picks spots inside it, and drifts into it when it starts outside. */
 
 typedef struct {
     float x, y; /* where the cursor is meant to be, relative to the start */
@@ -22,6 +25,8 @@ typedef struct {
     uint16_t target_steps; /* steps since it picked that spot */
     int16_t sent_x, sent_y; /* where the moves sent so far put the cursor */
     float range;
+    bool bounded; /* only picks spots inside the area below */
+    float left, top, right, bottom; /* relative to the start */
     bool homing;
     uint16_t home_steps; /* steps since it set off home */
 } Wander;
@@ -37,6 +42,16 @@ void wander_set_length(Wander* wander, WalkLength length);
 /* The move for the next step, in whole counts. Rounding is carried, so the
  * moves always add up to the position. */
 WalkPoint wander_step(Wander* wander);
+
+/* Keep to this area from now on: edges relative to the start, the right
+ * and bottom ones just outside. A spot outside it is given up at once. */
+void wander_set_area(Wander* wander, int16_t left, int16_t top, int16_t right, int16_t bottom);
+
+/* The pointer turned out to be (dx, dy) away from where the moves sent so
+ * far put it (pointer acceleration turns counts into pixels at a rate that
+ * depends on speed): carry on from where it really is. Nothing moves now;
+ * a wander home by the count sets off again for the last few pixels. */
+void wander_shift(Wander* wander, int16_t dx, int16_t dy);
 
 /* Glide back to the start from here on. */
 void wander_go_home(Wander* wander);

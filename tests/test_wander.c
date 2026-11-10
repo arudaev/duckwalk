@@ -74,6 +74,87 @@ static void check_homing(WalkLength length, uint32_t seed) {
           (unsigned long)seed, length, x, y, steps);
 }
 
+static bool target_inside(const Wander* w, int16_t left, int16_t top, int16_t right, int16_t bottom) {
+    return w->tx >= left && w->tx < right && w->ty >= top && w->ty < bottom;
+}
+
+/* Given an area, every spot it heads for is inside it, and the pointer
+ * stays inside but for a turning circle; started outside, it drifts in. */
+static void check_area(WalkLength length, uint32_t seed) {
+    /* An area around the start, or one off to the side of it. */
+    int16_t left, top, right, bottom;
+    switch(seed % 4) {
+    case 0: /* a big window around the pointer */
+        left = -500, top = -300, right = 500, bottom = 300;
+        break;
+    case 1: /* a small window */
+        left = -60, top = -40, right = 60, bottom = 40;
+        break;
+    case 2: /* the pointer next to the taskbar, the window above */
+        left = -400, top = -500, right = 400, bottom = -80;
+        break;
+    default: /* the pointer far right of the window */
+        left = -900, top = -200, right = -300, bottom = 200;
+        break;
+    }
+    Wander w;
+    wander_start(&w, length);
+    wander_set_area(&w, left, top, right, bottom);
+    int16_t x = 0, y = 0;
+    bool inside = seed % 4 < 2, came_in = inside;
+    int out_after_in = 0;
+    /* How far a turn can carry it past an edge: its turning circle, at most
+     * a quarter of the room it has. */
+    float room = fminf(wander_reach(&w), fminf(right - left, bottom - top) / 2.0f);
+    float swing = room / 2.0f + 5;
+    for(int i = 0; i < STEPS; i++) {
+        CHECK(target_inside(&w, left, top, right, bottom), "seed %lu: heads for (%.0f,%.0f) outside the area",
+              (unsigned long)seed, w.tx, w.ty);
+        WalkPoint m = wander_step(&w);
+        x += m.x;
+        y += m.y;
+        bool in = x >= left && x < right && y >= top && y < bottom;
+        if(in) came_in = true;
+        bool near = x >= left - swing && x < right + swing && y >= top - swing && y < bottom + swing;
+        if(came_in && !near) out_after_in++;
+    }
+    CHECK(came_in, "seed %lu: never got into the area", (unsigned long)seed);
+    CHECK(out_after_in == 0, "seed %lu: strayed out of the area %d steps", (unsigned long)seed, out_after_in);
+
+    wander_go_home(&w);
+    int steps = 0;
+    while(!wander_is_home(&w) && steps < WANDER_HOME_STEPS * 3) {
+        WalkPoint m = wander_step(&w);
+        x += m.x;
+        y += m.y;
+        steps++;
+    }
+    CHECK(wander_is_home(&w) && x == 0 && y == 0, "seed %lu: home at (%d,%d)", (unsigned long)seed, x, y);
+}
+
+/* Home by the count but a few pixels off: told so, it steps onto the start
+ * slowly and lands on it. */
+static void check_correct(uint32_t seed) {
+    Wander w;
+    wander_start(&w, WalkLengthMedium);
+    wander_go_home(&w);
+    int guard = 0;
+    while(!wander_is_home(&w) && guard++ < 1000) wander_step(&w);
+    int16_t dx = (int16_t)(seed % 81) - 40, dy = (int16_t)(seed % 37) - 18;
+    wander_shift(&w, dx, dy);
+    int16_t x = dx, y = dy;
+    int steps = 0;
+    while(!wander_is_home(&w) && steps < WANDER_HOME_STEPS) {
+        WalkPoint m = wander_step(&w);
+        CHECK(abs(m.x) <= 3 && abs(m.y) <= 3, "seed %lu: correction jumped (%d,%d)", (unsigned long)seed, m.x, m.y);
+        x += m.x;
+        y += m.y;
+        steps++;
+    }
+    CHECK(wander_is_home(&w) && x == 0 && y == 0, "seed %lu: corrected from (%d,%d) to (%d,%d) in %d steps",
+          (unsigned long)seed, dx, dy, x, y, steps);
+}
+
 int main(void) {
     for(WalkLength length = 0; length < WalkLengthCount; length++) {
         for(uint32_t seed = 1; seed <= 20000; seed++) {
@@ -87,6 +168,17 @@ int main(void) {
             shim_random_seed(seed * 2654435761u);
             check_one(length, seed);
         }
+    }
+
+    for(WalkLength length = 0; length < WalkLengthCount; length++) {
+        for(uint32_t seed = 1; seed <= SEEDS; seed++) {
+            shim_random_seed(seed * 2654435761u + 17);
+            check_area(length, seed);
+        }
+    }
+    for(uint32_t seed = 1; seed <= SEEDS; seed++) {
+        shim_random_seed(seed);
+        check_correct(seed);
     }
 
     /* Preview's sample fits a path, starts and ends at the start. */

@@ -111,6 +111,45 @@ void walk_circle(WalkPath* path, int16_t radius, uint16_t steps) {
     }
 }
 
+/* How far a path from `lo` to `hi` sticks out of [left, right). */
+static int32_t overflow(int16_t lo, int16_t hi, int16_t left, int16_t right) {
+    int32_t out = 0;
+    if(lo < left) out += left - lo;
+    if(hi >= right) out += hi - right + 1;
+    return out;
+}
+
+/* How much of [lo, hi] fits the room, as a factor (1 when it all does). */
+static float fits(int16_t lo, int16_t hi, int16_t left, int16_t right) {
+    float f = 1.0f;
+    if(hi >= right && hi > 0) f = fminf(f, (right - 1) / (float)hi);
+    if(lo < left && lo < 0) f = fminf(f, left / (float)lo);
+    return f < 0 ? 0 : f;
+}
+
+bool walk_fit(WalkPath* path, int16_t left, int16_t top, int16_t right, int16_t bottom) {
+    bool flip_x = overflow(-path->max_x, -path->min_x, left, right) < overflow(path->min_x, path->max_x, left, right);
+    bool flip_y = overflow(-path->max_y, -path->min_y, top, bottom) < overflow(path->min_y, path->max_y, top, bottom);
+    float sx = flip_x ? -1.0f : 1.0f, sy = flip_y ? -1.0f : 1.0f;
+    int16_t lo_x = flip_x ? -path->max_x : path->min_x, hi_x = flip_x ? -path->min_x : path->max_x;
+    int16_t lo_y = flip_y ? -path->max_y : path->min_y, hi_y = flip_y ? -path->min_y : path->max_y;
+    sx *= fits(lo_x, hi_x, left, right);
+    sy *= fits(lo_y, hi_y, top, bottom);
+    if(sx == 1.0f && sy == 1.0f) return false;
+    path->min_x = path->max_x = path->min_y = path->max_y = 0;
+    for(uint16_t i = 0; i < path->count; i++) {
+        WalkPoint* p = &path->points[i];
+        /* Towards zero, so a squeezed point never lands past the edge. */
+        p->x = (int16_t)(p->x * sx);
+        p->y = (int16_t)(p->y * sy);
+        if(p->x < path->min_x) path->min_x = p->x;
+        if(p->x > path->max_x) path->max_x = p->x;
+        if(p->y < path->min_y) path->min_y = p->y;
+        if(p->y > path->max_y) path->max_y = p->y;
+    }
+    return true;
+}
+
 int16_t walk_reach(const WalkPath* path) {
     int16_t r = path->max_x;
     if(-path->min_x > r) r = -path->min_x;

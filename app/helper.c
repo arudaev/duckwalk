@@ -11,6 +11,23 @@ static volatile bool heard;
 /* A command waiting for the main loop: 0 when there is none. */
 static volatile uint8_t command;
 static volatile uint8_t command_arg;
+/* The latest area report. The interrupt bumps `area_seq` to odd before it
+ * writes and back to even after, so a reader that sees the same even number
+ * before and after copying got a whole report. */
+static volatile uint32_t area_seq;
+static volatile uint32_t area_at;
+static volatile PointerArea area_report;
+
+static void read_rect(const uint8_t* p, PointerRect* r) {
+    r->left = helper_get_i16(&p[0]);
+    r->top = helper_get_i16(&p[2]);
+    r->right = helper_get_i16(&p[4]);
+    r->bottom = helper_get_i16(&p[6]);
+}
+
+static bool rect_ok(const PointerRect* r) {
+    return r->left < r->right && r->top < r->bottom;
+}
 
 bool helper_receive(const uint8_t* data, uint32_t now) {
     if(data[0] != HELPER_MAGIC || data[1] != HELPER_VERSION) return false;
@@ -23,6 +40,17 @@ bool helper_receive(const uint8_t* data, uint32_t now) {
         if(data[3] == HELPER_CMD_MODE && (data[4] < 1 || data[4] > 3)) return false;
         command_arg = data[4];
         command = data[3];
+        return true;
+    }
+    if(data[2] == HELPER_MSG_AREA) {
+        PointerArea a = {.x = helper_get_i16(&data[3]), .y = helper_get_i16(&data[5])};
+        read_rect(&data[7], &a.safe);
+        read_rect(&data[15], &a.screen);
+        if(!rect_ok(&a.safe) || !rect_ok(&a.screen)) return false;
+        area_seq++;
+        area_report = a;
+        area_at = now;
+        area_seq++;
         return true;
     }
     if(data[2] != HELPER_MSG_IDLE) return false;
@@ -54,6 +82,17 @@ bool helper_present(void) {
      * would wrap and make it look present again. */
     if(heard && tick_reached(heard_at + furi_ms_to_ticks(HELPER_TIMEOUT_MS))) heard = false;
     return heard;
+}
+
+bool helper_area(PointerArea* area, uint32_t* at) {
+    if(!helper_present()) return false;
+    uint32_t seq;
+    do {
+        seq = area_seq;
+        *area = area_report;
+        *at = area_at;
+    } while((seq & 1) || seq != area_seq);
+    return seq && tick_before(*at + furi_ms_to_ticks(HELPER_AREA_FRESH_MS));
 }
 
 bool helper_take_command(uint8_t* cmd, uint8_t* arg) {

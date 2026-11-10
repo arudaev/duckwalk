@@ -38,6 +38,15 @@ pub fn send_once(packet: [u8; PACKET_LEN]) {
     ONCE.lock().unwrap().push_back(packet);
 }
 
+/// A packet only the newest of which matters (the pointer's area): it
+/// replaces one of its type still waiting, so a slow link never falls
+/// behind.
+pub fn send_latest(packet: [u8; PACKET_LEN]) {
+    let mut once = ONCE.lock().unwrap();
+    once.retain(|p| p[2] != packet[2]);
+    once.push_back(packet);
+}
+
 fn take_once() -> Option<[u8; PACKET_LEN]> {
     ONCE.lock().unwrap().pop_front()
 }

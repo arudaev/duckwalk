@@ -16,6 +16,13 @@
  *   HELPER_MSG_COMMAND: [3] HELPER_CMD_*, [4] for HELPER_CMD_MODE the mode
  *   (1 subtle, 2 walk, 3 wander). As if pressed on the Flipper: wake and
  *   sleep do what OK does, and a mode is set as in Settings.
+ *   HELPER_MSG_AREA: where the pointer is and where Harold may take it, in
+ *   the computer's pixels, signed 16-bit little-endian: [3..6] the pointer
+ *   (x, y), [7..14] the safe area to wander in (left, top, right, bottom:
+ *   the middle of the active window, clear of its edges and the taskbar),
+ *   [15..22] the screen the pointer is on. Sent with each idle packet and
+ *   every HELPER_AREA_EVERY_MS while Harold has the pointer. Older Flipper
+ *   builds ignore it.
  *
  * Flipper -> PC (types 0x81 and up, so the two directions never mix; each
  * side ignores types it doesn't know)
@@ -39,6 +46,7 @@
 #define HELPER_MSG_IDLE 0x01
 #define HELPER_MSG_BYE  0x02
 #define HELPER_MSG_COMMAND 0x03
+#define HELPER_MSG_AREA    0x04
 
 #define HELPER_CMD_WAKE  1
 #define HELPER_CMD_SLEEP 2
@@ -64,6 +72,11 @@
 #define HELPER_HEARTBEAT_MS 1000
 #define HELPER_TIMEOUT_MS   5000
 
+/* While Harold has the pointer the helper reports the area this often, and
+ * the Flipper trusts a report this long. */
+#define HELPER_AREA_EVERY_MS 100
+#define HELPER_AREA_FRESH_MS 2000
+
 static inline void helper_put_u32(uint8_t* p, uint32_t v) {
     p[0] = (uint8_t)v;
     p[1] = (uint8_t)(v >> 8);
@@ -78,6 +91,10 @@ static inline uint32_t helper_get_u32(const uint8_t* p) {
 static inline void helper_put_u16(uint8_t* p, uint16_t v) {
     p[0] = (uint8_t)v;
     p[1] = (uint8_t)(v >> 8);
+}
+
+static inline int16_t helper_get_i16(const uint8_t* p) {
+    return (int16_t)(uint16_t)(p[0] | p[1] << 8);
 }
 
 static inline uint16_t helper_get_u16(const uint8_t* p) {

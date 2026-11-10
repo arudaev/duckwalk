@@ -19,7 +19,7 @@ Harold asks how to reach your computer. **Left** for a USB cable, **Right** for 
 | ![Harold reading code](screens/home-awake@4x.png) | **Keeping the computer awake.** Harold reads code on his laptop and the status line counts down to the next walk. Every few seconds he types, sips his coffee, looks round or bounces. Now and then he finds a bug, quacks at it and fixes it. |
 | ![Harold sipping coffee](screens/home-sip@4x.png) | **A coffee break.** He turns to his mug and the steam picks up. |
 | ![Harold walking](screens/home-walking@4x.png) | **Walking.** The pointer takes a short, curved walk and comes back to where it started. Harold walks along on the screen. |
-| ![Harold wandering](screens/home-wandering@4x.png) | **Wandering.** In Wander mode the pointer drifts around without stopping, and Harold drifts with it. |
+| ![Harold wandering](screens/home-wandering@4x.png) | **Wandering.** In Wander mode the pointer drifts around without stopping, and Harold drifts with it. With the [desktop app](../desktop/app/README.md) on Windows it stays in the middle of the window you're in, clear of the taskbar, tabs and buttons, and comes back to the exact pixel it started from. |
 | ![Harold asleep](screens/home-asleep@4x.png) | **Asleep.** Keep-awake is off. **OK** wakes him; OK again puts him to sleep. |
 | ![You're working](screens/home-working@4x.png) | **You're working.** With the [desktop app](../desktop/app/README.md) running, Harold lets go of the pointer while you use your own mouse or keyboard, and waits 30 seconds after you stop (**Resume after** in Settings). |
 

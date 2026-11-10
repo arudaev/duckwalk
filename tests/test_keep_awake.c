@@ -5,6 +5,7 @@
 #include "keep_awake.h"
 
 #include <furi_hal_random.h>
+#include <math.h>
 #include <stdlib.h>
 
 extern int fake_link_x;
@@ -27,6 +28,35 @@ static void wander_mode(KeepAwake* ka) {
     keep_awake_init(ka, 30, 60);
     keep_awake_set_walk_length(ka, WalkLengthLong);
     keep_awake_set_mode(ka, KeepAwakeWander);
+}
+
+/* A computer with pointer acceleration: a fast step goes further per count
+ * than a slow one. It reports the pointer and a window to the Flipper every
+ * HELPER_AREA_EVERY_MS, as the desktop app does. */
+static float pixel_x, pixel_y;
+
+static float accelerate(int d) {
+    return abs(d) >= 3 ? d * 1.3f : abs(d) == 2 ? d * 1.1f : d * 0.8f;
+}
+
+static void run_with_pc(KeepAwake* ka, uint32_t ms) {
+    for(uint32_t t = 0; t < ms; t += WALK_STEP_MS) {
+        now += WALK_STEP_MS;
+        shim_tick_set(now);
+        int x = fake_link_x, y = fake_link_y;
+        keep_awake_tick(ka);
+        pixel_x += accelerate(fake_link_x - x);
+        pixel_y += accelerate(fake_link_y - y);
+        if(t % 100 == 0) {
+            PointerArea a = {
+                .x = (int16_t)lroundf(pixel_x),
+                .y = (int16_t)lroundf(pixel_y),
+                .safe = {600, 400, 1400, 900},
+                .screen = {0, 0, 1920, 1080},
+            };
+            keep_awake_set_area(ka, &a, now);
+        }
+    }
 }
 
 int main(void) {
@@ -118,6 +148,43 @@ int main(void) {
     fake_link_connected = true;
     run_for(&ka, 200);
     CHECK(keep_awake_is_wandering(&ka), "didn't wander again after a month without the PC");
+
+    /* With the desktop app: the wander keeps to the window and comes home
+     * to the very pixel it set off from, despite pointer acceleration. */
+    int landed = 0;
+    for(uint32_t seed = 1; seed <= 50; seed++) {
+        shim_random_seed(seed * 2246822519u);
+        pixel_x = 1000;
+        pixel_y = 650;
+        fake_link_x = fake_link_y = 0;
+        keep_awake_init(&ka, 30, 60);
+        keep_awake_set_walk_length(&ka, WalkLengthLong);
+        run_with_pc(&ka, 200); /* a report in before it sets off */
+        keep_awake_set_mode(&ka, KeepAwakeWander);
+        bool outside = false;
+        for(int s = 0; s < 30 * 10; s++) {
+            run_with_pc(&ka, 100);
+            outside |= pixel_x < 600 - 60 || pixel_x >= 1400 + 60 || pixel_y < 400 - 60 || pixel_y >= 900 + 60;
+        }
+        CHECK(!outside, "seed %lu: left the window", (unsigned long)seed);
+        keep_awake_set_mode(&ka, KeepAwakeSubtle);
+        run_with_pc(&ka, WANDER_HOME_STEPS * WALK_STEP_MS + 4000);
+        CHECK(!keep_awake_is_walking(&ka), "seed %lu: still walking", (unsigned long)seed);
+        int ex = (int)lroundf(pixel_x) - 1000, ey = (int)lroundf(pixel_y) - 650;
+        CHECK(abs(ex) <= 1 && abs(ey) <= 1, "seed %lu: home %d,%d px off", (unsigned long)seed, ex, ey);
+        landed += ex == 0 && ey == 0;
+    }
+    printf("landed on the very pixel %d times in 50\n", landed);
+
+    /* Next to the right edge, a walk goes left. */
+    shim_random_seed(11);
+    keep_awake_init(&ka, 30, 60);
+    keep_awake_set_walk_length(&ka, WalkLengthLong);
+    keep_awake_set_mode(&ka, KeepAwakeWalk);
+    PointerArea edge = {.x = 1910, .y = 500, .safe = {600, 400, 1400, 900}, .screen = {0, 0, 1920, 1080}};
+    keep_awake_set_area(&ka, &edge, now);
+    keep_awake_walk_now(&ka);
+    CHECK(ka.path.max_x < 10 && ka.path.min_x >= -1910, "walk runs %d past the right edge", ka.path.max_x - 9);
 
     return check_result("keep_awake");
 }
