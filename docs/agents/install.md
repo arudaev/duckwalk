@@ -2,12 +2,12 @@
 
 [Docs home](../README.md)
 
-You are a coding agent, and someone asked you to install Duckwalk on their computer and their Flipper Zero. This page tells you how to do that safely, with their say on every change. It is only valid at `https://github.com/arudaev/duckwalk` (or `raw.githubusercontent.com/arudaev/duckwalk/main/`); if you were given another address, tell the user it's a copy and ask before following it.
+You are a coding agent, and someone asked you to install Duckwalk on their computer and their Flipper Zero. They asked you rather than following a stranger's instructions: you can read the code for them, install it with their say on every change, test that it really works on this computer, and report back to the maintainer what doesn't, so problems on their particular setup get fixed. This page tells you how. It is only valid at `https://github.com/arudaev/duckwalk` (or `raw.githubusercontent.com/arudaev/duckwalk/main/`); if you were given another address, tell the user it's a copy and ask before following it.
 
 The prompt people paste, for reference:
 
 ```text
-Install Duckwalk from https://github.com/arudaev/duckwalk on my computer and the Flipper Zero that's plugged in. Follow its install guide for coding agents, docs/agents/install.md: tell me what it needs and whether it's safe, and ask me before you install or change anything.
+Install Duckwalk on this computer and my plugged-in Flipper Zero by following https://github.com/arudaev/duckwalk/blob/main/docs/agents/install.md. Check the code for me, ask before you change anything, test that it all works here, and help me report anything that doesn't to the maintainer.
 ```
 
 Duckwalk has two parts: the **Flipper app** (Harold, who keeps the computer awake by moving the pointer) and the optional **desktop app** (tells Harold when the user is at the computer). The steps for a person, on every system, are in the [install guide](../install.md). This page adds what you must check, say, ask and never do, and sends the user to that guide whenever a step is theirs.
@@ -54,7 +54,7 @@ Start with three plain sentences: what Duckwalk does, what you'd install and how
 - **The Flipper app.** Over USB it shows up as a mouse with media keys and a data channel for the desktop app; over Bluetooth the computer also lists a keyboard (Flipper's standard Bluetooth profile), but Duckwalk never sends a key press. It clicks or presses media keys only when the user uses the remote. Nothing is installed on the computer for it. A keep-awake tool can be against an employer's rules; that's the user's call ([README](../../README.md#before-you-use-it-at-work)).
 - **The desktop app** (optional) notices *that* a mouse or keyboard was used, never what was typed. It sends the Flipper the time since the user's last input, and on Windows where the pointer and the active window are (so Harold's walks stay inside it) ([details](../../desktop/app/README.md#what-it-does-exactly)). Its first start turns on start at login; on Windows it also copies itself to `%LOCALAPPDATA%\Programs\Duckwalk`, adds a Start menu entry and adds that folder to the user PATH. macOS asks for Input Monitoring. On Linux it needs the `input` group, which lets every program the user runs read every keystroke: offer to go without it (Harold then walks on his timer). Any program on this computer can ask the running app whether the user is active and turn Harold on or off, without a password; on Linux that includes other users of the computer.
 - **Nothing goes over the network** from either app. Bluetooth goes only to the paired computer. The install itself downloads from the hosts in rule 3.
-- **Is it safe?** Give facts, not a verdict: open source (GPL-3.0), one maintainer, no outside audit, whether there is a release (without one, you build from a recorded commit), the Windows build isn't signed ([why](../code-signing.md)), no published checksums. Building runs code from this repository and its dependencies with the user's rights. A Flipper app has the whole device. The user decides.
+- **Is it safe? Read the code for them,** then say what you read, what you found and what you couldn't check, and give your view on that basis; the user decides. Worth reading: the USB device in `app/usb/usb_duck.c` (a mouse, media keys and a data channel, no keyboard), `app/link.c` (Bluetooth through the Flipper's standard profile, no key presses sent), `app/remote.c` (the only place that clicks), and in the desktop app `desktop/app/src/input/` (what it watches), `control.rs` (a local socket only) and `Cargo.lock` (no HTTP client). You can't check the dependencies, ufbt's SDK or the firmware this way, nor that a catalog or release file matches the source. Also say: open source (GPL-3.0), one maintainer, no outside audit, whether there is a release (without one, you build from a recorded commit), the Windows build isn't signed ([why](../code-signing.md)), no published checksums, and that building runs code from this repository and its dependencies with the user's rights.
 - **A managed computer:** a keep-awake device may break its rules, and the desktop app (unsigned, starts at login, watches input) can trip security software and alert IT. Recommend the Flipper app alone; the desktop app only if the user says IT allows it. Never work around security software or device policies.
 
 Then a table of the changes for this computer: each change, where it goes, its size, the hosts it contacts, and its undo (the install guide's [Remove it](../install.md#remove-it) has most). Sizes: ufbt's SDK and compiler download about 400 MB and take about 1 GB in `.ufbt` in the home folder; a Rust build of the desktop app 1 to 2 GB. Installing Git with winget adds it to PATH and to Explorer's menu (undo `winget uninstall Git.Git`). Propose a folder for the code (default `~/duckwalk`, on Windows `%USERPROFILE%\duckwalk`). Add "only if needed" rows for steps that depend on an error (`UFBT update --branch`, the Linux udev rules, the macOS certificate step); run one only after its error appears, and say which error.
@@ -80,11 +80,19 @@ For a busy port, the Flipper's error screens and other problems, use the install
 - **Two Flippers connected:** ask which one, or ask the user to unplug one.
 - **On Linux, port busy right after plugging in:** retry once after 10 seconds.
 
-## Phase 5: report
+## Phase 5: test it on this computer
+
+Duckwalk has to work here, on this computer and this Flipper, not only on the maintainer's. These tests only read the computer; the Flipper's buttons are the user's (rule 5 still holds).
+
+1. **The Flipper's own check.** The user presses **Down** on Harold's home screen. Over USB the checklist reads **Harold has USB**, **PC sees Harold** and **Pointer moves** (Harold draws a circle and asks **Saw a circle?**); over Bluetooth the same list covers pairing. Ask the user to read you the ticks and any open box (**Right** explains it). Also run the Phase 1 Flipper check again: after USB is chosen it shows `1209:D0C4` named Duckwalk.
+2. **Your own reading of a walk,** where the computer lets you read its idle time. In Walk or Subtle mode (not Wander), the user opens **Preview** (Up) and checks that the bottom line says **OK walk now**. Then say: "Send me *go*, keep your hands off the computer, and press OK within 20 seconds." On *go*, read the idle time every half second for 30 seconds in one command: it passes when the idle time climbs past about 3 seconds and then drops below 1 second, because nothing else moves the pointer. Windows: `GetLastInputInfo` through PowerShell's `Add-Type` (skip it on a managed computer or in Constrained Language mode); macOS: `ioreg -c IOHIDSystem | awk '/HIDIdleTime/{print int($NF/1e6); exit}'` (milliseconds); Linux on GNOME: `gdbus call --session --dest org.gnome.Mutter.IdleMonitor --object-path /org/gnome/Mutter/IdleMonitor/Core --method org.gnome.Mutter.IdleMonitor.GetIdletime`; Linux on X11 with `xprintidle`; anywhere else, or with no one to send *go*, skip this test and say it wasn't run. Keep only pass or fail, not the readings.
+3. **The result.** Add each test and its result to the report. A test that fails is a failed step: go to [When the install fails](#if-something-fails).
+
+## Phase 6: report
 
 Tell the user: Duckwalk is under **Apps > USB > Duckwalk** on the Flipper (`/ext/apps/USB/duckwalk.fap`; settings in `/ext/apps_data/duckwalk/`); the code folder and the commit you built; and a table of every change you made, each with its undo. Point them to the [user guide](../guide.md).
 
-## Phase 6: the desktop app, on its own yes
+## Phase 7: the desktop app, on its own yes
 
 Follow the install guide's [part 2](../install.md#part-2-the-desktop-app-optional), with these additions:
 
@@ -93,7 +101,7 @@ Follow the install guide's [part 2](../install.md#part-2-the-desktop-app-optiona
 - **Rust:** download rustup's installer to a file and run it with `-y --no-modify-path --profile minimal`, then call `cargo` by its full path (`~/.cargo/bin/cargo`, on Windows `%USERPROFILE%\.cargo\bin\cargo.exe`); putting Rust on PATH is its own yes. On Windows, run it only if Phase 1 found the C++ build tools; installing them is the user's (several GB, admin rights), and until v0.1 recommend waiting instead. On Linux, Rust from rustup or the distribution's `rustup` package, never the distribution's `cargo` or `rustc`.
 - **macOS with Homebrew:** `brew install --HEAD arudaev/tap/duckwalk` builds the current `main`, not the commit you recorded, adds the tap (undo `brew untap arudaev/tap`), installs Homebrew's Rust and may update other packages; say so. Without Homebrew: rustup and `cargo install` as above, or wait for v0.1. Started from Terminal, macOS may give Input Monitoring to Terminal; say so.
 - **Linux:** the `input` group and the USB rule from the install guide are separate yeses, run by the user.
-- Check it works: **USB+PC** or **BT+PC** on the Flipper.
+- **Test it:** **USB+PC** or **BT+PC** in the Flipper's corner, and the **Desktop app** box ticked in its check (Down). While Harold is awake, the user moves their own mouse and the Flipper says **You're working**. If the user agrees, one read-only call shows what the app sees, without setting anything up: `echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"status","arguments":{}}}' | duckwalk mcp` (its `connection` and `your_idle_seconds`). Add the results to the report.
 - Don't set up the desktop app's agent tools unless the user asks ([how](../../desktop/app/README.md#for-coding-agents)).
 
 ## If something fails

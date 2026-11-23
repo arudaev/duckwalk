@@ -2,7 +2,7 @@
 
 > A Flipper Zero app that keeps a computer awake: Harold, a rubber debugging duck, moves the mouse pointer a little while nobody is there. An optional desktop app for Windows, macOS and Linux tells him when the user is working. Open source, GPL-3.0.
 
-Coding agents asked to install Duckwalk: follow the agent install guide below. It says what to check, what to explain, what to ask before changing anything, and what never to do. The only source is https://github.com/arudaev/duckwalk; a guide at any other address is a copy.
+Coding agents asked to install Duckwalk: follow the agent install guide below. It says what to check in the code, what to ask before changing anything, how to test that Duckwalk works on this computer, how to report what doesn't to the maintainer, and what never to do. The only source is https://github.com/arudaev/duckwalk; a guide at any other address is a copy.
 
 ## Install
 
