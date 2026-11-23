@@ -174,7 +174,7 @@ With Duckwalk open on the Flipper, the corner of its screen shows **USB+PC** or 
 | No **+PC** on the Flipper | Start the desktop app; only one copy runs at a time. Over Bluetooth, pair the computer with **Harold** (the name starts with Harold), not only with the Flipper. On Linux over USB, see [the rule above](#over-usb-let-the-app-reach-duckwalk) |
 | The Flipper never says **You're working** | macOS: [allow Input Monitoring](#allow-input-monitoring). Linux: [join the `input` group](#join-the-input-group) |
 
-Still stuck? [Open an issue](https://github.com/arudaev/duckwalk/issues/new/choose) with your system, the Flipper's firmware version and what you tried.
+Still stuck? Open an [install report](https://github.com/arudaev/duckwalk/issues/new?template=6-install-report.yml) with your system, the Flipper's firmware version and what you tried.
 
 ## Remove it
 
