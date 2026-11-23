@@ -43,6 +43,8 @@ cd duckwalk/app
 ufbt launch      # builds it and starts it on a connected Flipper (close qFlipper first)
 ```
 
+Step by step for Windows, macOS and Linux, with the desktop app: the [install guide](docs/install.md).
+
 </details>
 
 On the first launch Harold asks how to reach the computer: **Left** for USB, **Right** for Bluetooth. Bluetooth walks you through pairing on the Flipper's screen.

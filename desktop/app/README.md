@@ -10,48 +10,24 @@ It is optional. Without it, Duckwalk can't see your input and walks on its timer
 
 ## Use it
 
-1. Get the app for your computer:
-   - **Windows:** download it from the [releases](https://github.com/arudaev/duckwalk/releases).
-   - **macOS:** with [Homebrew](https://brew.sh), which builds it on your Mac, so macOS doesn't flag it:
-     ```bash
-     brew install --HEAD arudaev/tap/duckwalk
-     ```
-     (Plain `brew install arudaev/tap/duckwalk` once v0.1 is out.)
-   - **Linux:** with Rust, after installing the libraries listed under [Build](#build):
-     ```bash
-     cargo install --git https://github.com/arudaev/duckwalk duckwalk
-     ```
-     Or download the binary from the releases.
-2. Start Duckwalk on the Flipper, plugged in over USB or paired over Bluetooth.
-3. Start it: open the download on Windows, run `duckwalk` on macOS and Linux. There is no window: Harold appears in the tray (the menu bar on macOS) and does what he does on the Flipper: he stands while awake, waddles while he walks the pointer, shuts his eyes while asleep, opens his bill when he quacks, and stays grey while there's no Flipper.
-   - **Windows** may warn about an unknown app: **More info**, then **Run anyway**. The app then installs itself: it copies itself to `%LOCALAPPDATA%\Programs\Duckwalk`, adds **Duckwalk** to the Start menu (Windows Search finds it there) and runs from that copy, so you can delete the download. A newer download updates it the same way; quit the running one from Harold's menu first.
-   - **macOS and Linux:** Homebrew and cargo put it where it can stay. A Linux binary from the releases: move it to such a folder first, since it starts from there at every login, and make it executable (`chmod +x`).
-4. The Flipper shows **USB+PC** or **BT+PC** in the corner. While you work, its status line says **You're working**.
+To install it on Windows, macOS or Linux, follow [Install, part 2](../../docs/install.md#part-2-the-desktop-app-optional). Start Duckwalk on the Flipper, plugged in over USB or paired over Bluetooth, then start the app. There is no window: Harold appears in the tray (the menu bar on macOS) and does what he does on the Flipper: he stands while awake, waddles while he walks the pointer, shuts his eyes while asleep, opens his bill when he quacks, and stays grey while there's no Flipper. The Flipper shows **USB+PC** or **BT+PC** in the corner, and while you work its status line says **You're working**.
 
 Harold's menu in the tray says how he's connected and whether you're working, and has:
 
 - **Start at login:** on after the first start. Windows uses the Run entry for your user, macOS a Launch Agent, Linux an autostart file in `~/.config/autostart/`.
 - **Quit Duckwalk:** tells the Flipper goodbye, so it drops **+PC** at once.
 
-Only one copy runs at a time.
-
-**To remove it:** untick **Start at login** in Harold's menu, choose **Quit Duckwalk**, then remove the app: on Windows, delete the folder `%LOCALAPPDATA%\Programs\Duckwalk`, the Start menu entry **Duckwalk**, and that folder from your user PATH (search Windows for *environment variables*); on macOS, `brew uninstall duckwalk`; installed with cargo, `cargo uninstall duckwalk`.
+Only one copy runs at a time. On Windows a newer download updates the installed copy; quit the running one from Harold's menu first. To remove it: [Install, Remove it](../../docs/install.md#remove-it).
 
 **Tested on Windows 11** over USB and Bluetooth. The macOS and Linux builds are new; reports are welcome.
 
 ### macOS: allow Input Monitoring
 
-On first start the app asks for it. Allow it in **System Settings > Privacy & Security > Input Monitoring**, then start the app again. Without it Harold walks on his timer.
+The app needs it to see your input; [how to allow it](../../docs/install.md#allow-input-monitoring).
 
 ### Linux: join the `input` group
 
-The app reads your devices from `/dev/input/`, which only that group may do:
-
-```bash
-sudo usermod -aG input $USER
-```
-
-Then log out and in again. Without it the app says it can't read any input device, and Harold walks on his timer.
+The app reads your devices from `/dev/input/`, which only the `input` group may do; [how to join it](../../docs/install.md#join-the-input-group).
 
 ## For coding agents
 

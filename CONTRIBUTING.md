@@ -8,6 +8,8 @@ This page is the short version. The details live in [`docs/contributing/`](docs/
 
 ## Five-minute setup
 
+Just want to use Duckwalk? Follow the [install guide](docs/install.md) instead.
+
 You need Python 3.8+ and a Flipper Zero on the official firmware.
 
 ```bash
@@ -18,6 +20,8 @@ cd app
 ufbt            # builds dist/duckwalk.fap against the release SDK
 ufbt launch     # uploads it and starts it on a connected Flipper (close qFlipper first)
 ```
+
+If pip refuses with *externally-managed-environment*, or `ufbt` isn't found, the [install guide](docs/install.md#1-install-python-and-ufbt) has the fix for each system.
 
 No Flipper at hand? The walk planner and the settings file have host tests that run with any C compiler and CMake:
 
