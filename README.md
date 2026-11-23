@@ -15,7 +15,7 @@ Harold lives on your desk. When you step away, he moves the mouse pointer so Tea
 </p>
 
 > [!NOTE]
-> **v0.1 is nearly ready.** It works on official firmware 1.5.1 with Windows 11, over USB and Bluetooth. Until it is in the Flipper Apps Catalog, build it from source (below). Progress: [v0.1 milestone](https://github.com/arudaev/duckwalk/milestone/2).
+> **v0.1 is nearly ready.** It works on official firmware 1.5.1 with Windows 11, over USB and Bluetooth. Until it is in the Flipper Apps Catalog, install it with your coding agent or by hand ([Install](#install)). Progress: [v0.1 milestone](https://github.com/arudaev/duckwalk/milestone/2).
 
 ## Why Duckwalk
 

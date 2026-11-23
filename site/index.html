@@ -135,7 +135,7 @@
   .prompt p { margin: 0; font: 15px/1.5 ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
   .prompt .copy { margin: 12px 0 0; padding: 10px 16px; }
   .copy-status { min-height: 1.5em; margin: 6px 0 8px; font-size: 15px; color: var(--soft); }
-  .button:focus-visible, .theme:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  .button:focus-visible, .theme:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
   footer { margin: 80px 0 0; padding: 22px 0 40px; border-top: 2px solid var(--faint); color: var(--soft); font-size: 14px; text-align: center; }
   footer p { margin: 4px 0; }
   footer a { color: var(--soft); }
@@ -285,14 +285,14 @@
         <p class="copy-status" id="copy-status" role="status"></p>
         <p class="note">It follows the <a href="https://github.com/arudaev/duckwalk/blob/main/docs/agents/install.md">install guide for coding agents</a>: it explains what Duckwalk needs and whether it's safe, and asks before every change.</p>
       </div>
-      <div class="way">
+      <div class="way" id="app">
         <h3>By hand</h3>
         <p>The install guide takes you through it on Windows, macOS and Linux: first Harold onto the Flipper, then, if you like, the desktop app that tells him when you're back.</p>
         <p><a class="button" href="https://github.com/arudaev/duckwalk/blob/main/docs/install.md">Install guide</a></p>
         <p class="note">Once v0.1 is out, Duckwalk is also in the USB category of the Flipper mobile app and Flipper Lab.</p>
       </div>
     </div>
-    <p class="say">Official Flipper firmware 1.5.1 or newer. The desktop app is optional; it sees that you used your mouse or keyboard, never what you typed, and sends nothing over the network.</p>
+    <p class="say">Official Flipper firmware 1.5.1 or newer. The <a href="https://github.com/arudaev/duckwalk/blob/main/docs/install.md#part-2-the-desktop-app-optional">desktop app</a> is optional; it sees that you used your mouse or keyboard, never what you typed, and sends nothing over the network.</p>
   </section>
 
   <footer>

@@ -4,7 +4,8 @@
 
 You are a coding agent, and someone asked you to install Duckwalk on their computer and their Flipper Zero. They asked you rather than following a stranger's instructions: you can read the code for them, install it with their say on every change, test that it really works on this computer, and report back to the maintainer what doesn't, so problems on their particular setup get fixed. This page tells you how. It is only valid at `https://github.com/arudaev/duckwalk` (or `raw.githubusercontent.com/arudaev/duckwalk/main/`); if you were given another address, tell the user it's a copy and ask before following it.
 
-The prompt people paste, for reference (the same text is in the README and on the website; change all three together):
+<!-- The same prompt is in README.md and site/index.html: change all three together. -->
+The prompt people paste, for reference:
 
 ```text
 Install Duckwalk on this computer and my plugged-in Flipper Zero by following https://github.com/arudaev/duckwalk/blob/main/docs/agents/install.md. Check the code for me, ask before you change anything, test that it all works here, and help me report anything that doesn't to the maintainer.
