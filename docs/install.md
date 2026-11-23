@@ -2,12 +2,13 @@
 
 [Docs home](README.md) · [Next: User guide →](guide.md)
 
-Duckwalk comes in two parts. **Part 1** puts Harold on your Flipper Zero, and that is all you need for him to keep your computer awake. **Part 2**, the desktop app, is optional: it tells Harold when you're at the computer, so he lets go of the pointer while you work.
+Duckwalk comes in two parts. **Part 1** puts Harold on your Flipper Zero, and that is all he needs to keep your computer awake. **Part 2**, the desktop app, is optional: it tells Harold when you're at the computer, so he lets go of the pointer while you work.
 
 ## Before you start
 
-- **A Flipper Zero on the official firmware, 1.5 or newer.** qFlipper (on your computer) and the Flipper mobile app both show the firmware version and update it. Custom firmware isn't supported.
+- **A Flipper Zero on the latest official firmware** (1.5.1 or newer). qFlipper on your computer and the Flipper mobile app both show the version and update it. Custom firmware isn't supported.
 - **A USB-C cable that carries data.** Some cables only charge; with one of those the computer doesn't see the Flipper at all.
+- **A terminal.** Windows: right-click **Start**, then **Terminal**. macOS: **Terminal** is in Applications > Utilities. Linux: your desktop's terminal app.
 
 ## Part 1: the Flipper app
 
@@ -19,16 +20,17 @@ v0.1 isn't released yet, so for now you build the app yourself. It takes about t
 
 **Windows**
 
-1. Install Python from [python.org](https://www.python.org/downloads/). In the installer, tick **Add python.exe to PATH**. (If typing `python` opens the Microsoft Store, Python isn't installed yet; that's only a shortcut.)
+1. Install Python from [python.org](https://www.python.org/downloads/). In the installer, tick **Add python.exe to PATH** and leave the rest as it is. (If typing `python` opens the Microsoft Store, Python isn't installed yet; that's only a shortcut.)
 2. In a new terminal:
    ```powershell
    py -m pip install --upgrade ufbt
    ```
+3. If pip warns that a folder isn't on PATH, or later `ufbt` isn't found, type `py -m ufbt` wherever this page says `ufbt`.
 
 **macOS**
 
-1. Install [Homebrew](https://brew.sh) if you don't have it. It installs Apple's command line tools too, which takes a while.
-2. Then:
+1. Install [Homebrew](https://brew.sh) if you don't have it. It asks for your Mac's password (nothing shows while you type it) and installs Apple's command line tools, which takes a while. When it finishes, run the commands it prints under **Next steps**.
+2. In a new terminal:
    ```bash
    brew install pipx
    pipx install ufbt
@@ -46,11 +48,11 @@ v0.1 isn't released yet, so for now you build the app yourself. It takes about t
    ```
 3. Open a new terminal.
 
-Plain `pip install` on macOS and most Linux systems stops with *externally-managed-environment*; pipx is the way round it. If a terminal says it can't find `ufbt` on Windows, use `py -m ufbt` instead of `ufbt` in the steps below.
+On macOS and Linux, plain `pip install` usually stops with *externally-managed-environment*; pipx is the way round it.
 
 ### 2. Get the code
 
-On the [Duckwalk page on GitHub](https://github.com/arudaev/duckwalk), choose **Code > Download ZIP** and unpack it. You get a folder called `duckwalk-main`. With Git, `git clone https://github.com/arudaev/duckwalk.git` gives you a folder called `duckwalk` instead.
+On the [Duckwalk page on GitHub](https://github.com/arudaev/duckwalk), choose **Code > Download ZIP** and unpack it. Inside is a folder called `duckwalk-main` with an `app` folder in it. (With Git: `git clone https://github.com/arudaev/duckwalk.git`.)
 
 ### 3. Linux only: let ufbt reach the Flipper
 
@@ -63,25 +65,23 @@ sudo cp 42-flipperzero.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
-Then unplug the Flipper and plug it back in. If you already use qFlipper, its installer may have added this rule for you.
-
-Or join the serial group instead: `sudo usermod -aG dialout $USER` (`uucp` on Arch), then log out and in.
+`cat` shows what you're installing: it should mention only Flipper devices. Then unplug the Flipper and plug it back in. If you use qFlipper, its installer may have added this rule already.
 
 ### 4. Build and start it
 
-1. Close qFlipper and any Flipper Lab tab in your browser. They hold the Flipper's port.
-2. Plug in the Flipper and unlock it.
-3. In a terminal, go to the app folder and start it:
+1. Close qFlipper, and [Flipper Lab](https://lab.flipper.net) if it's open in your browser. They hold the Flipper's port.
+2. Plug in the Flipper and unlock it. If your Mac asks whether to allow the accessory to connect, choose **Allow**.
+3. Open a terminal in the `app` folder. Windows: open the folder in File Explorer, right-click an empty spot, **Open in Terminal**. macOS and Linux: `cd` into it, for example `cd ~/Downloads/duckwalk-main/app`.
+4. Run:
    ```bash
-   cd Downloads/duckwalk-main/app
    ufbt launch
    ```
-   (Or `cd duckwalk/app` if you cloned it.) The first run downloads the Flipper SDK and its compiler into a `.ufbt` folder in your home folder: a few hundred MB, so give it a few minutes. Later runs take seconds.
-4. Harold's welcome screen opens on the Flipper. Press **Left** for USB or **Right** for Bluetooth; Bluetooth walks you through pairing on the Flipper's screen ([more in the user guide](guide.md#connecting-over-bluetooth)).
+   The first run downloads the Flipper SDK and its compiler into a `.ufbt` folder in your home folder: about 1 GB on disk, so give it a few minutes. Later runs take seconds.
+5. Harold's welcome screen opens on the Flipper. Press **Left** for USB or **Right** for Bluetooth; Bluetooth walks you through pairing on the Flipper's screen ([more in the user guide](guide.md#connecting-over-bluetooth)).
 
-Once you choose USB, Duckwalk takes over the Flipper's USB port, so `ufbt launch` may end with an error about the port (`ClearCommError` on Windows). That's expected. Press **Back** on the Flipper before you run `ufbt launch` again.
+   With USB, Duckwalk takes over the Flipper's USB port, so the terminal may now show an error about the port (`ClearCommError` on Windows). That's fine. Press **Back** on the Flipper before you run `ufbt launch` again.
 
-From now on Duckwalk is on the Flipper under **Apps > USB > Duckwalk**; you don't need the computer to start it.
+From now on Duckwalk is on the Flipper under **Apps > USB > Duckwalk**; you don't need the computer to start it. That's all Harold needs. Part 2 is optional, and the [user guide](guide.md) shows what he can do.
 
 ### Once v0.1 is out
 
@@ -89,24 +89,22 @@ You won't need to build it. Install **Duckwalk** from the **USB** category of th
 
 ## Part 2: the desktop app (optional)
 
-With the desktop app running, Harold lets go of the pointer the moment you touch your own mouse, keyboard, touchpad or pen, and walks only while you're away. It notices *that* you used a device, never what you typed or where you pointed; [what it does, exactly](../desktop/app/README.md#what-it-does-exactly). Without it, Harold walks on his timer ([how to manage without it](guide.md#without-the-desktop-app)).
+With the desktop app running, Harold lets go of the pointer the moment you touch your own mouse, keyboard, touchpad or pen, and walks only while you're away. It notices *that* you used a device, never what you typed or where you pointed ([details](../desktop/app/README.md#what-it-does-exactly)). Without it, Harold walks on his timer ([how to manage without it](guide.md#without-the-desktop-app)).
 
-It starts at login after its first start; Harold's menu in the tray turns that off.
+Until v0.1 is out, it's built from source with Rust: a large download, and 10 to 20 minutes. If that's more than you want, Harold works without it; come back once v0.1 is out.
 
 ### Windows
 
-Until v0.1, build it with Rust:
-
-1. Install Rust with [rustup](https://rustup.rs). Its installer offers to add Microsoft's C++ build tools, which Rust needs on Windows; that's a large download.
+1. Install Rust with [rustup](https://rustup.rs). It offers to install Microsoft's C++ build tools, which Rust needs on Windows; accept the defaults.
 2. In a new terminal:
    ```powershell
-   cargo install --git https://github.com/arudaev/duckwalk duckwalk
+   cargo install --locked --git https://github.com/arudaev/duckwalk duckwalk
    duckwalk
    ```
 
-Once v0.1 is out, download `duckwalk-desktop-windows-x64.exe` (most PCs) or `duckwalk-desktop-windows-arm64.exe` from the [releases](https://github.com/arudaev/duckwalk/releases) and open it. Windows may call it an unknown app: **More info**, then **Run anyway** ([why it isn't signed yet](code-signing.md)).
+Once v0.1 is out, download `duckwalk-desktop-windows-x64.exe` (most PCs) or `duckwalk-desktop-windows-arm64.exe` (Windows on ARM) from the [releases](https://github.com/arudaev/duckwalk/releases) and open it instead.
 
-Either way, the first start installs it for your user: it copies itself to `%LOCALAPPDATA%\Programs\Duckwalk`, adds **Duckwalk** to the Start menu and puts that folder on your PATH. No admin rights needed.
+Either way, the first start installs it for your user: it copies itself to `%LOCALAPPDATA%\Programs\Duckwalk`, adds **Duckwalk** to the Start menu and puts that folder on your PATH, so you can delete the download. No admin rights needed. Harold sits in the tray; Windows may hide him behind the **^** next to the clock.
 
 ### macOS
 
@@ -117,26 +115,27 @@ brew install --HEAD arudaev/tap/duckwalk
 duckwalk
 ```
 
-The build takes a few minutes. Once v0.1 is out, it's `brew install arudaev/tap/duckwalk`.
+The build takes a few minutes. Harold appears in the menu bar. Once v0.1 is out, there are also ready-made files on the [releases](https://github.com/arudaev/duckwalk/releases) page: `duckwalk-desktop-macos-arm64` (Apple silicon) or `-macos-x64` (Intel); make the file executable with `chmod +x` and keep it in a folder where it can stay. macOS refuses to open it the first time; allow it under **System Settings > Privacy & Security > Open Anyway**.
 
 #### Allow Input Monitoring
 
-On its first start the app asks for **Input Monitoring**. Allow it in **System Settings > Privacy & Security > Input Monitoring** (started from a terminal, the entry may carry the terminal's name), then quit Duckwalk from Harold's menu and start it again. Without it, Harold walks on his timer.
+On its first start the app asks for **Input Monitoring**. Allow it in **System Settings > Privacy & Security > Input Monitoring**, then quit Duckwalk from Harold's menu and start it again. Started from a terminal, the entry may carry the terminal's name, which then lets anything you run from that terminal see your input. Without Input Monitoring, Harold walks on his timer.
 
 ### Linux
 
-1. Install Rust with [rustup](https://rustup.rs) (or your distribution's `rustup` package), and the libraries listed under [Build](../desktop/app/README.md#build). The names there are Debian and Ubuntu's; Fedora and Arch call them a little differently.
+1. Install Rust with [rustup](https://rustup.rs), and the libraries and a C compiler:
+   - Debian, Ubuntu: `sudo apt install build-essential libudev-dev libdbus-1-dev pkg-config libgtk-3-dev libxdo-dev libayatana-appindicator3-dev`
+   - Fedora: `sudo dnf install gcc systemd-devel dbus-devel pkgconf-pkg-config gtk3-devel libxdo-devel libayatana-appindicator-gtk3-devel`
+   - Arch: `sudo pacman -S base-devel systemd-libs dbus gtk3 xdotool libayatana-appindicator`
 2. In a new terminal:
    ```bash
-   cargo install --git https://github.com/arudaev/duckwalk duckwalk
+   cargo install --locked --git https://github.com/arudaev/duckwalk duckwalk
    duckwalk
    ```
 
 Once v0.1 is out, you can download `duckwalk-desktop-linux-x64` from the [releases](https://github.com/arudaev/duckwalk/releases) instead: move it to a folder where it can stay (it starts from there at every login) and make it executable with `chmod +x`.
 
-On GNOME without the [AppIndicator extension](https://extensions.gnome.org/extension/615/appindicator-support/) (Fedora, for example), Harold doesn't show in the top bar, but the app still runs.
-
-The Linux build hasn't been tested over USB yet; if it can't reach the Flipper there, use Bluetooth, and please [tell us](https://github.com/arudaev/duckwalk/issues/new/choose).
+On GNOME without the [AppIndicator extension](https://extensions.gnome.org/extension/615/appindicator-support/) (Fedora, for example), Harold doesn't show in the top bar, but the app still runs. On Fedora: `sudo dnf install gnome-shell-extension-appindicator`, turn it on in the Extensions app, then log out and in.
 
 #### Join the `input` group
 
@@ -146,35 +145,46 @@ The app sees your input through `/dev/input/`, which only the `input` group may 
 sudo usermod -aG input $USER
 ```
 
-Then log out and in again. Be aware that every program you run can then read your keyboard and mouse; to undo it later, `sudo gpasswd -d $USER input`. Without the group, the app says it can't read any input device, and Harold walks on his timer.
+Then log out and in again. Every program you run can then read your keyboard and mouse; to undo it, `sudo gpasswd -d $USER input`. Without the group, the app says it can't read any input device, and Harold walks on his timer.
+
+#### Over USB: let the app reach Duckwalk
+
+Over USB, the app talks to Duckwalk through `/dev/hidraw`, which on most systems only root may open. This rule lets whoever is logged in open Duckwalk's own device (USB ID `1209:d0c4`) and nothing else:
+
+```bash
+echo 'SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="d0c4", TAG+="uaccess"' | sudo tee /etc/udev/rules.d/70-duckwalk.rules
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
+Then unplug the Flipper and plug it back in. It hasn't been tested on Linux yet, so [tell us](https://github.com/arudaev/duckwalk/issues/new/choose) how it went; Bluetooth doesn't need it.
 
 ### Check it works
 
-With Duckwalk open on the Flipper, the corner shows **USB+PC** or **BT+PC**. Touch your mouse: the status line says **You're working**.
+With Duckwalk open on the Flipper, the corner of its screen shows **USB+PC** or **BT+PC**. Touch your mouse: the status line says **You're working**. From now on the app starts when you log in; to stop that, untick **Start at login** in Harold's menu.
 
 ## When it doesn't work
 
 | What you see | What to do |
 |---|---|
-| `ufbt launch` can't open the port, or finds no Flipper | Close qFlipper and Flipper Lab. If Duckwalk is running in USB mode, press **Back** on the Flipper. Check the cable carries data. On Linux, see step 3 |
-| The Flipper says **Error: Outdated App** | The SDK is older than your firmware: run `ufbt update`, then `ufbt launch` again |
-| The Flipper says **Error: Outdated Firmware** or **Error: Missing Imports** | Your firmware is older than the SDK: update it to the latest release with qFlipper or the Flipper mobile app, then launch again |
-| No **+PC** in the Flipper's corner | Start the desktop app; only one copy runs at a time. Over Bluetooth, the computer must be paired with "Harold" and not only with the Flipper |
-| The Flipper never says **You're working** | macOS: allow Input Monitoring and restart the app. Linux: join the `input` group and log out and in |
+| `ufbt launch` can't open the port, or finds no Flipper | Close qFlipper and Flipper Lab. If Duckwalk is running in USB mode, press **Back** on the Flipper. Unlock the Flipper, and check the cable carries data. On Linux, see [step 3](#3-linux-only-let-ufbt-reach-the-flipper) |
+| The Flipper says **Error: Outdated App**, **Outdated Firmware** or **Missing Imports** | The SDK and the firmware are out of step. Outdated App: run `ufbt update`, then `ufbt launch` again. The other two: update the firmware to the latest release with qFlipper or the Flipper mobile app, then launch again |
+| Windows calls the desktop app an unknown app | **More info**, then **Run anyway**. The download isn't signed yet; [here's why](code-signing.md) |
+| No **+PC** on the Flipper | Start the desktop app; only one copy runs at a time. Over Bluetooth, pair the computer with **Harold** (the name starts with Harold), not only with the Flipper. On Linux over USB, see [the rule above](#over-usb-let-the-app-reach-duckwalk) |
+| The Flipper never says **You're working** | macOS: [allow Input Monitoring](#allow-input-monitoring). Linux: [join the `input` group](#join-the-input-group) |
 
 Still stuck? [Open an issue](https://github.com/arudaev/duckwalk/issues/new/choose) with your system, the Flipper's firmware version and what you tried.
 
 ## Remove it
 
-**From the Flipper:** with qFlipper's file manager, delete `apps/USB/duckwalk.fap` and the folder `apps_data/duckwalk/` (settings and Bluetooth keys). If you installed it from the catalog, you can remove it in the Flipper mobile app or Flipper Lab instead. Then remove "Harold" from the computer's Bluetooth devices, if you paired him.
+**From the Flipper:** with qFlipper's file manager, delete `apps/USB/duckwalk.fap` and the folder `apps_data/duckwalk/` (settings and Bluetooth keys). If you installed it from the catalog, you can remove it in the Flipper mobile app or Flipper Lab instead. Then remove the Bluetooth device whose name starts with **Harold** from the computer, if you paired it.
 
 **The desktop app:** untick **Start at login** in Harold's menu and choose **Quit Duckwalk**. Then:
 
 - **Windows:** delete the folder `%LOCALAPPDATA%\Programs\Duckwalk`, the Start menu entry **Duckwalk**, and that folder in your user PATH (search Windows for *environment variables*). If you built it with Rust, also `cargo uninstall duckwalk`.
 - **macOS:** `brew uninstall duckwalk`, and remove Duckwalk from Input Monitoring.
-- **Linux:** `cargo uninstall duckwalk`, or delete the file you downloaded; leave the `input` group with `sudo gpasswd -d $USER input`.
+- **Linux:** `cargo uninstall duckwalk`, or delete the file you downloaded. Leave the `input` group with `sudo gpasswd -d $USER input`, and delete the rules you added in `/etc/udev/rules.d/`.
 
-If Start at login was still on, its entry stays behind: the **Duckwalk** value under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` on Windows, `~/Library/LaunchAgents/Duckwalk.plist` on macOS, `~/.config/autostart/Duckwalk.desktop` on Linux. The app also leaves a small `Duckwalk` folder in your settings folder (`%APPDATA%`, `~/Library/Application Support`, `~/.config`).
+The app also leaves a small `Duckwalk` folder in your settings folder (`%APPDATA%`, `~/Library/Application Support` or `~/.config`). If you skipped unticking **Start at login**, its entry stays too: the **Duckwalk** value under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` on Windows, `~/Library/LaunchAgents/Duckwalk.plist` on macOS, `~/.config/autostart/Duckwalk.desktop` on Linux.
 
 **The build tools:** `pipx uninstall ufbt` (or `py -m pip uninstall ufbt` on Windows), the `.ufbt` folder in your home folder, and Rust with `rustup self uninstall` if you don't need it.
 

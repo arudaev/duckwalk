@@ -10,7 +10,7 @@ It is optional. Without it, Duckwalk can't see your input and walks on its timer
 
 ## Use it
 
-To install it on Windows, macOS or Linux, follow [Install, part 2](../../docs/install.md#part-2-the-desktop-app-optional). Start Duckwalk on the Flipper, plugged in over USB or paired over Bluetooth, then start the app. There is no window: Harold appears in the tray (the menu bar on macOS) and does what he does on the Flipper: he stands while awake, waddles while he walks the pointer, shuts his eyes while asleep, opens his bill when he quacks, and stays grey while there's no Flipper. The Flipper shows **USB+PC** or **BT+PC** in the corner, and while you work its status line says **You're working**.
+To install it on Windows, macOS or Linux, follow [Install, part 2](../../docs/install.md#part-2-the-desktop-app-optional); macOS asks for Input Monitoring, and Linux needs the `input` group. Start Duckwalk on the Flipper, plugged in over USB or paired over Bluetooth, then start the app. There is no window: Harold appears in the tray (the menu bar on macOS) and does what he does on the Flipper: he stands while awake, waddles while he walks the pointer, shuts his eyes while asleep, opens his bill when he quacks, and stays grey while there's no Flipper.
 
 Harold's menu in the tray says how he's connected and whether you're working, and has:
 
@@ -20,14 +20,6 @@ Harold's menu in the tray says how he's connected and whether you're working, an
 Only one copy runs at a time. On Windows a newer download updates the installed copy; quit the running one from Harold's menu first. To remove it: [Install, Remove it](../../docs/install.md#remove-it).
 
 **Tested on Windows 11** over USB and Bluetooth. The macOS and Linux builds are new; reports are welcome.
-
-### macOS: allow Input Monitoring
-
-The app needs it to see your input; [how to allow it](../../docs/install.md#allow-input-monitoring).
-
-### Linux: join the `input` group
-
-The app reads your devices from `/dev/input/`, which only the `input` group may do; [how to join it](../../docs/install.md#join-the-input-group).
 
 ## For coding agents
 
