@@ -242,6 +242,28 @@ static void home_wander_homing(void) {
     duckwalk_apply_settings(&app);
     run_for(200);
 }
+/* Wanders until he stops for a job, caught partway through it while the
+ * pointer drifts on. */
+static void home_wander_job(void) {
+    wander_mode();
+    for(int i = 0; i < 1500 && !(app.home.at_job && app.home.job_away); i++) run_for(WALK_STEP_MS);
+    expect(app.home.at_job && app.home.job_away, "home-wander-job: he never stopped for a job");
+    WalkPoint at = keep_awake_position(&app.keep_awake);
+    run_for(400);
+    WalkPoint now = keep_awake_position(&app.keep_awake);
+    expect(app.home.job != JobNone, "home-wander-job: the job ended too soon");
+    expect(at.x != now.x || at.y != now.y, "home-wander-job: the pointer waited for him");
+}
+/* Knocked askew while wandering, the books are his next job. */
+static void home_wander_books(void) {
+    wander_mode();
+    run_for(500);
+    app.home.books_askew = true;
+    for(int i = 0; i < 1500 && !(app.home.at_job && app.home.job_away); i++) run_for(WALK_STEP_MS);
+    expect(app.home.job == JobBooks, "home-wander-books: the books weren't his next job");
+    run_for(700);
+    expect(!app.home.books_askew, "home-wander-books: the books are still askew");
+}
 static void preview_wandering(void) {
     home_wandering();
     press(InputKeyUp, InputTypeShort);
@@ -383,6 +405,8 @@ static const struct {
     {"home-job-laptop", home_job_laptop},
     {"home-wandering", home_wandering},
     {"home-wander-homing", home_wander_homing},
+    {"home-wander-job", home_wander_job},
+    {"home-wander-books", home_wander_books},
     {"home-quack", home_quack},
     {"home-working", home_working},
     {"home-bluetooth", home_bluetooth},

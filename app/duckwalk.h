@@ -56,7 +56,8 @@ typedef enum {
 } Routine;
 
 /* Harold's small jobs around the desk, one at each Subtle nudge (at his
- * seat) and one at a walk's pause (at the object he's nearest). */
+ * seat), one at a walk's pause and every so often while he wanders (at the
+ * object he's nearest). */
 typedef enum {
     JobNone,
     JobWiggle, /* a wiggle in his seat */
@@ -86,9 +87,11 @@ typedef struct {
     Job last_job; /* never the same seat job twice in a row */
     uint32_t job_start; /* when he got to it */
     uint32_t job_until;
-    bool job_away; /* a walk's job, at an object; else one at his seat */
+    bool job_away; /* a walk's or wander's job, at an object; else one at his seat */
     bool at_job; /* he got there and is at it */
     bool walk_job_done; /* one job per walk */
+    bool wander_job_set; /* wander_job_at is set for this wander */
+    uint32_t wander_job_at; /* the next job while he wanders */
     int16_t dx; /* where he is on screen, from his seat */
     uint32_t moved_at;
     bool books_askew; /* he knocked them walking past */
