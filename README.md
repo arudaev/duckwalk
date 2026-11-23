@@ -29,16 +29,17 @@ Harold lives on your desk. When you step away, he moves the mouse pointer so Tea
 
 ## Install
 
-Once v0.1 is out: open the Flipper mobile app or [Flipper Lab](https://lab.flipper.net/apps), go to **USB**, and install **Duckwalk**. It needs the official firmware, 1.5 or newer.
+**With your coding agent.** If you use a coding agent on your computer (in your terminal or code editor, not a chat in the browser), plug in the Flipper and paste this to it:
 
-<details>
-<summary>Until then, build it from source</summary>
+```text
+Install Duckwalk from https://github.com/arudaev/duckwalk on my computer and the Flipper Zero that's plugged in. Follow its install guide for coding agents, docs/agents/install.md: tell me what it needs and whether it's safe, and ask me before you install or change anything.
+```
 
-You need Python 3.8+, Flipper's build tool ufbt and a Flipper on the official firmware. The [install guide](docs/install.md) has the steps for Windows, macOS and Linux, and the optional desktop app.
+It follows the [install guide for coding agents](docs/agents/install.md): it explains what Duckwalk needs and whether it's safe, and asks before every change.
 
-</details>
+**By hand.** The [install guide](docs/install.md) takes you through it on Windows, macOS and Linux, with the optional desktop app. Once v0.1 is out, you can also install it from the **USB** category of the Flipper mobile app or [Flipper Lab](https://lab.flipper.net/apps).
 
-On the first launch Harold asks how to reach the computer: **Left** for USB, **Right** for Bluetooth. Bluetooth walks you through pairing on the Flipper's screen.
+Duckwalk needs the official Flipper firmware, 1.5.1 or newer. On the first launch Harold asks how to reach the computer: **Left** for USB, **Right** for Bluetooth. Bluetooth walks you through pairing on the Flipper's screen.
 
 ## Use
 
