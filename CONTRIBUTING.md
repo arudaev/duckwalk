@@ -70,7 +70,7 @@ I'm not on team AI or team no-AI. I care about the result. If an AI coding agent
 - The PR is complete: a clear description, the issue linked, and a review requested.
 - It has no AI watermarks, no generated filler, and nothing you wouldn't put your own name to.
 
-What I don't want is a quick contribution that was easy to generate and never tested. Read what you submit, run it, and treat it as your own work, because it is. If you hand the work to an agent, point it at [AGENTS.md](AGENTS.md) first.
+What I don't want is a quick contribution that was easy to generate and never tested. Read what you submit, run it, and treat it as your own work, because it is. If you hand the work to an agent, point it at [AGENTS.md](AGENTS.md) first. An agent that installed Duckwalk for you and found the fix for a failed install follows [Fixing it](docs/agents/install.md#fixing-it) in the agent install guide.
 
 ## More
 

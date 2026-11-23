@@ -2,6 +2,8 @@
 
 [Docs home](README.md) · [Next: User guide →](guide.md)
 
+Rather have your coding agent do it? Point it at the [install guide for coding agents](agents/install.md).
+
 Duckwalk comes in two parts. **Part 1** puts Harold on your Flipper Zero, and that is all he needs to keep your computer awake. **Part 2**, the desktop app, is optional: it tells Harold when you're at the computer, so he lets go of the pointer while you work.
 
 ## Before you start
@@ -156,7 +158,7 @@ sudo cp 70-duckwalk.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
-`cat` shows what you're installing: a few comment lines and one rule that names `1209` and `d0c4`. If you cloned the code, the same file is in `desktop/app/linux/`. Without the rule, Harold's menu says **USB blocked: install Duckwalk's udev rule**. Bluetooth doesn't need it: if the Flipper still never shows **USB+PC**, use Bluetooth and [tell us](https://github.com/arudaev/duckwalk/issues/new/choose).
+`cat` shows what you're installing: a few comment lines and one rule that names `1209` and `d0c4`. If you cloned the code, the same file is in `desktop/app/linux/`. Without the rule, Harold's menu says **USB blocked: install Duckwalk's udev rule**. The rule hasn't been tested on a Linux computer yet: if the Flipper never shows **USB+PC**, use Bluetooth, which doesn't need it, and [tell us](https://github.com/arudaev/duckwalk/issues/new?template=6-install-report.yml).
 
 When you're done with both, log out and in again, then unplug the Flipper and plug it back in.
 
@@ -174,7 +176,7 @@ With Duckwalk open on the Flipper, the corner of its screen shows **USB+PC** or 
 | No **+PC** on the Flipper | Start the desktop app; only one copy runs at a time. Over Bluetooth, pair the computer with **Harold** (the name starts with Harold), not only with the Flipper. On Linux over USB, see [the rule above](#over-usb-let-the-app-reach-duckwalk) |
 | The Flipper never says **You're working** | macOS: [allow Input Monitoring](#allow-input-monitoring). Linux: [join the `input` group](#join-the-input-group) |
 
-Still stuck? [Open an issue](https://github.com/arudaev/duckwalk/issues/new/choose) with your system, the Flipper's firmware version and what you tried.
+Still stuck? Open an [install report](https://github.com/arudaev/duckwalk/issues/new?template=6-install-report.yml) with your system, the Flipper's firmware version and what you tried.
 
 ## Remove it
 

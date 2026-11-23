@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "duckwalk",
   "displayName": "Duckwalk",
-  "version": "0.1.0",
-  "description": "Keep your computer awake during long agent tasks with Duckwalk, a Flipper Zero app. Adds the duckwalk skill and the MCP server from Duckwalk's desktop app: status, wake, sleep, set_mode.",
+  "version": "0.2.0",
+  "description": "Keep your computer awake during long agent tasks with Duckwalk, a Flipper Zero app. Adds the duckwalk skill, which also installs Duckwalk by its install guide for coding agents, and the MCP server from Duckwalk's desktop app: status, wake, sleep, set_mode.",
   "author": {
     "name": "Alexander Rudaev",
     "url": "https://github.com/arudaev"
