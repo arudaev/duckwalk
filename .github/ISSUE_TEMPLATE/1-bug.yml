@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting. The Flipper's firmware version and your computer's operating system matter most: USB and Bluetooth behave differently on each.
+        Thanks for reporting. Couldn't install it? Use the [install report](https://github.com/arudaev/duckwalk/issues/new?template=6-install-report.yml) instead. The Flipper's firmware version and your computer's operating system matter most: USB and Bluetooth behave differently on each.
   - type: textarea
     id: what
     attributes:

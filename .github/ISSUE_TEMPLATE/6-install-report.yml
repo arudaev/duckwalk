@@ -1,0 +1,92 @@
+name: Install report
+description: Installing Duckwalk failed, by hand or with a coding agent.
+title: "Install: "
+labels: [type:bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Sorry it didn't work. First check [When it doesn't work](https://github.com/arudaev/duckwalk/blob/main/docs/install.md#when-it-doesnt-work) in the install guide; most problems have a fix there.
+        This issue is public: before you post, replace your user name, home folder paths, computer name and the Flipper's name with placeholders like `<home>` or `<flipper-name>`. A security problem goes to a [private report](https://github.com/arudaev/duckwalk/security/advisories/new), not here.
+  - type: dropdown
+    id: part
+    attributes:
+      label: What were you installing?
+      options:
+        - The Flipper app
+        - The desktop app
+        - Both
+    validations:
+      required: true
+  - type: dropdown
+    id: how
+    attributes:
+      label: How?
+      options:
+        - By hand, following the install guide
+        - With a coding agent
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Computer
+      description: Operating system, version and architecture.
+      placeholder: "Ubuntu 24.04, x86_64"
+    validations:
+      required: true
+  - type: textarea
+    id: attempts
+    attributes:
+      label: What happened
+      description: Each step you or the agent ran, in order, with what it did. Mark what you saw on the Flipper's screen.
+      placeholder: |
+        1. `pipx install ufbt`: worked
+        2. `ufbt launch`: "permission denied" on the serial port
+        3. Added the udev rule from step 3, replugged: same error
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output
+      description: The first error and about 20 lines before it, and the last line, with personal data replaced. No output? Write "none".
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Which Duckwalk
+      description: The commit you built, the release, the Apps Catalog, Homebrew, or the date you downloaded the ZIP.
+  - type: input
+    id: firmware
+    attributes:
+      label: Flipper firmware
+      description: qFlipper or the Flipper mobile app shows it.
+      placeholder: "1.5.1 (official)"
+  - type: textarea
+    id: tools
+    attributes:
+      label: Tools
+      description: Python, ufbt and how you installed it, the SDK channel and version from `ufbt status`, Rust, Homebrew; whatever applies.
+  - type: dropdown
+    id: connection
+    attributes:
+      label: Connection
+      options:
+        - USB
+        - Bluetooth
+        - Didn't get that far
+  - type: textarea
+    id: fix
+    attributes:
+      label: What might fix it
+      description: Your best guess and what makes you think so, if you have one.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Before posting
+      options:
+        - label: I replaced my user name, paths, computer name, the Flipper's name, serial numbers, addresses and any tokens or passwords.
+          required: true

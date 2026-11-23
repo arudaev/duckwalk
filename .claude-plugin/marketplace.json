@@ -11,7 +11,6 @@
       "source": "./",
       "displayName": "Duckwalk",
       "description": "The duckwalk skill and the MCP server from Duckwalk's desktop app: status, wake, sleep, set_mode.",
-      "version": "0.1.0",
       "homepage": "https://arudaev.github.io/duckwalk/",
       "repository": "https://github.com/arudaev/duckwalk",
       "license": "GPL-3.0-only",

@@ -1,6 +1,6 @@
 # Agent guide
 
-Installing Duckwalk for someone? Follow [docs/agents/install.md](docs/agents/install.md); its limits come first. The rest of this page is for changing the code; an installing agent commits, pushes or opens issues and pull requests only as that guide allows.
+Installing Duckwalk for someone? Follow [docs/agents/install.md](docs/agents/install.md) to install and test it on their computer; its limits come first. The rest of this page is for changing the code; an installing agent commits, pushes or opens issues and pull requests only as that guide allows.
 
 Read by Codex, Claude Code (through `CLAUDE.md`) and other coding agents. Humans: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
