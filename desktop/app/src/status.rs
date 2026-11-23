@@ -20,6 +20,7 @@ pub struct Status {
     connection: AtomicU8,
     idle_s: AtomicU32,
     asleep: AtomicBool,
+    usb_denied: AtomicBool,
 }
 
 impl Status {
@@ -28,6 +29,7 @@ impl Status {
             connection: AtomicU8::new(0),
             idle_s: AtomicU32::new(UNWATCHED),
             asleep: AtomicBool::new(false),
+            usb_denied: AtomicBool::new(false),
         }
     }
 
@@ -46,6 +48,12 @@ impl Status {
     /// Duckwalk said Harold is asleep (keep-awake off).
     pub fn set_asleep(&self, asleep: bool) {
         self.asleep.store(asleep, Ordering::Relaxed);
+    }
+
+    /// Duckwalk is plugged in, but this user may not open it over USB
+    /// (Linux without the udev rule).
+    pub fn set_usb_denied(&self, denied: bool) {
+        self.usb_denied.store(denied, Ordering::Relaxed);
     }
 
     /// Seconds since your last own input, or UNWATCHED.
@@ -73,6 +81,9 @@ impl Status {
             ""
         };
         match self.connection() {
+            Connection::None if self.usb_denied.load(Ordering::Relaxed) => {
+                format!("USB blocked: install Duckwalk's udev rule; {you}")
+            }
             Connection::None => format!("Looking for Harold; {you}"),
             Connection::Usb => format!("Harold on USB{asleep}; {you}"),
             Connection::Bluetooth => format!("Harold on Bluetooth{asleep}; {you}"),
@@ -94,6 +105,10 @@ mod tests {
         s.set_connection(Connection::Usb);
         s.set_idle_s(1);
         assert_eq!(s.line(), "Harold on USB; you're working");
+        s.set_connection(Connection::None);
+        s.set_usb_denied(true);
+        assert_eq!(s.line(), "USB blocked: install Duckwalk's udev rule; you're working");
+        s.set_usb_denied(false);
         s.set_connection(Connection::Bluetooth);
         s.set_idle_s(42);
         assert_eq!(s.line(), "Harold on Bluetooth; idle 42 s");
