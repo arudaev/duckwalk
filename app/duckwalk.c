@@ -195,7 +195,7 @@ int32_t duckwalk_app(void* p) {
     app->active_at = furi_get_tick();
     /* Deadlines start now, not at 0: a Flipper up for over 24.8 days would
      * read a 0 as still to come. */
-    app->home.quack_until = app->home.waddle_until = app->home.step_at = app->active_at;
+    app->home.quack_until = app->home.job_until = app->home.step_at = app->active_at;
     app->link_seen_at = app->active_at;
     app->remote.lit_until = app->trail.at = app->active_at;
     app->remote.page = RemotePageMenu;

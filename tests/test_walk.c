@@ -53,6 +53,12 @@ static void check_one(const WalkPath* path, WalkLength length, uint32_t seed) {
     CHECK(walk_reach(path) > 0, "seed %lu: reach 0", (unsigned long)seed);
     /* The planned pause: at least 8 steps standing still. */
     CHECK(longest_hold >= 7, "seed %lu: longest pause %d steps", (unsigned long)seed, longest_hold);
+    /* pause_at marks it: the point there holds for the pause. */
+    CHECK(path->pause_at > 0 && path->pause_at + 8 < path->count, "seed %lu: pause at %u of %u", (unsigned long)seed, path->pause_at, path->count);
+    for(uint16_t k = 1; k < 8 && path->pause_at + 8 < path->count; k++) {
+        WalkPoint a = path->points[path->pause_at], b = path->points[path->pause_at + k];
+        CHECK(a.x == b.x && a.y == b.y, "seed %lu: pause_at %u isn't the pause", (unsigned long)seed, path->pause_at);
+    }
 }
 
 int main(void) {
@@ -92,6 +98,7 @@ int main(void) {
     /* The pairing screen's circle comes back to the start. */
     walk_circle(&path, 24, 40);
     CHECK(path.count == 41, "circle has %u points", path.count);
+    CHECK(path.pause_at == path.count, "circle pauses at %u", path.pause_at);
     CHECK(path.points[0].x == 0 && path.points[0].y == 0, "circle starts off the start");
     CHECK(path.points[40].x == 0 && path.points[40].y == 0, "circle ends at (%d,%d)", path.points[40].x, path.points[40].y);
     CHECK(walk_reach(&path) == 48, "circle reach %d", walk_reach(&path));

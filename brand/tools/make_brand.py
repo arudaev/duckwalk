@@ -2,7 +2,8 @@
 
 Harold is a rubber duck, the one from VOYAGER // 56K. His drawings are text
 grids in brand/source, '#' for ink and '.' for paper, 24x24, facing right:
-harold-24.txt (idle), harold-24-blink.txt and harold-24-quack.txt. Edit a
+harold-24.txt (idle), harold-24-blink.txt, harold-24-quack.txt and
+harold-24-reach.txt. Edit a
 pixel there and run this to redraw every sprite:
 
     python brand/tools/make_brand.py
@@ -18,6 +19,7 @@ copy facing left:
     bob    idle one pixel higher: a walking or typing bounce
     blink  harold-24-blink.txt, eyes closed; also used while asleep
     quack  harold-24-quack.txt, the bill open
+    reach  harold-24-reach.txt, a wing out in front: his desk jobs
 
 Each pose also gets a mask ("_mask"): Harold filled in solid, so the app can
 blank out what he stands in front of before drawing him.
@@ -109,10 +111,11 @@ def main():
         "bob": headroom(idle, raised=True),
         "blink": headroom(load("harold-24-blink.txt")),
         "quack": headroom(load("harold-24-quack.txt")),
+        "reach": headroom(load("harold-24-reach.txt")),
     }
     # The open bill lets a fill leak inside, so every mask is filled in
     # together with the idle body at the same height.
-    body = {"idle": poses["idle"], "bob": poses["bob"], "blink": poses["idle"], "quack": poses["idle"]}
+    body = {"idle": poses["idle"], "bob": poses["bob"], "blink": poses["idle"], "quack": poses["idle"], "reach": poses["idle"]}
     sprites, masks = {}, {}
     for name, bm in poses.items():
         filled = silhouette(bm)

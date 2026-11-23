@@ -166,12 +166,67 @@ static void home_walking_laptop(void) {
         keep_awake_walk_now(&app.keep_awake);
         while(keep_awake_is_walking(&app.keep_awake) && !over) {
             run_for(WALK_STEP_MS);
-            int32_t reach = keep_awake_reach(&app.keep_awake);
-            over = reach > 0 && keep_awake_position(&app.keep_awake).x * 20 / reach >= 17;
+            over = app.home.dx >= 17;
         }
         if(!over) run_for(2000);
     }
     expect(over, "home-walking-laptop: Harold never reached the laptop");
+}
+/* A Subtle nudge's job at his seat, caught partway through. */
+static void seat_job(Job job, uint32_t ms) {
+    app.settings.values[SettingMode] = KeepAwakeSubtle;
+    duckwalk_apply_settings(&app);
+    run_for(500);
+    app.home.last_job = JobNone;
+    do {
+        home_on_move(&app);
+    } while(app.home.job != job);
+    run_for(ms);
+    expect(app.home.job == job, "a seat job ended too soon");
+}
+static void home_job_stretch(void) {
+    seat_job(JobStretch, 500);
+}
+static void home_job_tap(void) {
+    seat_job(JobTap, 400);
+}
+static void home_job_top_up(void) {
+    seat_job(JobTopUp, 400);
+}
+/* Walks until one stops for a job at its pause, at the object wanted. */
+static void walk_job(Job job, uint32_t ms) {
+    keep_awake_set_walk_length(&app.keep_awake, WalkLengthLong);
+    for(int walk = 0; walk < 200; walk++) {
+        keep_awake_walk_now(&app.keep_awake);
+        while(keep_awake_is_walking(&app.keep_awake) && !(app.home.at_job && app.home.job_away)) {
+            run_for(WALK_STEP_MS);
+        }
+        if(app.home.at_job && app.home.job_away && app.home.job == job) {
+            run_for(ms);
+            expect(app.home.job == job, "a walk's job ended too soon");
+            return;
+        }
+        while(keep_awake_is_walking(&app.keep_awake)) run_for(WALK_STEP_MS);
+        run_for(500);
+    }
+    expect(false, "no walk stopped for the job wanted");
+}
+static void home_job_water(void) {
+    walk_job(JobWater, 300);
+}
+static void home_job_books(void) {
+    walk_job(JobBooks, 200);
+    expect(app.home.books_askew, "home-job-books: the books weren't askew");
+}
+static void home_job_books_done(void) {
+    walk_job(JobBooks, 700);
+    expect(!app.home.books_askew, "home-job-books-done: the books are still askew");
+}
+static void home_job_mug(void) {
+    walk_job(JobTopUp, 300);
+}
+static void home_job_laptop(void) {
+    walk_job(JobTap, 300);
 }
 static void wander_mode(void) {
     app.settings.values[SettingMode] = KeepAwakeWander;
@@ -318,6 +373,14 @@ static const struct {
     {"home-stopped", home_stopped},
     {"home-walking", home_walking},
     {"home-walking-laptop", home_walking_laptop},
+    {"home-job-stretch", home_job_stretch},
+    {"home-job-tap", home_job_tap},
+    {"home-job-top-up", home_job_top_up},
+    {"home-job-water", home_job_water},
+    {"home-job-books", home_job_books},
+    {"home-job-books-done", home_job_books_done},
+    {"home-job-mug", home_job_mug},
+    {"home-job-laptop", home_job_laptop},
     {"home-wandering", home_wandering},
     {"home-wander-homing", home_wander_homing},
     {"home-quack", home_quack},

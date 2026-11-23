@@ -1,6 +1,6 @@
 v0.1:
  - First release
- - Harold at his desk: reads code, types, sips coffee, hunts bugs and quacks at them
+ - Harold at his desk: reads code, types, sips coffee, hunts bugs and quacks at them, and does small jobs as he keeps the computer awake (waters the plant, straightens his books, tops up his coffee)
  - Keep-awake modes: Walk (a short random walk every few minutes), Subtle (one pixel out and back) and Wander (the pointer drifts and glides back to where it started)
  - Over USB or Bluetooth, with a connection check on the Down button; it also shows whether the desktop app runs, with a QR code for where to get it
  - Settings: how often, how far, work hours only, Stop after 1 to 8 hours, sound and vibration
