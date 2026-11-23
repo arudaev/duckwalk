@@ -61,7 +61,7 @@ cargo run --release -- --verbose --no-install
 
 ## Build
 
-You need Rust (stable). On Linux, also `libudev-dev`, `libdbus-1-dev`, `pkg-config`, and for the tray `libgtk-3-dev`, `libxdo-dev` and `libayatana-appindicator3-dev`.
+You need Rust (stable). On Linux, also `libudev-dev`, `libdbus-1-dev`, `pkg-config`, and for the tray `libgtk-3-dev` and `libayatana-appindicator3-dev`.
 
 ```bash
 cargo test
