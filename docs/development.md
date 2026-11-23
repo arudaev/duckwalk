@@ -60,7 +60,7 @@ cargo test
 cargo run --release -- --verbose --no-install
 ```
 
-Rust (stable); on Linux also `libudev-dev`, `libdbus-1-dev`, `pkg-config`, `libgtk-3-dev`, `libxdo-dev` and `libayatana-appindicator3-dev`. `--verbose` lists every input device as yours or Duckwalk's; `--pretend-working` tells Harold you are working all the time, to check the link. See [desktop/app/README.md](../desktop/app/README.md).
+Rust (stable); on Linux also `libudev-dev`, `libdbus-1-dev`, `pkg-config`, `libgtk-3-dev` and `libayatana-appindicator3-dev`. `--verbose` lists every input device as yours or Duckwalk's; `--pretend-working` tells Harold you are working all the time, to check the link. See [desktop/app/README.md](../desktop/app/README.md).
 
 ## Bluetooth
 

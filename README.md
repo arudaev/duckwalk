@@ -34,14 +34,7 @@ Once v0.1 is out: open the Flipper mobile app or [Flipper Lab](https://lab.flipp
 <details>
 <summary>Until then, build it from source</summary>
 
-You need Python 3.8+ and a Flipper on the official firmware.
-
-```bash
-python -m pip install --upgrade ufbt
-git clone https://github.com/arudaev/duckwalk.git
-cd duckwalk/app
-ufbt launch      # builds it and starts it on a connected Flipper (close qFlipper first)
-```
+You need Python 3.8+, Flipper's build tool ufbt and a Flipper on the official firmware. The [install guide](docs/install.md) has the steps for Windows, macOS and Linux, and the optional desktop app.
 
 </details>
 

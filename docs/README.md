@@ -1,6 +1,6 @@
 # Duckwalk docs
 
-[← Duckwalk](../README.md) · [Start: User guide →](guide.md)
+[← Duckwalk](../README.md) · [Start: Install →](install.md)
 
 Start here. Every page about Duckwalk is linked from this one, in reading order, and each page links back here and on to the next.
 
@@ -14,10 +14,11 @@ Start here. Every page about Duckwalk is linked from this one, in reading order,
 
 | Order | Page | Question answered |
 |---|---|---|
+| **00** | [Install](install.md) | How do I get Harold onto my Flipper, and the desktop app onto my computer? |
 | **01** | [User guide](guide.md) | What does every screen and button do, and how do I connect over USB or Bluetooth? |
 | **02** | [Desktop app](../desktop/app/README.md) | How does Harold know I'm back at the computer? |
 
-What Duckwalk is and how to install it: the [README](../README.md).
+What Duckwalk is: the [README](../README.md).
 
 ## I want to work on Duckwalk
 
