@@ -156,7 +156,7 @@ echo 'SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="d0c4", TA
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
-It hasn't been tested on Linux yet: if the Flipper never shows **USB+PC**, use Bluetooth, which doesn't need it, and [tell us](https://github.com/arudaev/duckwalk/issues/new/choose).
+It hasn't been tested on Linux yet: if the Flipper never shows **USB+PC**, use Bluetooth, which doesn't need it, and [tell us](https://github.com/arudaev/duckwalk/issues/new?template=6-install-report.yml).
 
 When you're done with both, log out and in again, then unplug the Flipper and plug it back in.
 

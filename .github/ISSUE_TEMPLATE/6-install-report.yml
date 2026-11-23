@@ -50,7 +50,7 @@ body:
     id: logs
     attributes:
       label: Output
-      description: The first error and about 20 lines before it, and the last line. With personal data replaced.
+      description: The first error and about 20 lines before it, and the last line, with personal data replaced. No output? Write "none".
       render: text
     validations:
       required: true
