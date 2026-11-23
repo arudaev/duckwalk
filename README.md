@@ -29,15 +29,15 @@ Harold lives on your desk. When you step away, he moves the mouse pointer so Tea
 
 ## Install
 
-**With your coding agent.** If you use a coding agent on your computer (in your terminal or code editor, not a chat in the browser), plug in the Flipper and paste this to it:
+**With your coding agent.** Your own coding agent, working on your computer (in your terminal or code editor, not a chat in the browser), can check the code for you, install everything, and test that it really works on your computer and your Flipper. If something doesn't, it helps you report it, so it gets fixed for setups like yours. Plug in the Flipper and paste this to it:
 
 ```text
-Install Duckwalk from https://github.com/arudaev/duckwalk on my computer and the Flipper Zero that's plugged in. Follow its install guide for coding agents, docs/agents/install.md: tell me what it needs and whether it's safe, and ask me before you install or change anything.
+Install Duckwalk on this computer and my plugged-in Flipper Zero by following https://github.com/arudaev/duckwalk/blob/main/docs/agents/install.md. Check the code for me, ask before you change anything, test that it all works here, and help me report anything that doesn't to the maintainer.
 ```
 
-It follows the [install guide for coding agents](docs/agents/install.md): it explains what Duckwalk needs and whether it's safe, and asks before every change.
+It follows the [install guide for coding agents](docs/agents/install.md) and asks you before every change.
 
-**By hand.** The [install guide](docs/install.md) takes you through it on Windows, macOS and Linux, with the optional desktop app. Once Duckwalk is in the Flipper Apps Catalog, you can also install it from the **USB** category of the Flipper mobile app or [Flipper Lab](https://lab.flipper.net/apps).
+**By hand.** Prefer to do it yourself? The [install guide](docs/install.md) takes you through it on Windows, macOS and Linux, with the optional desktop app. Once Duckwalk is in the Flipper Apps Catalog, you can also install it from the **USB** category of the Flipper mobile app or [Flipper Lab](https://lab.flipper.net/apps).
 
 Duckwalk needs the official Flipper firmware, 1.5.1 or newer. On the first launch Harold asks how to reach the computer: **Left** for USB, **Right** for Bluetooth. Bluetooth walks you through pairing on the Flipper's screen.
 
