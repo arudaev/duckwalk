@@ -20,7 +20,7 @@ v0.1 isn't released yet, so for now you build the app yourself. It takes 10 to 2
 
 **Windows**
 
-1. Install Python from [python.org](https://www.python.org/downloads/). If the installer shows **Add python.exe to PATH**, tick it, and leave the rest as it is. (If typing `python` opens the Microsoft Store, Python isn't installed yet; that's only a shortcut.) Part 1 hasn't been tested on Windows on ARM yet.
+1. Install Python from [python.org](https://www.python.org/downloads/). If the installer shows **Add python.exe to PATH**, tick it, and leave the rest as it is. (If typing `python` opens the Microsoft Store, Python isn't installed yet; that's only a shortcut.) On Windows on ARM, any of python.org's Windows installers works; ufbt's compiler runs under Windows' x64 emulation.
 2. In a new terminal:
    ```powershell
    py -m pip install --upgrade ufbt
