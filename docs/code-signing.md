@@ -26,7 +26,7 @@ Every change reaches `main` through a pull request. Every release is approved by
 
 ## Privacy
 
-Duckwalk doesn't send any information to other networked systems. The desktop app talks only to the Flipper on your desk, over USB or Bluetooth, and sends it one number: how long ago you last used your own mouse or keyboard. Nothing is saved, and nothing leaves your computer.
+Duckwalk doesn't send any information to other networked systems. The desktop app talks only to the Flipper on your desk, over USB or Bluetooth, and sends it how long ago you last used your own mouse or keyboard, and on Windows where the pointer and the active window are, so Harold's walks stay inside it. Nothing is saved, and nothing leaves your computer.
 
 ---
 
