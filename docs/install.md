@@ -147,14 +147,16 @@ Every program you run can then read your keyboard and mouse; on a shared or work
 
 #### Over USB: let the app reach Duckwalk
 
-Over USB, the app talks to Duckwalk through `/dev/hidraw`, which on most systems only root may open. This rule lets whoever is logged in open Duckwalk's own device (USB ID `1209:d0c4`) and nothing else:
+Over USB, the app talks to Duckwalk through `/dev/hidraw`, which on most systems only root may open. Duckwalk's udev rule lets whoever is logged in open Duckwalk's own device (USB ID `1209:d0c4`) and nothing else:
 
 ```bash
-echo 'SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="d0c4", TAG+="uaccess"' | sudo tee /etc/udev/rules.d/70-duckwalk.rules
+curl -fsSL https://raw.githubusercontent.com/arudaev/duckwalk/main/desktop/app/linux/70-duckwalk.rules -o 70-duckwalk.rules
+cat 70-duckwalk.rules
+sudo cp 70-duckwalk.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
-It hasn't been tested on Linux yet: if the Flipper never shows **USB+PC**, use Bluetooth, which doesn't need it, and [tell us](https://github.com/arudaev/duckwalk/issues/new/choose).
+`cat` shows what you're installing: a few comment lines and one rule that names `1209` and `d0c4`. If you cloned the code, the same file is in `desktop/app/linux/`. Without the rule, Harold's menu says **USB blocked: install Duckwalk's udev rule**. Bluetooth doesn't need it: if the Flipper still never shows **USB+PC**, use Bluetooth and [tell us](https://github.com/arudaev/duckwalk/issues/new/choose).
 
 When you're done with both, log out and in again, then unplug the Flipper and plug it back in.
 

@@ -1,0 +1,10 @@
+# Duckwalk's desktop app talks to the Flipper over /dev/hidraw*, which most
+# Linux systems let only root open. This rule lets whoever is logged in at
+# the computer open Duckwalk's own device (pid.codes 1209:d0c4) and nothing
+# else. It sorts before systemd's 73-seat-late.rules, which applies the tag.
+#
+# Install: sudo cp 70-duckwalk.rules /etc/udev/rules.d/
+#          sudo udevadm control --reload-rules && sudo udevadm trigger
+# Then unplug the Flipper and plug it back in.
+
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="d0c4", TAG+="uaccess"

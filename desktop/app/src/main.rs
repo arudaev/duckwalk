@@ -267,6 +267,7 @@ async fn link(verbose: bool, pretend_working: bool, quit: Arc<Notify>) {
         } else {
             Connection::None
         });
+        STATUS.set_usb_denied(usb.denied());
         STATUS.set_asleep(flipper::HAROLD.heard() && !flipper::HAROLD.awake());
         STATUS.set_idle_s(if activity.is_watching() || pretend_working {
             idle.as_secs().min(u32::MAX as u64 - 1) as u32
