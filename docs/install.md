@@ -12,7 +12,7 @@ Duckwalk comes in two parts. **Part 1** puts Harold on your Flipper Zero, and th
 
 ## Part 1: the Flipper app
 
-v0.1 isn't released yet, so for now you build the app yourself. It takes 10 to 20 minutes the first time, most of it a one-off download.
+Until v0.1 is released, you build the app yourself. It takes 10 to 20 minutes the first time, most of it a one-off download.
 
 ### 1. Install Python and ufbt
 
@@ -83,7 +83,7 @@ sudo udevadm control --reload-rules && sudo udevadm trigger
 
 ### Once v0.1 is out
 
-You won't need to build it. Install **Duckwalk** from the **USB** category of the Flipper mobile app or [Flipper Lab](https://lab.flipper.net/apps). Or download `duckwalk.fap` from the [releases](https://github.com/arudaev/duckwalk/releases) and copy it to `apps/USB/` on the Flipper's SD card with qFlipper.
+You won't need to build it. Once Duckwalk is in the Flipper Apps Catalog, install it from the **USB** category of the Flipper mobile app or [Flipper Lab](https://lab.flipper.net/apps). Or download `duckwalk.fap` from the [releases](https://github.com/arudaev/duckwalk/releases) and copy it to `apps/USB/` on the Flipper's SD card with qFlipper.
 
 ## Part 2: the desktop app (optional)
 
@@ -113,7 +113,7 @@ brew install --HEAD arudaev/tap/duckwalk
 duckwalk
 ```
 
-The build takes a few minutes. Harold appears in the menu bar. From then on the app starts when you log in. Once v0.1 is out, there are also ready-made files on the [releases](https://github.com/arudaev/duckwalk/releases) page: `duckwalk-desktop-macos-arm64` (Apple silicon) or `-macos-x64` (Intel); make the file executable with `chmod +x`, keep it in a folder where it can stay, and run it. macOS refuses it the first time: choose **Open Anyway** under **System Settings > Privacy & Security**, then run it again.
+The build takes a few minutes. Harold appears in the menu bar. From then on the app starts when you log in. Once v0.1 is out, `brew install arudaev/tap/duckwalk` (without `--HEAD`) installs the release, and there are also ready-made files on the [releases](https://github.com/arudaev/duckwalk/releases) page: `duckwalk-desktop-macos-arm64` (Apple silicon) or `-macos-x64` (Intel); make the file executable with `chmod +x`, keep it in a folder where it can stay, and run it. macOS refuses it the first time: choose **Open Anyway** under **System Settings > Privacy & Security**, then run it again.
 
 #### Allow Input Monitoring
 
