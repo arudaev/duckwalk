@@ -2,6 +2,8 @@
 
 [Docs home](README.md) · [Next: User guide →](guide.md)
 
+Rather have your coding agent do it? Point it at the [install guide for coding agents](agents/install.md).
+
 Duckwalk comes in two parts. **Part 1** puts Harold on your Flipper Zero, and that is all he needs to keep your computer awake. **Part 2**, the desktop app, is optional: it tells Harold when you're at the computer, so he lets go of the pointer while you work.
 
 ## Before you start

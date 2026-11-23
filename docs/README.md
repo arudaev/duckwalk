@@ -18,7 +18,7 @@ Start here. Every page about Duckwalk is linked from this one, in reading order,
 | **01** | [User guide](guide.md) | What does every screen and button do, and how do I connect over USB or Bluetooth? |
 | **02** | [Desktop app](../desktop/app/README.md) | How does Harold know I'm back at the computer? |
 
-What Duckwalk is: the [README](../README.md).
+What Duckwalk is: the [README](../README.md). Installing with a coding agent: the [agent install guide](agents/install.md).
 
 ## I want to work on Duckwalk
 

@@ -1,5 +1,7 @@
 # Agent guide
 
+Installing Duckwalk for someone? Follow [docs/agents/install.md](docs/agents/install.md). The rules below still apply; the parts about issues and pull requests are for changing the code.
+
 Read by Codex, Claude Code (through `CLAUDE.md`) and other coding agents. Humans: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## What this is
