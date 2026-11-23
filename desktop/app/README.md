@@ -31,7 +31,7 @@ A coding agent can check on Harold and switch keep-awake on and off, for example
 | **Codex** | `codex mcp add duckwalk -- duckwalk mcp` for the MCP server, and `npx skills add arudaev/duckwalk` for the skill |
 | **Others** | Any MCP client: a stdio server, command `duckwalk`, argument `mcp`. The skill: `npx skills add arudaev/duckwalk` |
 
-Then ask your agent to set Duckwalk up: the skill sends it to the [install guide for coding agents](../../docs/agents/install.md), which has it explain everything first and install only with your OK. On Windows the app puts its folder on your PATH, so `duckwalk` works by name in new terminals.
+Then ask your agent to set Duckwalk up: the skill sends it to the [install guide for coding agents](../../docs/agents/install.md), which has it check the code for you, install only with your OK, test that it all works on your computer, and help you report anything that doesn't. On Windows the app puts its folder on your PATH, so `duckwalk` works by name in new terminals.
 
 | Tool | Does |
 |---|---|

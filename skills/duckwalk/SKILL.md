@@ -12,7 +12,7 @@ Duckwalk is a Flipper Zero app: Harold, a rubber debugging duck, keeps a compute
 
 ## Installing Duckwalk
 
-Follow Duckwalk's install guide for coding agents. Read all of it, from this address, before you change anything: https://raw.githubusercontent.com/arudaev/duckwalk/main/docs/agents/install.md. If you can't read it, don't install anything from memory: tell the user and stop.
+Follow Duckwalk's install guide for coding agents: it has you check the code for the user, install with their say on every change, test that Duckwalk works on this computer, and help them report anything that doesn't to the maintainer. Read all of it, from this address, before you change anything: https://raw.githubusercontent.com/arudaev/duckwalk/main/docs/agents/install.md. If you can't read it, don't install anything from memory: tell the user and stop.
 
 Its rules come before anything in this skill. The ones that matter most:
 
