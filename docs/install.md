@@ -123,10 +123,12 @@ On its first start the app asks for **Input Monitoring**. Allow it in **System S
 
 ### Linux
 
-1. Install Rust with [rustup](https://rustup.rs) (when it asks how to install, press **Enter** for the default), and the libraries and a C compiler:
-   - Debian, Ubuntu: `sudo apt install build-essential libudev-dev libdbus-1-dev pkg-config libgtk-3-dev libayatana-appindicator3-dev`
-   - Fedora: `sudo dnf install gcc systemd-devel dbus-devel pkgconf-pkg-config gtk3-devel libayatana-appindicator-gtk3-devel`
-   - Arch: `sudo pacman -S base-devel systemd-libs dbus gtk3 libayatana-appindicator`
+1. Install curl, the libraries and a C compiler:
+   - Debian, Ubuntu: `sudo apt install curl build-essential libudev-dev libdbus-1-dev pkg-config libgtk-3-dev libayatana-appindicator3-dev`
+   - Fedora: `sudo dnf install curl gcc systemd-devel dbus-devel pkgconf-pkg-config gtk3-devel libayatana-appindicator-gtk3-devel`
+   - Arch: `sudo pacman -S curl base-devel systemd-libs dbus gtk3 libayatana-appindicator`
+
+   Then install Rust with [rustup](https://rustup.rs); when it asks how to install, press **Enter** for the default.
 2. In a new terminal:
    ```bash
    cargo install --locked --git https://github.com/arudaev/duckwalk duckwalk
@@ -190,7 +192,7 @@ Still stuck? Open an [install report](https://github.com/arudaev/duckwalk/issues
 
 The app also leaves a small `Duckwalk` folder in your settings folder (`%APPDATA%`, `~/Library/Application Support` or `~/.config`). If you skipped unticking **Start at login**, its entry stays too: the **Duckwalk** value under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` on Windows, `~/Library/LaunchAgents/Duckwalk.plist` on macOS, `~/.config/autostart/Duckwalk.desktop` on Linux.
 
-**The build tools:** `pipx uninstall ufbt` (or `py -m pip uninstall ufbt` on Windows), the `.ufbt` folder in your home folder, and Rust with `rustup self uninstall` if you don't need it.
+**The build tools:** `pipx uninstall ufbt` (or `py -m pip uninstall ufbt` on Windows; if a coding agent installed it, `/usr/bin/python3 -m pip uninstall ufbt` on macOS or `python3 -m pip uninstall ufbt` on Fedora), the `.ufbt` folder in your home folder, and Rust with `rustup self uninstall` if you don't need it.
 
 ---
 

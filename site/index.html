@@ -127,6 +127,7 @@
   code { font: 0.92em ui-monospace, Consolas, monospace; background: var(--faint); padding: 1px 5px; border-radius: 4px; }
 
   .ways { display: grid; grid-template-columns: 1fr; gap: 28px; max-width: 900px; margin: 0 auto; }
+  .say + .ways { margin-top: 24px; }
   @media (min-width: 760px) { .ways { grid-template-columns: 1fr 1fr; } }
   .way h3 { font: 18px/1.3 var(--pixel); margin: 0 0 10px; }
   .way p { margin: 0 0 12px; }
@@ -273,13 +274,14 @@
 
   <section id="install">
     <h2>Install</h2>
+    <p class="say">Until the first release, both ways build Duckwalk from its source code: about 1 GB of downloads and 15 to 30 minutes, once.</p>
     <div class="ways">
       <div class="way">
         <h3>With your coding agent</h3>
-        <p>Your own coding agent, working on your computer (in your terminal or code editor, not a chat in the browser), can check the code for you, install everything and test that it really works on your computer and your Flipper. If something doesn't, it helps you report it, so it gets fixed for setups like yours. Plug in the Flipper and paste this to it:</p>
+        <p>Your own coding agent, working on your computer (in your terminal or code editor, not a chat in the browser), can read the code for you and tell you what it couldn't check, install everything and test that it really works on your computer and your Flipper. If something doesn't, it helps you report it, so it gets fixed for setups like yours. Plug in the Flipper and paste this to it:</p>
         <!-- The same prompt is in README.md and docs/agents/install.md: change all three together. -->
         <div class="prompt">
-          <p id="agent-prompt">Install Duckwalk on this computer and my plugged-in Flipper Zero by following https://github.com/arudaev/duckwalk/blob/main/docs/agents/install.md. Check the code for me, ask before you change anything, test that it all works here, and help me report anything that doesn't to the maintainer.</p>
+          <p id="agent-prompt">Install Duckwalk on this computer and my plugged-in Flipper Zero by following https://raw.githubusercontent.com/arudaev/duckwalk/main/docs/agents/install.md. Check the code for me, ask before you change anything, test that it all works here, and help me report anything that doesn't to the maintainer.</p>
           <button class="button copy" id="copy" type="button" hidden>Copy</button>
         </div>
         <p class="copy-status" id="copy-status" role="status"></p>
@@ -292,7 +294,7 @@
         <p class="note">Once Duckwalk is in the Flipper Apps Catalog, it's also in the USB category of the Flipper mobile app and Flipper Lab.</p>
       </div>
     </div>
-    <p class="say">Official Flipper firmware 1.5.1 or newer. The <a href="https://github.com/arudaev/duckwalk/blob/main/docs/install.md#part-2-the-desktop-app-optional">desktop app</a> is optional; it sees that you used your mouse or keyboard, never what you typed, and sends nothing over the network.</p>
+    <p class="say">Official Flipper firmware 1.5.1 or newer. The <a href="https://github.com/arudaev/duckwalk/blob/main/docs/install.md#part-2-the-desktop-app-optional">desktop app</a> is optional; it sees that you used your mouse or keyboard, never what you typed, and sends nothing over the network. It starts when you log in (you can turn that off) and isn't signed yet: <a href="https://github.com/arudaev/duckwalk/blob/main/desktop/app/README.md#what-it-does-exactly">everything it does</a>.</p>
   </section>
 
   <footer>
