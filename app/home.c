@@ -20,6 +20,7 @@
 #include "util.h"
 
 #include <furi_hal_random.h>
+#include <stdlib.h>
 
 /* Layout, left to right: plant, mug, Harold, laptop. */
 #define HOME_X     56 /* Harold's seat at the desk */
@@ -327,43 +328,100 @@ static uint32_t line_hash(uint32_t n) {
     return n;
 }
 
-/* The laptop's screen while no computer is connected. */
-#define SEARCH_MS 400
+/* The laptop's screen while no computer is connected: the Bluetooth or USB
+ * logo, drawn stroke by stroke as if by a pen, held, then drawn again. */
+#define PEN_MS    45 /* per pixel of line */
+#define HOLD_MS   1400 /* the finished logo */
+#define SHAPE_PX  3 /* a dot, a box or an arrowhead takes as long as this much line */
 #define SEARCH_CX (LAPTOP_X + LAPTOP_W / 2)
+#define SEARCH_CY (LAPTOP_Y + LAPTOP_H / 2 - 1)
 
-/* The Bluetooth sign, with waves going out on both sides. */
-static void draw_bt_search(Canvas* canvas) {
-    int32_t cx = SEARCH_CX, top = LAPTOP_Y + 6, mid = top + 5;
-    canvas_draw_line(canvas, cx, top, cx, top + 10);
-    canvas_draw_line(canvas, cx - 3, top + 3, cx + 3, top + 7);
-    canvas_draw_line(canvas, cx + 3, top + 7, cx, top + 10);
-    canvas_draw_line(canvas, cx - 3, top + 7, cx + 3, top + 3);
-    canvas_draw_line(canvas, cx + 3, top + 3, cx, top);
-    uint32_t waves = furi_get_tick() / ms(SEARCH_MS) % 4; /* 0 to 3 */
-    for(uint32_t i = 0; i < waves; i++) {
-        int32_t d = 7 + i * 3;
-        for(int32_t side = -1; side <= 1; side += 2) {
-            int32_t x = cx + side * d;
-            canvas_draw_line(canvas, x, mid - 1, x, mid + 1);
-            canvas_draw_dot(canvas, x - side, mid - 2);
-            canvas_draw_dot(canvas, x - side, mid + 2);
-        }
-    }
+typedef enum {
+    StrokeLine, /* from (x0, y0) to (x1, y1) */
+    StrokeBadge, /* rounded frame, x0 y0 to x1 y1 */
+    StrokeDisc, /* at (x0, y0), radius x1 */
+    StrokeBox, /* at (x0, y0), x1 by y1 */
+    StrokeArrow, /* pointing right, back edge at x0, centre y0, half height x1 */
+} StrokeKind;
+
+typedef struct {
+    uint8_t kind;
+    int8_t x0, y0, x1, y1;
+} Stroke;
+
+/* Around the centre of the laptop's screen, in the proportions of the
+ * official logos, small enough to read as an icon on the laptop rather than
+ * a sign over Harold's desk. The Bluetooth rune, as status bars show it, is
+ * one line, the way it is written: left arm, down to the bottom, up the
+ * stem, round the top and out the other arm. */
+static const Stroke bt_logo[] = {
+    {StrokeLine, -3, -2, 3, 2},
+    {StrokeLine, 3, 2, 0, 5},
+    {StrokeLine, 0, 5, 0, -5},
+    {StrokeLine, 0, -5, 3, -2},
+    {StrokeLine, 3, -2, -3, 2},
+};
+
+/* The USB trident: the base, the shaft and its arrow, then the branch with
+ * the circle and the branch with the square. */
+static const Stroke usb_logo[] = {
+    {StrokeDisc, -9, 0, 2, 0},
+    {StrokeLine, -7, 0, 7, 0},
+    {StrokeArrow, 8, 0, 2, 0},
+    {StrokeLine, -4, 0, -1, -3},
+    {StrokeLine, -1, -3, 1, -3},
+    {StrokeDisc, 3, -3, 1, 0},
+    {StrokeLine, -1, 0, 2, 3},
+    {StrokeLine, 2, 3, 4, 3},
+    {StrokeBox, 5, 2, 3, 3},
+};
+
+static int32_t stroke_px(const Stroke* s) {
+    if(s->kind != StrokeLine) return SHAPE_PX;
+    int32_t dx = abs(s->x1 - s->x0), dy = abs(s->y1 - s->y0);
+    return (dx > dy ? dx : dy) + 1;
 }
 
-/* A USB plug on its cable, going up into the port and down again. */
-static void draw_usb_search(Canvas* canvas) {
-    int32_t cx = SEARCH_CX;
-    int32_t port = LAPTOP_Y + 4;
-    canvas_draw_frame(canvas, cx - 5, port, 11, 3);
-    uint32_t step = furi_get_tick() / ms(SEARCH_MS) % 6;
-    int32_t rise = step < 4 ? (int32_t)step : 3; /* up, then a beat in the port */
-    int32_t top = port + 6 - rise;
-    canvas_draw_frame(canvas, cx - 3, top, 7, 4);
-    canvas_draw_dot(canvas, cx - 1, top + 1);
-    canvas_draw_dot(canvas, cx + 1, top + 1);
-    canvas_draw_box(canvas, cx - 2, top + 4, 5, 3);
-    canvas_draw_line(canvas, cx, top + 7, cx, LAPTOP_Y + LAPTOP_H - 3);
+static void draw_logo(Canvas* canvas, const Stroke* logo, size_t count) {
+    int32_t total = 0;
+    for(size_t i = 0; i < count; i++) total += stroke_px(&logo[i]);
+    uint32_t cycle = ms(total * PEN_MS + HOLD_MS);
+    int32_t ink = (int32_t)((furi_get_tick() % cycle) / ms(PEN_MS)); /* pixels the pen has drawn */
+
+    int32_t cx = SEARCH_CX, cy = SEARCH_CY;
+    for(size_t i = 0; i < count && ink > 0; i++) {
+        const Stroke* s = &logo[i];
+        int32_t px = stroke_px(s);
+        switch(s->kind) {
+        case StrokeLine: {
+            int32_t steps = px - 1, done = ink < px ? ink - 1 : steps;
+            int32_t x1 = s->x0 + (steps ? (s->x1 - s->x0) * done / steps : 0);
+            int32_t y1 = s->y0 + (steps ? (s->y1 - s->y0) * done / steps : 0);
+            canvas_draw_line(canvas, cx + s->x0, cy + s->y0, cx + x1, cy + y1);
+            break;
+        }
+        case StrokeBadge:
+            if(ink >= px) {
+                canvas_draw_rframe(canvas, cx + s->x0, cy + s->y0, s->x1 - s->x0 + 1, s->y1 - s->y0 + 1, (s->x1 - s->x0) / 2);
+            }
+            break;
+        case StrokeDisc:
+            if(ink >= px) canvas_draw_disc(canvas, cx + s->x0, cy + s->y0, s->x1);
+            break;
+        case StrokeBox:
+            if(ink >= px) canvas_draw_box(canvas, cx + s->x0, cy + s->y0, s->x1, s->y1);
+            break;
+        case StrokeArrow:
+            if(ink >= px) {
+                for(int32_t i = 0; i <= s->x1; i++) {
+                    int32_t h = s->x1 - i;
+                    canvas_draw_line(canvas, cx + s->x0 + i, cy + s->y0 - h, cx + s->x0 + i, cy + s->y0 + h);
+                }
+            }
+            break;
+        }
+        ink -= px;
+    }
 }
 
 static void draw_laptop(Canvas* canvas, const Duckwalk* app) {
@@ -381,9 +439,9 @@ static void draw_laptop(Canvas* canvas, const Duckwalk* app) {
 
     if(waiting(app)) {
         if(link_kind() == LinkBluetooth) {
-            draw_bt_search(canvas);
+            draw_logo(canvas, bt_logo, COUNT_OF(bt_logo));
         } else {
-            draw_usb_search(canvas);
+            draw_logo(canvas, usb_logo, COUNT_OF(usb_logo));
         }
         return;
     }
