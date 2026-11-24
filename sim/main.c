@@ -206,12 +206,12 @@ static void home_working(void) {
 /* No computer yet: Harold waits, and his laptop looks for one. */
 static void home_bluetooth(void) {
     sim_link = (SimLink){.kind = LinkBluetooth, .connected = false, .on_air = true};
-    run_for(2500); /* the logo finished drawing */
+    run_for(1400); /* the logo finished drawing */
     expect(app.keep_awake.offline, "home-bluetooth: Harold isn't waiting for the computer");
 }
 static void home_waiting_usb(void) {
     sim_link = (SimLink){.kind = LinkUsb, .connected = false, .on_air = true};
-    run_for(2500); /* the logo finished drawing */
+    run_for(1000); /* the logo finished drawing */
     expect(app.keep_awake.offline, "home-waiting-usb: Harold isn't waiting for the computer");
 }
 static void settings_top(void) {

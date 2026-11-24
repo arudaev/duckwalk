@@ -330,9 +330,9 @@ static uint32_t line_hash(uint32_t n) {
 
 /* The laptop's screen while no computer is connected: the Bluetooth or USB
  * logo, drawn stroke by stroke as if by a pen, held, then drawn again. */
-#define PEN_MS    45 /* per pixel of line */
+#define PEN_MS    30 /* per pixel of line */
 #define HOLD_MS   1400 /* the finished logo */
-#define SHAPE_PX  3 /* a dot, a box or an arrowhead takes as long as this much line */
+#define SHAPE_PX  4 /* a dot, a box or an arrowhead takes as long as this much line */
 #define SEARCH_CX (LAPTOP_X + LAPTOP_W / 2)
 #define SEARCH_CY (LAPTOP_Y + LAPTOP_H / 2 - 1)
 
@@ -350,30 +350,30 @@ typedef struct {
 } Stroke;
 
 /* Around the centre of the laptop's screen, in the proportions of the
- * official logos, small enough to read as an icon on the laptop rather than
- * a sign over Harold's desk. The Bluetooth rune, as status bars show it, is
- * one line, the way it is written: left arm, down to the bottom, up the
- * stem, round the top and out the other arm. */
+ * official logos. The Bluetooth badge is a tall stadium, the rune about four
+ * fifths of its height and drawn as one line, the way it is written: left
+ * arm, down to the bottom, up the stem, round the top and out the other arm. */
 static const Stroke bt_logo[] = {
-    {StrokeLine, -3, -2, 3, 2},
-    {StrokeLine, 3, 2, 0, 5},
-    {StrokeLine, 0, 5, 0, -5},
-    {StrokeLine, 0, -5, 3, -2},
-    {StrokeLine, 3, -2, -3, 2},
+    {StrokeBadge, -6, -8, 6, 8},
+    {StrokeLine, -3, -3, 3, 3},
+    {StrokeLine, 3, 3, 0, 6},
+    {StrokeLine, 0, 6, 0, -6},
+    {StrokeLine, 0, -6, 3, -3},
+    {StrokeLine, 3, -3, -3, 3},
 };
 
 /* The USB trident: the base, the shaft and its arrow, then the branch with
  * the circle and the branch with the square. */
 static const Stroke usb_logo[] = {
-    {StrokeDisc, -9, 0, 2, 0},
-    {StrokeLine, -7, 0, 7, 0},
-    {StrokeArrow, 8, 0, 2, 0},
-    {StrokeLine, -4, 0, -1, -3},
-    {StrokeLine, -1, -3, 1, -3},
-    {StrokeDisc, 3, -3, 1, 0},
-    {StrokeLine, -1, 0, 2, 3},
-    {StrokeLine, 2, 3, 4, 3},
-    {StrokeBox, 5, 2, 3, 3},
+    {StrokeDisc, -10, 0, 2, 0},
+    {StrokeLine, -8, 0, 10, 0},
+    {StrokeArrow, 10, 0, 2, 0},
+    {StrokeLine, -4, 0, 0, -4},
+    {StrokeLine, 0, -4, 2, -4},
+    {StrokeDisc, 4, -4, 1, 0},
+    {StrokeLine, 0, 0, 4, 4},
+    {StrokeLine, 4, 4, 5, 4},
+    {StrokeBox, 6, 3, 3, 3},
 };
 
 static int32_t stroke_px(const Stroke* s) {
