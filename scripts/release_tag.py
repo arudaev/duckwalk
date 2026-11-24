@@ -55,7 +55,7 @@ def fap_version() -> str:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        sys.exit(__doc__)
+        sys.exit("Usage: python scripts/release_tag.py TAG")
     try:
         print(f"prerelease={kind(sys.argv[1], fap_version())}")
     except ValueError as error:
