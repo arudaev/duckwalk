@@ -122,6 +122,12 @@ static bool at_desk(const Duckwalk* app) {
     return !keep_awake_is_walking(&app->keep_awake) && app->keep_awake.mode != KeepAwakeOff;
 }
 
+/* Awake, on duty, but no computer: he watches his laptop look for one. */
+static bool waiting(const Duckwalk* app) {
+    const KeepAwake* ka = &app->keep_awake;
+    return at_desk(app) && ka->offline && !ka->paused;
+}
+
 /* Harold's horizontal place on screen: his seat, or his share of the walk. */
 static int32_t harold_x(const Duckwalk* app) {
     const KeepAwake* ka = &app->keep_awake;
@@ -200,6 +206,8 @@ static Frame harold_frame(const Duckwalk* app) {
     if(anim->desk == DeskQuack) return (Frame){PoseQuack, true, 0};
     /* You're at the computer: he turns to watch you work. */
     bool blink = tick_before(anim->blink_until);
+    /* No computer: he sits facing the laptop and waits. */
+    if(waiting(app)) return (Frame){blink ? PoseBlink : PoseIdle, false, 0};
     if(ka->user_active) return (Frame){blink ? PoseBlink : PoseIdle, true, 0};
     if(anim->routine != RoutineNone) return routine_frame(anim);
     return (Frame){blink ? PoseBlink : PoseIdle, false, 0};
@@ -255,7 +263,7 @@ void home_tick(Duckwalk* app) {
     }
 
     /* The code scrolls while he reads, quicker while he types. */
-    bool reading = at_desk(app) && !ka->user_active && anim->desk == DeskReading;
+    bool reading = at_desk(app) && !ka->user_active && !waiting(app) && anim->desk == DeskReading;
     if(reading && tick_reached(anim->scroll_at)) {
         anim->scroll++;
         anim->scroll_at = tick_in_ms(anim->routine == RoutineType ? SCROLL_MS / 3 : SCROLL_MS);
@@ -276,7 +284,7 @@ void home_tick(Duckwalk* app) {
     }
 
     /* The bug hunt: spot it, quack at it, fix it. */
-    if(!at_desk(app) || ka->user_active) {
+    if(!at_desk(app) || ka->user_active || waiting(app)) {
         if(anim->desk != DeskReading || !anim->bug_at) schedule_bug(anim);
         return;
     }
@@ -319,6 +327,45 @@ static uint32_t line_hash(uint32_t n) {
     return n;
 }
 
+/* The laptop's screen while no computer is connected. */
+#define SEARCH_MS 400
+#define SEARCH_CX (LAPTOP_X + LAPTOP_W / 2)
+
+/* The Bluetooth sign, with waves going out on both sides. */
+static void draw_bt_search(Canvas* canvas) {
+    int32_t cx = SEARCH_CX, top = LAPTOP_Y + 6, mid = top + 5;
+    canvas_draw_line(canvas, cx, top, cx, top + 10);
+    canvas_draw_line(canvas, cx - 3, top + 3, cx + 3, top + 7);
+    canvas_draw_line(canvas, cx + 3, top + 7, cx, top + 10);
+    canvas_draw_line(canvas, cx - 3, top + 7, cx + 3, top + 3);
+    canvas_draw_line(canvas, cx + 3, top + 3, cx, top);
+    uint32_t waves = furi_get_tick() / ms(SEARCH_MS) % 4; /* 0 to 3 */
+    for(uint32_t i = 0; i < waves; i++) {
+        int32_t d = 7 + i * 3;
+        for(int32_t side = -1; side <= 1; side += 2) {
+            int32_t x = cx + side * d;
+            canvas_draw_line(canvas, x, mid - 1, x, mid + 1);
+            canvas_draw_dot(canvas, x - side, mid - 2);
+            canvas_draw_dot(canvas, x - side, mid + 2);
+        }
+    }
+}
+
+/* A USB plug on its cable, going up into the port and down again. */
+static void draw_usb_search(Canvas* canvas) {
+    int32_t cx = SEARCH_CX;
+    int32_t port = LAPTOP_Y + 4;
+    canvas_draw_frame(canvas, cx - 5, port, 11, 3);
+    uint32_t step = furi_get_tick() / ms(SEARCH_MS) % 6;
+    int32_t rise = step < 4 ? (int32_t)step : 3; /* up, then a beat in the port */
+    int32_t top = port + 6 - rise;
+    canvas_draw_frame(canvas, cx - 3, top, 7, 4);
+    canvas_draw_dot(canvas, cx - 1, top + 1);
+    canvas_draw_dot(canvas, cx + 1, top + 1);
+    canvas_draw_box(canvas, cx - 2, top + 4, 5, 3);
+    canvas_draw_line(canvas, cx, top + 7, cx, LAPTOP_Y + LAPTOP_H - 3);
+}
+
 static void draw_laptop(Canvas* canvas, const Duckwalk* app) {
     const HomeAnim* anim = &app->home;
     if(app->keep_awake.mode == KeepAwakeOff) {
@@ -331,6 +378,15 @@ static void draw_laptop(Canvas* canvas, const Duckwalk* app) {
     canvas_draw_rframe(canvas, LAPTOP_X, LAPTOP_Y, LAPTOP_W, LAPTOP_H, 2);
     canvas_draw_frame(canvas, LAPTOP_X - 4, DESK_Y - 2, LAPTOP_W + 8, 2);
     canvas_draw_line(canvas, LAPTOP_X + 4, LAPTOP_Y + LAPTOP_H, LAPTOP_X + LAPTOP_W - 5, LAPTOP_Y + LAPTOP_H);
+
+    if(waiting(app)) {
+        if(link_kind() == LinkBluetooth) {
+            draw_bt_search(canvas);
+        } else {
+            draw_usb_search(canvas);
+        }
+        return;
+    }
 
     uint32_t first = anim->scroll / 3;
     int32_t shift = anim->scroll % 3;
@@ -447,6 +503,15 @@ static void draw_status(Canvas* canvas, const Duckwalk* app) {
         snprintf(line, sizeof(line), "Asleep, OK wakes");
     } else if(ka->paused) {
         snprintf(line, sizeof(line), "Off hours");
+    } else if(waiting(app)) {
+        /* No computer, so no countdown: nothing would reach it. */
+        if(link_kind() == LinkBluetooth && link_off()) {
+            snprintf(line, sizeof(line), "Bluetooth off");
+        } else if(link_kind() == LinkBluetooth) {
+            snprintf(line, sizeof(line), "Finding PC%.*s", (int)(furi_get_tick() / ms(400) % 4), "...");
+        } else {
+            snprintf(line, sizeof(line), link_off() ? "USB in use" : "Plug into PC");
+        }
     } else if(ka->user_active) {
         /* The PC helper saw the user's own mouse or keyboard. */
         snprintf(line, sizeof(line), "You're working");

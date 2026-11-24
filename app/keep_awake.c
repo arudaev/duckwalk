@@ -7,6 +7,9 @@
 
 /* After the Remote moves the pointer, a wander keeps off it this long. */
 #define REMOTE_HOLD_MS 30000
+/* Wander has no wait, so after a computer connects it gives the desktop app
+ * a moment to say where the pointer is before setting off. */
+#define RECONNECT_WAIT_MS 5000
 
 /* A walk keeps this far from the screen's edges: its path is in mouse
  * counts and the screen in pixels, and pointer acceleration makes a fast
@@ -45,6 +48,7 @@ void keep_awake_init(KeepAwake* ka, uint32_t min_s, uint32_t max_s) {
     ka->moves = 0;
     ka->paused = false;
     ka->user_active = false;
+    ka->offline = false;
     ka->step = 0;
     ka->wandering = false;
     ka->has_area = false;
@@ -150,6 +154,14 @@ void keep_awake_set_walk_length(KeepAwake* ka, WalkLength length) {
 void keep_awake_set_paused(KeepAwake* ka, bool paused) {
     if(ka->paused && !paused) schedule(ka);
     ka->paused = paused;
+}
+
+void keep_awake_set_offline(KeepAwake* ka, bool offline) {
+    if(ka->offline && !offline) {
+        schedule(ka);
+        if(ka->mode == KeepAwakeWander) ka->next_tick += furi_ms_to_ticks(RECONNECT_WAIT_MS);
+    }
+    ka->offline = offline;
 }
 
 uint32_t keep_awake_seconds_left(const KeepAwake* ka) {
@@ -332,7 +344,7 @@ static bool wander_tick(KeepAwake* ka) {
 bool keep_awake_tick(KeepAwake* ka) {
     if(ka->step) return walk_step(ka);
     if(ka->wandering) return wander_tick(ka);
-    if(ka->mode == KeepAwakeOff || ka->paused || ka->user_active) return false;
+    if(ka->mode == KeepAwakeOff || ka->paused || ka->user_active || ka->offline) return false;
     if(tick_before(ka->next_tick)) return false;
 
     if(ka->mode == KeepAwakeWander) {

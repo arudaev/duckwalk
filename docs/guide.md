@@ -37,6 +37,10 @@ To come back, press the opposite button: **Down** from the preview, **Up** from 
 
 The corner shows the connection: **USB**, **BT**, **BT pairing**, **no USB**. **+PC** means the desktop app is talking to Duckwalk.
 
+While no computer is connected, Harold waits instead of counting down: his laptop looks for one (a Bluetooth sign sending out waves, or a USB plug going in) and the line under the title says **Finding PC** or **Plug into PC** (**Bluetooth off** or **USB in use** when the Flipper's own side isn't ready). Nothing moves until a computer connects, and then the countdown starts afresh. **Down** opens the connection check if it doesn't come back by itself.
+
+<p align="center"><img src="screens/home-bluetooth@4x.png" width="45%" alt="Harold waits at his desk; his laptop shows a Bluetooth sign and the line reads Finding PC"> <img src="screens/home-waiting-usb@4x.png" width="45%" alt="Harold waits at his desk; his laptop shows a USB plug going into a port and the line reads Plug into PC"></p>
+
 ## Settings
 
 ![Settings](screens/settings@4x.png)

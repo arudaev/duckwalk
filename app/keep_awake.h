@@ -31,6 +31,7 @@ typedef struct {
     uint32_t moves;
     bool paused; /* outside the hours set in Settings */
     bool user_active; /* the PC helper sees the user working */
+    bool offline; /* no computer connected: Harold waits for one */
     WalkPath path; /* the next walk, or the one playing */
     uint16_t step; /* next point to play; 0 when not walking */
     uint32_t step_tick;
@@ -56,6 +57,11 @@ void keep_awake_set_walk_length(KeepAwake* ka, WalkLength length);
 
 /* While paused nothing is scheduled; resuming starts a fresh wait. */
 void keep_awake_set_paused(KeepAwake* ka, bool paused);
+
+/* While no computer is connected nothing is scheduled; once one is, a fresh
+ * wait starts, so Harold doesn't walk the moment it comes back (Wander,
+ * which has no wait, holds off for a few seconds). */
+void keep_awake_set_offline(KeepAwake* ka, bool offline);
 
 /* Seconds until the next nudge or walk (0 when off). */
 uint32_t keep_awake_seconds_left(const KeepAwake* ka);
