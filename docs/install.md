@@ -103,13 +103,13 @@ Then [check it worked](#copy-the-ready-made-app), as for the ready-made app.
 
 With the desktop app running, Harold lets go of the pointer the moment you touch your own mouse, keyboard, touchpad or pen, and walks only while you're away. It notices *that* you used a device, never what you typed or where you pointed ([details](../desktop/app/README.md#what-it-does-exactly)). Without it, Harold walks on his timer ([how to manage without it](guide.md#without-the-desktop-app)).
 
-It's ready-made for Windows, macOS and Linux. It isn't signed yet ([here's why](code-signing.md)), so your computer warns you the first time; each system's steps say what to click. Building it yourself is the fallback.
+It's ready-made for Windows, macOS and Linux. It isn't signed yet ([here's why](code-signing.md)), so your computer warns you the first time; each system's steps say what to click. Building it yourself is the fallback (on macOS, Homebrew builds it for you).
 
 ### Windows
 
 1. Download [`duckwalk-desktop-windows-x64.exe`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk-desktop-windows-x64.exe). On Windows on ARM (**Settings > System > About** says ARM), take [`duckwalk-desktop-windows-arm64.exe`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk-desktop-windows-arm64.exe) instead.
 2. If your browser warns that the file isn't commonly downloaded, keep it. In Edge: the **...** next to the warning, **Keep**, then **Show more > Keep anyway**.
-3. Open it. If Windows says **Windows protected your PC**, choose **More info**, then **Run anyway**.
+3. Open it. If Windows says **Windows protected your PC**, choose **More info**, then **Run anyway**. No window opens: Harold appears in the tray.
 
 The first start installs it for your user: it copies itself to `%LOCALAPPDATA%\Programs\Duckwalk`, adds **Duckwalk** to the Start menu and puts that folder on your PATH, so you can delete the download. No admin rights needed. Harold sits in the tray; Windows may hide him behind the **^** next to the clock.
 
@@ -138,7 +138,7 @@ Download [`duckwalk-desktop-linux-x64`](https://github.com/arudaev/duckwalk/rele
 
 ```bash
 mkdir -p ~/.local/bin
-mv ~/Downloads/duckwalk-desktop-linux-x64 ~/.local/bin/duckwalk
+mv ~/Downloads/duckwalk-desktop-linux-x64 ~/.local/bin/duckwalk   # or wherever your browser saved it
 chmod +x ~/.local/bin/duckwalk
 ~/.local/bin/duckwalk
 ```
@@ -173,9 +173,10 @@ Every program you run can then read your keyboard and mouse; on a shared or work
 
 #### Over USB: let the app reach Duckwalk
 
-Over USB, the app talks to Duckwalk through `/dev/hidraw`, which on most systems only root may open. Duckwalk's udev rule lets whoever is logged in open Duckwalk's own device (USB ID `1209:d0c4`) and nothing else. Download [`70-duckwalk.rules`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/70-duckwalk.rules), then, in the folder you saved it to:
+Over USB, the app talks to Duckwalk through `/dev/hidraw`, which on most systems only root may open. Duckwalk's udev rule lets whoever is logged in open Duckwalk's own device (USB ID `1209:d0c4`) and nothing else. Download [`70-duckwalk.rules`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/70-duckwalk.rules), then:
 
 ```bash
+cd ~/Downloads   # or wherever your browser saved it
 cat 70-duckwalk.rules
 sudo cp 70-duckwalk.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && sudo udevadm trigger
@@ -208,8 +209,8 @@ Still stuck? Open an [install report](https://github.com/arudaev/duckwalk/issues
 **The desktop app:** untick **Start at login** in Harold's menu and choose **Quit Duckwalk**. Then:
 
 - **Windows:** delete the folder `%LOCALAPPDATA%\Programs\Duckwalk`, the Start menu entry **Duckwalk**, and that folder in your user PATH (search Windows for *environment variables*). If you built it with Rust, also `cargo uninstall duckwalk`.
-- **macOS:** `brew uninstall duckwalk` (or delete the file you downloaded), and remove Duckwalk from Input Monitoring.
-- **Linux:** `cargo uninstall duckwalk`, or delete the file you downloaded. Leave the `input` group with `sudo gpasswd -d $USER input`, and delete `/etc/udev/rules.d/70-duckwalk.rules` (and `42-flipperzero.rules`, unless you use qFlipper).
+- **macOS:** `brew uninstall duckwalk` (or delete the file you moved), and remove Duckwalk from Input Monitoring.
+- **Linux:** delete `~/.local/bin/duckwalk` (or `cargo uninstall duckwalk` if you built it). Leave the `input` group with `sudo gpasswd -d $USER input`, and delete `/etc/udev/rules.d/70-duckwalk.rules` (and `42-flipperzero.rules`, unless you use qFlipper).
 
 The app also leaves a small `Duckwalk` folder in your settings folder (`%APPDATA%`, `~/Library/Application Support` or `~/.config`). If you skipped unticking **Start at login**, its entry stays too: the **Duckwalk** value under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` on Windows, `~/Library/LaunchAgents/Duckwalk.plist` on macOS, `~/.config/autostart/Duckwalk.desktop` on Linux.
 
