@@ -109,9 +109,9 @@ It's ready-made for Windows, macOS and Linux. It isn't signed yet ([here's why](
 
 1. Download [`duckwalk-desktop-windows-x64.exe`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk-desktop-windows-x64.exe). On Windows on ARM (**Settings > System > About** says ARM), take [`duckwalk-desktop-windows-arm64.exe`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk-desktop-windows-arm64.exe) instead.
 2. If your browser warns that the file isn't commonly downloaded, keep it. In Edge: the **...** next to the warning, **Keep**, then **Show more > Keep anyway**.
-3. Open it. If Windows says **Windows protected your PC**, choose **More info**, then **Run anyway**. No window opens: Harold appears in the tray.
+3. Open it. If Windows says **Windows protected your PC**, choose **More info**, then **Run anyway**. No window opens: Harold appears in the tray by the clock, where Windows may hide him behind the **^**.
 
-The first start installs it for your user: it copies itself to `%LOCALAPPDATA%\Programs\Duckwalk`, adds **Duckwalk** to the Start menu and puts that folder on your PATH, so you can delete the download. No admin rights needed. Harold sits in the tray; Windows may hide him behind the **^** next to the clock.
+The first start installs it for your user: it copies itself to `%LOCALAPPDATA%\Programs\Duckwalk`, adds **Duckwalk** to the Start menu and puts that folder on your PATH (so `duckwalk` also works in a terminal), so you can delete the download. No admin rights needed. Harold sits in the tray; Windows may hide him behind the **^** next to the clock.
 
 **Or build it yourself:** install Rust with [rustup](https://rustup.rs), which offers to install Microsoft's C++ build tools (accept the defaults), then in a new terminal run `cargo install --locked --git https://github.com/arudaev/duckwalk duckwalk`, then `duckwalk`. Count on one to two GB of downloads and 10 to 20 minutes.
 
