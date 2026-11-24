@@ -345,32 +345,34 @@
   /* ---------- The Flipper ---------- */
   const lcd = document.getElementById("lcd");
   const shot = (name) => "screens/" + name + "@4x.png";
-  const idleLoop = ["home-awake", "home-typing", "home-awake", "home-sip", "home-awake", "home-hop", "home-bug", "home-bug-quack", "home-bug-fixed"];
+  const idleLoop = ["home-awake", "home-typing", "home-awake", "home-sip", "home-awake", "home-hop", "home-bug", "home-bug-quack", "home-bug-fixed", "home-awake", "home-walking"];
   const screens = {
     asleep: "home-asleep", quack: "home-quack", settings: "settings", settings2: "settings-bottom",
-    remote: "remote-menu", media: "remote-media", preview: "preview", walking: "home-walking", link: "pairing-usb-all-set",
+    remote: "remote-menu", media: "remote-media", preview: "preview", link: "pairing-usb-all-set",
   };
+  /* As in the app: the button opposite the one that opened a screen goes back
+     (Down from Preview, Up from the connection check, Right from the Remote's
+     menu), and so does Back. */
   const moves = {
     home: { ok: "asleep", right: "settings", left: "remote", up: "preview", down: "link", hold: "quack" },
-    asleep: { ok: "home", right: "settings", left: "remote", up: "preview", down: "link" },
-    quack: { back: "home" },
+    asleep: { ok: "home", right: "settings", left: "remote", up: "preview", down: "link", hold: "quack" },
+    quack: { ok: "asleep", right: "settings", left: "remote", up: "preview", down: "link" },   // a quack is the home screen for a moment
     settings: { down: "settings2", back: "home" },
     settings2: { up: "settings", back: "home" },
-    remote: { ok: "media", back: "home" },
+    remote: { ok: "media", right: "home", back: "home" },
     media: { back: "remote" },
-    preview: { ok: "walking", back: "home" },
-    walking: { back: "home" },
-    link: { back: "home" },
+    preview: { down: "home", back: "home" },   // OK plays the walk; the screen stays
+    link: { up: "home", back: "home" },
   };
   [...idleLoop, ...Object.values(screens)].forEach((n) => { new Image().src = shot(n); });
 
-  let state = "home", loopAt = 0, timer = null;
+  let state = "home", loopAt = 0, timer = null, sleeping = false;
   function show(next) {
+    if (next === "home" && sleeping) next = "asleep";   // he stays asleep when you come back
     state = next;
     clearTimeout(timer);
     lcd.setAttribute("href", shot(next === "home" ? "home-awake" : screens[next]));
     loopAt = 0;
-    if (next === "walking") timer = setTimeout(() => show("home"), 3200);
     if (next === "quack") timer = setTimeout(() => show("home"), 1400);
   }
   setInterval(() => {
@@ -379,6 +381,11 @@
     lcd.setAttribute("href", shot(idleLoop[loopAt]));
   }, 1600);
   function press(key) {
+    if (key === "ok" && (state === "home" || state === "asleep" || state === "quack")) {
+      sleeping = !(state === "asleep" || (state === "quack" && sleeping));   // OK puts him to sleep or wakes him
+      show(sleeping ? "asleep" : "home");
+      return;
+    }
     const target = (moves[state] || {})[key];
     if (target) show(target);
   }
@@ -396,7 +403,7 @@
       if (!held) press(key);
     });
     el.addEventListener("pointerleave", () => { el.classList.remove("down"); clearTimeout(holdTimer); });
-    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); press(key); } });
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!e.repeat) press(key); } });
   });
   const keymap = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", Enter: "ok", Backspace: "back", Escape: "back" };
   document.addEventListener("keydown", (e) => {
@@ -404,7 +411,9 @@
     if (!key || (e.target.closest && e.target.closest("a, button, input, textarea, .key"))) return;
     const r = flipper.getBoundingClientRect();
     if (r.bottom < 0 || r.top > innerHeight) return;
+    if (!(moves[state] || {})[key]) return;   // keys with nothing to do here still scroll the page
     e.preventDefault();
+    if (e.repeat) return;                     // a held key presses once
     const el = flipper.querySelector(`[data-key="${key}"]`);
     el.classList.add("down"); setTimeout(() => el.classList.remove("down"), 140);
     press(key);
