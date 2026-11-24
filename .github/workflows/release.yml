@@ -1,13 +1,19 @@
 name: Release
 
 # Pushing a tag like v0.1 builds the Flipper app and the desktop app and leaves a draft
-# release with them attached. The author reads it and publishes it.
+# release with them attached. The author reads it and publishes it. A tag like v0.1-rc1
+# leaves a draft pre-release, which never becomes the "latest" release.
 
 on:
   push:
     tags: ["v*"]
-  # A dry run from the Actions tab: builds everything, releases nothing.
+  # A dry run from the Actions tab: builds everything and checks the tag, releases nothing.
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to check, like v0.1-rc1
+        required: true
+        default: v0.1-rc1
 
 permissions:
   contents: read
@@ -16,19 +22,28 @@ jobs:
   app:
     name: App
     runs-on: ubuntu-latest
+    outputs:
+      prerelease: ${{ steps.tag.outputs.prerelease }}
     steps:
       - uses: actions/checkout@v4
+      - name: Check the tag matches fap_version
+        id: tag
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          python3 -m doctest scripts/release_tag.py
+          python3 scripts/release_tag.py "$TAG" | tee -a "$GITHUB_OUTPUT"
       - name: Build duckwalk.fap
         uses: flipperdevices/flipperzero-ufbt-action@v0.1.4
         id: build
         with:
           app-dir: app
           sdk-channel: release
-      - name: Check the tag matches fap_version
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          version=$(sed -n 's/.*fap_version="\([^"]*\)".*/\1/p' app/application.fam)
-          test "v$version" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME, but fap_version is $version"; exit 1; }
+      - name: Say which firmware it's built for
+        env:
+          SUFFIX: ${{ steps.build.outputs.suffix }}
+          API: ${{ steps.build.outputs.api-version }}
+        run: echo "duckwalk.fap is built against the release firmware SDK, API $API ($SUFFIX)" | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
           name: app
@@ -77,11 +92,20 @@ jobs:
         with:
           path: dist
           merge-multiple: true
+      - name: Add the Linux USB rule and the checksums
+        working-directory: dist
+        run: |
+          cp ../desktop/app/linux/70-duckwalk.rules .
+          sha256sum duckwalk.fap duckwalk-desktop-* 70-duckwalk.rules > SHA256SUMS
+          cat SHA256SUMS
       - name: Create the draft
         env:
           GH_TOKEN: ${{ github.token }}
+          PRERELEASE: ${{ needs.app.outputs.prerelease }}
         run: |
           notes="docs/releases/$GITHUB_REF_NAME.md"
           test -f "$notes" || { echo "Write $notes first"; exit 1; }
-          gh release create "$GITHUB_REF_NAME" --draft --title "Duckwalk $GITHUB_REF_NAME" \
-            --notes-file "$notes" dist/*.fap dist/duckwalk-desktop-*
+          flag=""
+          if [ "$PRERELEASE" = "true" ]; then flag="--prerelease"; fi
+          gh release create "$GITHUB_REF_NAME" --draft $flag --title "Duckwalk $GITHUB_REF_NAME" \
+            --notes-file "$notes" dist/duckwalk.fap dist/duckwalk-desktop-* dist/70-duckwalk.rules dist/SHA256SUMS

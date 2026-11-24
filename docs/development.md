@@ -84,10 +84,10 @@ Every pull request runs:
 ## Releasing
 
 1. Raise `fap_version` in `app/application.fam` and add the version to `app/docs/changelog.md`. The catalog wants `major.minor`, higher than the last one it has.
-2. Write the release notes in `docs/releases/v<version>.md` and merge both through a pull request.
-3. Optional, before tagging: **Actions > Release > Run workflow** does a dry run that builds everything and releases nothing.
-4. The author tags `main`, for example `git tag v0.1 && git push origin v0.1`.
-5. The Release workflow checks that the tag matches `fap_version`, builds `duckwalk.fap` and the desktop app for Windows (x64, ARM64), macOS (Apple silicon, Intel) and Linux (x64), and leaves a draft release with them attached.
+2. Write the release notes in `docs/releases/<tag>.md` and merge both through a pull request.
+3. Optional, before tagging: **Actions > Release > Run workflow** does a dry run that checks the tag you give it, builds everything and releases nothing.
+4. The author tags `main`, for example `git tag v0.1 && git push origin v0.1`. A pre-release adds `-rcN` to the same version, like `v0.1-rc1`.
+5. The Release workflow checks the tag against `fap_version` (`scripts/release_tag.py`), builds `duckwalk.fap` and the desktop app for Windows (x64, ARM64), macOS (Apple silicon, Intel) and Linux (x64), and leaves a draft release with them, `70-duckwalk.rules` and `SHA256SUMS` attached. An `-rcN` tag makes it a pre-release, which never becomes the latest release.
 6. The author reads the draft and publishes it, then updates the catalog manifest's `commit_sha` (issue #10).
 
 ---
