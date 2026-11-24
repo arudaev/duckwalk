@@ -29,7 +29,7 @@ Harold lives on your desk. When you step away, he moves the mouse pointer so Tea
 
 ## Install
 
-**With your coding agent.** Your own coding agent, working on your computer (in your terminal or code editor, not a chat in the browser), can check the code for you, install everything, and test that it really works on your computer and your Flipper. If something doesn't, it helps you report it, so it gets fixed for setups like yours. Plug in the Flipper and paste this to it:
+**With your coding agent.** Your own coding agent, working on your computer (in your terminal or code editor, not a chat in the browser), can read the code for you and say what it couldn't check, then install everything and test that it really works on your computer and your Flipper. If something doesn't, it helps you report it, so it gets fixed for setups like yours. Plug in the Flipper and paste this to it:
 
 ```text
 Install Duckwalk on this computer and my plugged-in Flipper Zero by following https://raw.githubusercontent.com/arudaev/duckwalk/main/docs/agents/install.md. Check the code for me, ask before you change anything, test that it all works here, and help me report anything that doesn't to the maintainer.
