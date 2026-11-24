@@ -76,9 +76,39 @@ static void run_with_pc(KeepAwake* ka, uint32_t ms) {
     }
 }
 
+/* No computer: nothing moves and no countdown runs out; once one connects,
+ * a fresh wait starts instead of a nudge on the spot. */
+static void offline_waits(KeepAwake* ka) {
+    extern int fake_link_moves;
+    for(int m = KeepAwakeSubtle; m <= KeepAwakeWander; m++) {
+        keep_awake_init(ka, 30, 60);
+        keep_awake_set_mode(ka, (KeepAwakeMode)m);
+        keep_awake_set_offline(ka, true);
+        int before = fake_link_moves;
+        run_for(ka, 120000);
+        CHECK(fake_link_moves == before, "mode %d: moved %d times offline", m, fake_link_moves - before);
+        CHECK(!keep_awake_is_walking(ka), "mode %d: walking offline", m);
+
+        keep_awake_set_offline(ka, false);
+        if(m != KeepAwakeWander) {
+            uint32_t left = keep_awake_seconds_left(ka);
+            CHECK(left >= 29 && left <= 60, "mode %d: %lu s left after reconnecting", m, (unsigned long)left);
+            run_for(ka, 25000);
+        } else {
+            run_for(ka, 4000); /* Wander holds off for a moment, too */
+        }
+        CHECK(fake_link_moves == before, "mode %d: moved right after reconnecting", m);
+        run_for(ka, 61000);
+        CHECK(fake_link_moves > before, "mode %d: never moved once connected", m);
+        keep_awake_set_mode(ka, KeepAwakeOff);
+        run_for(ka, 5000); /* a wander glides home */
+    }
+}
+
 int main(void) {
     static KeepAwake ka;
     shim_tick_set(now);
+    offline_waits(&ka);
 
     for(uint32_t seed = 1; seed <= 200; seed++) {
         shim_random_seed(seed * 2654435761u);

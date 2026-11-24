@@ -52,6 +52,7 @@ static void run_for(uint32_t ms) {
     for(uint32_t t = 0; t < ms; t += WALK_STEP_MS) {
         shim_tick_set(furi_get_tick() + WALK_STEP_MS);
         keep_awake_set_user_active(&app.keep_awake, helper_user_active(30000));
+        keep_awake_set_offline(&app.keep_awake, !link_is_connected());
         remote_tick(&app);
         pairing_tick(&app);
         preview_tick(&app);
@@ -202,9 +203,16 @@ static void home_working(void) {
     helper_receive(packet, furi_get_tick());
     run_for(500);
 }
+/* No computer yet: Harold waits, and his laptop looks for one. */
 static void home_bluetooth(void) {
     sim_link = (SimLink){.kind = LinkBluetooth, .connected = false, .on_air = true};
-    run_for(500);
+    run_for(1400); /* the logo finished drawing */
+    expect(app.keep_awake.offline, "home-bluetooth: Harold isn't waiting for the computer");
+}
+static void home_waiting_usb(void) {
+    sim_link = (SimLink){.kind = LinkUsb, .connected = false, .on_air = true};
+    run_for(1000); /* the logo finished drawing */
+    expect(app.keep_awake.offline, "home-waiting-usb: Harold isn't waiting for the computer");
 }
 static void settings_top(void) {
     press(InputKeyRight, InputTypeShort);
@@ -323,6 +331,7 @@ static const struct {
     {"home-quack", home_quack},
     {"home-working", home_working},
     {"home-bluetooth", home_bluetooth},
+    {"home-waiting-usb", home_waiting_usb},
     {"settings", settings_top},
     {"settings-bottom", settings_bottom},
     {"remote-menu", remote_menu},

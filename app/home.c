@@ -20,6 +20,7 @@
 #include "util.h"
 
 #include <furi_hal_random.h>
+#include <stdlib.h>
 
 /* Layout, left to right: plant, mug, Harold, laptop. */
 #define HOME_X     56 /* Harold's seat at the desk */
@@ -122,6 +123,12 @@ static bool at_desk(const Duckwalk* app) {
     return !keep_awake_is_walking(&app->keep_awake) && app->keep_awake.mode != KeepAwakeOff;
 }
 
+/* Awake, on duty, but no computer: he watches his laptop look for one. */
+static bool waiting(const Duckwalk* app) {
+    const KeepAwake* ka = &app->keep_awake;
+    return at_desk(app) && ka->offline && !ka->paused;
+}
+
 /* Harold's horizontal place on screen: his seat, or his share of the walk. */
 static int32_t harold_x(const Duckwalk* app) {
     const KeepAwake* ka = &app->keep_awake;
@@ -200,6 +207,8 @@ static Frame harold_frame(const Duckwalk* app) {
     if(anim->desk == DeskQuack) return (Frame){PoseQuack, true, 0};
     /* You're at the computer: he turns to watch you work. */
     bool blink = tick_before(anim->blink_until);
+    /* No computer: he sits facing the laptop and waits. */
+    if(waiting(app)) return (Frame){blink ? PoseBlink : PoseIdle, false, 0};
     if(ka->user_active) return (Frame){blink ? PoseBlink : PoseIdle, true, 0};
     if(anim->routine != RoutineNone) return routine_frame(anim);
     return (Frame){blink ? PoseBlink : PoseIdle, false, 0};
@@ -255,7 +264,7 @@ void home_tick(Duckwalk* app) {
     }
 
     /* The code scrolls while he reads, quicker while he types. */
-    bool reading = at_desk(app) && !ka->user_active && anim->desk == DeskReading;
+    bool reading = at_desk(app) && !ka->user_active && !waiting(app) && anim->desk == DeskReading;
     if(reading && tick_reached(anim->scroll_at)) {
         anim->scroll++;
         anim->scroll_at = tick_in_ms(anim->routine == RoutineType ? SCROLL_MS / 3 : SCROLL_MS);
@@ -276,7 +285,7 @@ void home_tick(Duckwalk* app) {
     }
 
     /* The bug hunt: spot it, quack at it, fix it. */
-    if(!at_desk(app) || ka->user_active) {
+    if(!at_desk(app) || ka->user_active || waiting(app)) {
         if(anim->desk != DeskReading || !anim->bug_at) schedule_bug(anim);
         return;
     }
@@ -319,6 +328,102 @@ static uint32_t line_hash(uint32_t n) {
     return n;
 }
 
+/* The laptop's screen while no computer is connected: the Bluetooth or USB
+ * logo, drawn stroke by stroke as if by a pen, held, then drawn again. */
+#define PEN_MS    30 /* per pixel of line */
+#define HOLD_MS   1400 /* the finished logo */
+#define SHAPE_PX  4 /* a dot, a box or an arrowhead takes as long as this much line */
+#define SEARCH_CX (LAPTOP_X + LAPTOP_W / 2)
+#define SEARCH_CY (LAPTOP_Y + LAPTOP_H / 2 - 1)
+
+typedef enum {
+    StrokeLine, /* from (x0, y0) to (x1, y1) */
+    StrokeBadge, /* rounded frame, x0 y0 to x1 y1 */
+    StrokeDisc, /* at (x0, y0), radius x1 */
+    StrokeBox, /* at (x0, y0), x1 by y1 */
+    StrokeArrow, /* pointing right, back edge at x0, centre y0, half height x1 */
+} StrokeKind;
+
+typedef struct {
+    uint8_t kind;
+    int8_t x0, y0, x1, y1;
+} Stroke;
+
+/* Around the centre of the laptop's screen, in the proportions of the
+ * official logos. The Bluetooth badge is a tall stadium, the rune about four
+ * fifths of its height and drawn as one line, the way it is written: left
+ * arm, down to the bottom, up the stem, round the top and out the other arm. */
+static const Stroke bt_logo[] = {
+    {StrokeBadge, -6, -8, 6, 8},
+    {StrokeLine, -3, -3, 3, 3},
+    {StrokeLine, 3, 3, 0, 6},
+    {StrokeLine, 0, 6, 0, -6},
+    {StrokeLine, 0, -6, 3, -3},
+    {StrokeLine, 3, -3, -3, 3},
+};
+
+/* The USB trident: the base, the shaft and its arrow, then the branch with
+ * the circle and the branch with the square. */
+static const Stroke usb_logo[] = {
+    {StrokeDisc, -10, 0, 2, 0},
+    {StrokeLine, -8, 0, 10, 0},
+    {StrokeArrow, 10, 0, 2, 0},
+    {StrokeLine, -4, 0, 0, -4},
+    {StrokeLine, 0, -4, 2, -4},
+    {StrokeDisc, 4, -4, 1, 0},
+    {StrokeLine, 0, 0, 4, 4},
+    {StrokeLine, 4, 4, 5, 4},
+    {StrokeBox, 6, 3, 3, 3},
+};
+
+static int32_t stroke_px(const Stroke* s) {
+    if(s->kind != StrokeLine) return SHAPE_PX;
+    int32_t dx = abs(s->x1 - s->x0), dy = abs(s->y1 - s->y0);
+    return (dx > dy ? dx : dy) + 1;
+}
+
+static void draw_logo(Canvas* canvas, const Stroke* logo, size_t count) {
+    int32_t total = 0;
+    for(size_t i = 0; i < count; i++) total += stroke_px(&logo[i]);
+    uint32_t cycle = ms(total * PEN_MS + HOLD_MS);
+    int32_t ink = (int32_t)((furi_get_tick() % cycle) / ms(PEN_MS)); /* pixels the pen has drawn */
+
+    int32_t cx = SEARCH_CX, cy = SEARCH_CY;
+    for(size_t i = 0; i < count && ink > 0; i++) {
+        const Stroke* s = &logo[i];
+        int32_t px = stroke_px(s);
+        switch(s->kind) {
+        case StrokeLine: {
+            int32_t steps = px - 1, done = ink < px ? ink - 1 : steps;
+            int32_t x1 = s->x0 + (steps ? (s->x1 - s->x0) * done / steps : 0);
+            int32_t y1 = s->y0 + (steps ? (s->y1 - s->y0) * done / steps : 0);
+            canvas_draw_line(canvas, cx + s->x0, cy + s->y0, cx + x1, cy + y1);
+            break;
+        }
+        case StrokeBadge:
+            if(ink >= px) {
+                canvas_draw_rframe(canvas, cx + s->x0, cy + s->y0, s->x1 - s->x0 + 1, s->y1 - s->y0 + 1, (s->x1 - s->x0) / 2);
+            }
+            break;
+        case StrokeDisc:
+            if(ink >= px) canvas_draw_disc(canvas, cx + s->x0, cy + s->y0, s->x1);
+            break;
+        case StrokeBox:
+            if(ink >= px) canvas_draw_box(canvas, cx + s->x0, cy + s->y0, s->x1, s->y1);
+            break;
+        case StrokeArrow:
+            if(ink >= px) {
+                for(int32_t i = 0; i <= s->x1; i++) {
+                    int32_t h = s->x1 - i;
+                    canvas_draw_line(canvas, cx + s->x0 + i, cy + s->y0 - h, cx + s->x0 + i, cy + s->y0 + h);
+                }
+            }
+            break;
+        }
+        ink -= px;
+    }
+}
+
 static void draw_laptop(Canvas* canvas, const Duckwalk* app) {
     const HomeAnim* anim = &app->home;
     if(app->keep_awake.mode == KeepAwakeOff) {
@@ -331,6 +436,15 @@ static void draw_laptop(Canvas* canvas, const Duckwalk* app) {
     canvas_draw_rframe(canvas, LAPTOP_X, LAPTOP_Y, LAPTOP_W, LAPTOP_H, 2);
     canvas_draw_frame(canvas, LAPTOP_X - 4, DESK_Y - 2, LAPTOP_W + 8, 2);
     canvas_draw_line(canvas, LAPTOP_X + 4, LAPTOP_Y + LAPTOP_H, LAPTOP_X + LAPTOP_W - 5, LAPTOP_Y + LAPTOP_H);
+
+    if(waiting(app)) {
+        if(link_kind() == LinkBluetooth) {
+            draw_logo(canvas, bt_logo, COUNT_OF(bt_logo));
+        } else {
+            draw_logo(canvas, usb_logo, COUNT_OF(usb_logo));
+        }
+        return;
+    }
 
     uint32_t first = anim->scroll / 3;
     int32_t shift = anim->scroll % 3;
@@ -447,6 +561,15 @@ static void draw_status(Canvas* canvas, const Duckwalk* app) {
         snprintf(line, sizeof(line), "Asleep, OK wakes");
     } else if(ka->paused) {
         snprintf(line, sizeof(line), "Off hours");
+    } else if(waiting(app)) {
+        /* No computer, so no countdown: nothing would reach it. */
+        if(link_kind() == LinkBluetooth && link_off()) {
+            snprintf(line, sizeof(line), "Bluetooth off");
+        } else if(link_kind() == LinkBluetooth) {
+            snprintf(line, sizeof(line), "Finding PC%.*s", (int)(furi_get_tick() / ms(400) % 4), "...");
+        } else {
+            snprintf(line, sizeof(line), link_off() ? "USB in use" : "Plug into PC");
+        }
     } else if(ka->user_active) {
         /* The PC helper saw the user's own mouse or keyboard. */
         snprintf(line, sizeof(line), "You're working");

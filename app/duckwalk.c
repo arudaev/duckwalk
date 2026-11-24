@@ -225,6 +225,9 @@ int32_t duckwalk_app(void* p) {
         run_command(app);
         duckwalk_check_stop_after(app, got);
         check_link(app);
+        /* The settled link, the one the link sounds tell: a link that drops
+         * for a moment doesn't stop the countdown. */
+        keep_awake_set_offline(&app->keep_awake, !app->link_told);
         if(furi_get_tick() - duty_checked >= furi_ms_to_ticks(DUTY_CHECK_MS)) {
             duty_checked = furi_get_tick();
             keep_awake_set_paused(&app->keep_awake, !settings_on_duty(&app->settings));
