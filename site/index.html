@@ -274,8 +274,20 @@
 
   <section id="install">
     <h2>Install</h2>
-    <p class="say">Until the first release, both ways build Duckwalk from its source code: about 1 GB of disk space and 15 to 30 minutes, once (the optional desktop app adds 1 to 2 GB).</p>
     <div class="ways">
+      <div class="way" id="app">
+        <h3>Download</h3>
+        <p>Copy Harold onto your Flipper with <a href="https://flipper.net/pages/downloads">qFlipper</a>, Flipper's app for your computer. No terminal, a couple of minutes:</p>
+        <ol class="steps">
+          <li><span>Update the Flipper to the latest official firmware in qFlipper or the Flipper mobile app.</span></li>
+          <li><span>Download <a href="https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk.fap"><code>duckwalk.fap</code></a>.</span></li>
+          <li><span>Plug in the Flipper. In qFlipper's file manager, open <b>SD Card</b>, <b>apps</b>, <b>USB</b> and drag the file in.</span></li>
+          <li><span>On the Flipper: <b>Apps &gt; USB &gt; Duckwalk</b>.</span></li>
+        </ol>
+        <p><a class="button primary" href="https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk.fap">Download duckwalk.fap</a></p>
+        <p>The optional desktop app tells Harold when you're back: <a href="https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk-desktop-windows-x64.exe">Windows</a>, or <a href="https://github.com/arudaev/duckwalk/blob/main/docs/install.md#part-2-the-desktop-app-optional">macOS, Linux and the steps</a>.</p>
+        <p class="note">v0.1-rc1, a preview of the first release. Step by step, building it yourself and removing it: the <a href="https://github.com/arudaev/duckwalk/blob/main/docs/install.md">install guide</a>. Once Duckwalk is in the Flipper Apps Catalog, it's also in the USB category of the Flipper mobile app and Flipper Lab.</p>
+      </div>
       <div class="way">
         <h3>With your coding agent</h3>
         <p>Your own coding agent, working on your computer (in your terminal or code editor, not a chat in the browser), can read the code for you and say what it couldn't check, then install everything and test that it really works on your computer and your Flipper. If something doesn't, it helps you report it, so it gets fixed for setups like yours. Plug in the Flipper and paste this to it:</p>
@@ -286,12 +298,6 @@
         </div>
         <p class="copy-status" id="copy-status" role="status"></p>
         <p class="note">It follows the <a href="https://github.com/arudaev/duckwalk/blob/main/docs/agents/install.md">install guide for coding agents</a> and asks you before every change.</p>
-      </div>
-      <div class="way" id="app">
-        <h3>By hand</h3>
-        <p>Prefer to do it yourself? The install guide takes you through it on Windows, macOS and Linux: first Harold onto the Flipper, then, if you like, the desktop app that tells him when you're back.</p>
-        <p><a class="button" href="https://github.com/arudaev/duckwalk/blob/main/docs/install.md">Install guide</a></p>
-        <p class="note">Once Duckwalk is in the Flipper Apps Catalog, it's also in the USB category of the Flipper mobile app and Flipper Lab.</p>
       </div>
     </div>
     <p class="say">Official Flipper firmware 1.5.1 or newer. The <a href="https://github.com/arudaev/duckwalk/blob/main/docs/install.md#part-2-the-desktop-app-optional">desktop app</a> is optional; it sees that you used your mouse or keyboard, never what you typed, and sends nothing over the network. It starts when you log in (you can turn that off) and isn't signed yet, so your computer may warn you the first time you open it: <a href="https://github.com/arudaev/duckwalk/blob/main/desktop/app/README.md#what-it-does-exactly">everything it does</a>.</p>
