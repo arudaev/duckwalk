@@ -49,7 +49,7 @@ With `--exe` it refuses to start while another Duckwalk runs: quit that one from
 |---|---|---|---|---|---|
 | 6 Nov 2026 | Windows 11 ARM64 | at rest | about 9 MB | 0.1 % in Task Manager | – |
 | 25 Nov 2026 | Windows 11 ARM64, Bluetooth | while you work | 9.4 MB | 1.8–2.1 % | 335–383 |
-| 25 Nov 2026 | GitHub `windows-latest`, x64, no Flipper | at rest | 7.6 MB | 0.34–0.47 % | 131–152 |
+| 25 Nov 2026 | GitHub `windows-latest`, x64, no Flipper | at rest | 7.6–8.9 MB | 0.29–0.47 % | 131–152 |
 | 25 Nov 2026 | GitHub `ubuntu-latest`, xvfb, no Flipper | at rest, input not watched | 68.7 MB (USS, most of it GTK) | 0.20 % | 71 |
 
 Where the wake-ups come from today: the main loop checks for news from the Flipper every 50 ms and for the pointer's area every 100 ms, the tray redraws every 250 to 500 ms, and over Bluetooth the Windows link checks every 20 ms. Each tick wakes a few threads.
