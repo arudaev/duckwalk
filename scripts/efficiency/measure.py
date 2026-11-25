@@ -138,7 +138,7 @@ def nudge_while(stop):
         stop.wait(0.1)
 
 
-def measure(p, seconds, working):
+def measure(p, seconds, working, report_only=False):
     stop = threading.Event()
     if working:
         if not WINDOWS:
@@ -176,6 +176,9 @@ def measure(p, seconds, working):
 
     known = [i for i in idle if i is not None]
     if not known:
+        if report_only:
+            out["note"] = "The app couldn't watch input here, so nobody checked that the computer was left alone."
+            return out
         raise RuntimeError("the app didn't say how long you've been idle "
                            "(no control socket, or it can't watch input)")
     if working and max(known) > 1:
@@ -221,6 +224,8 @@ def report(m, budget, name, seconds):
                          f"{'ok' if ok else 'over'} |")
     if m.get("error"):
         lines += ["", f"Wake-ups: {m['error']}"]
+    if m.get("note"):
+        lines += ["", m["note"]]
     return "\n".join(lines) + "\n", (1 if over else 2 if missing else 0)
 
 
@@ -263,7 +268,8 @@ def main():
         if ask_app() is None:
             print("The app doesn't answer on its control socket, so it isn't really running.")
             return 2
-        m = measure(p, args.seconds, args.working)
+        report_only = not any(isinstance(v, (int, float)) for v in budget.values())
+        m = measure(p, args.seconds, args.working, report_only)
     except (psutil.Error, RuntimeError, OSError) as e:
         print(f"Couldn't measure: {e}")
         return 2
