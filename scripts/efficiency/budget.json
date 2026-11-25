@@ -1,0 +1,19 @@
+{
+  "windows": {
+    "about": "The reference machine: Windows 11 ARM64, 12 logical CPUs, the native build, Flipper connected",
+    "private_mb": 20,
+    "cpu_rest_pct": 2,
+    "cpu_working_pct": 4,
+    "wakeups_rest": 350,
+    "wakeups_working": 700
+  },
+  "windows-ci": {
+    "about": "GitHub's windows-latest runner, x64, no Flipper, at rest only",
+    "private_mb": 20,
+    "cpu_rest_pct": 1,
+    "wakeups_rest": 300
+  },
+  "linux": {
+    "about": "Report only until it has a baseline of its own"
+  }
+}
