@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="brand/banner.png" alt="Duckwalk: a pen drawing of Harold, a yellow rubber duck, nudging a mouse pointer along a dotted path from a Flipper Zero to a laptop" width="100%">
+</p>
+
 # Duckwalk
 
 **A Flipper Zero app that keeps your computer awake, with a rubber debugging duck in charge.**
