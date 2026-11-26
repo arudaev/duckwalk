@@ -9,7 +9,6 @@
 [![Build](https://github.com/arudaev/duckwalk/actions/workflows/build.yml/badge.svg)](https://github.com/arudaev/duckwalk/actions/workflows/build.yml)
 [![Tests](https://github.com/arudaev/duckwalk/actions/workflows/tests.yml/badge.svg)](https://github.com/arudaev/duckwalk/actions/workflows/tests.yml)
 [![Desktop app](https://github.com/arudaev/duckwalk/actions/workflows/desktop-app.yml/badge.svg)](https://github.com/arudaev/duckwalk/actions/workflows/desktop-app.yml)
-[![Release](https://img.shields.io/github/v/release/arudaev/duckwalk?include_prereleases&label=release)](https://github.com/arudaev/duckwalk/releases)
 [![Licence: GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-blue)](LICENSE)
 
 [Website](https://arudaev.github.io/duckwalk/) · [Install](#install) · [User guide](docs/guide.md) · [All docs](docs/README.md)
