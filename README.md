@@ -16,16 +16,16 @@
 Harold lives on your desk. When you step away, he moves the mouse pointer so Teams, the screen saver and the lock timer still see someone there, and he puts it back where it was. Never the same path twice, so it does not look like a jiggler. Over USB or Bluetooth, no drivers, nothing to install on the computer. The same Flipper is a media, slides and mouse remote.
 
 > [!NOTE]
-> **v0.1-rc1 is out**, a preview of the first release. It is built for the official firmware 1.5.1 (API 88.2) and tested with Windows 11, over USB and Bluetooth. Custom firmware such as Momentum or Unleashed hasn't been tested yet; if you try it, [say how it went](https://github.com/arudaev/duckwalk/issues/new/choose). Progress: [v0.1 milestone](https://github.com/arudaev/duckwalk/milestone/2).
+> **v0.1-rc1 is out**, a preview of the first release. It is built for the official firmware 1.5.1 (API 88.2) and tested with Windows 11, over USB and Bluetooth. Custom firmware such as Momentum or Unleashed isn't supported, because it hasn't been tested; if you try it anyway, [say how it went](https://github.com/arudaev/duckwalk/issues/new/choose). Progress: [v0.1 milestone](https://github.com/arudaev/duckwalk/milestone/2).
 
 ## Why Duckwalk
 
-- **It does not look like a jiggler.** Never the same path twice, in three ways. **Walk** takes a short, curved, random walk every few minutes. **Subtle** moves one pixel out and back, invisible while you work. **Wander** drifts the pointer around without stopping and glides it back to where it started when you turn it off. [See them move.](https://arudaev.github.io/duckwalk/#modes)
+- **It does not look like a jiggler.** Three ways, never the same path twice. **Walk** takes a short, curved, random walk every few minutes. **Subtle** moves one pixel out and back, invisible while you work. **Wander** drifts the pointer around without stopping and glides it back to where it started when you turn it off. [See them move.](https://arudaev.github.io/duckwalk/#modes)
 - **USB or Bluetooth.** Plug it in, or pair it and keep it in your pocket. A connection check shows whether the Flipper or the computer needs attention.
 - **Stops when you want it to.** Work hours only (Mon–Fri 8–18), and **Stop after** puts Harold to sleep when nobody has been around for 1 to 8 hours, so a PC you walked away from still locks.
 - **Lets go while you work.** With the optional [desktop app](desktop/app/README.md) for Windows, macOS and Linux, Harold pauses the moment you touch your own mouse or keyboard, over USB or Bluetooth. It lives in the tray and starts at login.
 - **A remote too.** Play, pause, volume and tracks; next and previous slide; a D-pad mouse.
-- **Under the hood.** Over USB it is one device with a mouse, media keys and a data channel. The walks, timers and settings are unit-tested on a computer, and every screen in these docs is rendered from the app's own drawing code on each change. [How it works.](#how-it-works)
+- **Under the hood.** Over USB it is one device with a mouse, media keys and a data channel. The walks, timers and settings are unit-tested on a computer, and every screen is rendered from the app's own drawing code on each change, so the screenshots in these docs are the real thing. [How it works.](#how-it-works)
 - **Harold is good company.** He reads code, types, sips coffee, hunts bugs and quacks at them.
 
 ## Install
@@ -37,7 +37,7 @@ Harold lives on your desk. When you step away, he moves the mouse pointer so Tea
 
 The [install guide](docs/install.md) has every step and the optional desktop app for Windows, macOS and Linux. Once Duckwalk is in the Flipper Apps Catalog, you can also install it from the **USB** category of the Flipper mobile app or [Flipper Lab](https://lab.flipper.net/apps).
 
-**Build it yourself** with [ufbt](https://github.com/flipperdevices/flipperzero-ufbt), Flipper's official build tool (Python 3.8 or newer). With the Flipper plugged in and qFlipper closed:
+**Build it yourself** with [ufbt](https://github.com/flipperdevices/flipperzero-ufbt), Flipper's official build tool. The short version, on Windows with Python 3.8 or newer, the Flipper plugged in and qFlipper closed (macOS and Linux need a few more steps: see [Or build it yourself](docs/install.md#or-build-it-yourself)):
 
 ```bash
 python -m pip install --upgrade ufbt
