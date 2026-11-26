@@ -22,6 +22,43 @@ Harold lives on your desk. When you step away, he moves the mouse pointer so Tea
 > [!NOTE]
 > **v0.1-rc1 is out**, a preview of the first release. It is built for the official firmware 1.5.1 (API 88.2) and tested with Windows 11, over USB and Bluetooth. Custom firmware such as Momentum or Unleashed isn't supported, because it hasn't been tested; if you try it anyway, [say how it went](https://github.com/arudaev/duckwalk/issues/new/choose). Progress: [v0.1 milestone](https://github.com/arudaev/duckwalk/milestone/2).
 
+## Install
+
+### With your coding agent: the easy way
+
+Plug in the Flipper and paste this to the coding agent on your computer, one that works in your terminal or code editor, not a chat in the browser:
+
+```text
+Install Duckwalk on this computer and my plugged-in Flipper Zero by following
+https://raw.githubusercontent.com/arudaev/duckwalk/main/docs/agents/install.md.
+Check the code for me, ask before you change anything, test that it all works
+here, and help me report anything that doesn't to the maintainer.
+```
+
+It reads the code and tells you what it couldn't check, installs the Flipper app and the optional desktop app on Windows, macOS or Linux, and tests that both really work. It asks before every change, and if something doesn't work, it helps you report it, so it gets fixed for setups like yours. It follows the [install guide for coding agents](docs/agents/install.md).
+
+### By hand
+
+1. Update the Flipper to the official firmware, 1.5.1 or newer, with [qFlipper](https://flipper.net/pages/downloads).
+2. Download [`duckwalk.fap`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk.fap) (v0.1-rc1).
+3. In qFlipper's file manager, drag it into **SD Card > apps > USB**.
+4. On the Flipper: **Apps > USB > Duckwalk**. On the first launch Harold asks how to reach the computer: **Left** for USB, **Right** for Bluetooth. Bluetooth walks you through pairing on the Flipper's screen.
+
+The [install guide](docs/install.md) has every step, including the desktop app. Once Duckwalk is in the Flipper Apps Catalog, you can also install it from the **USB** category of the Flipper mobile app or [Flipper Lab](https://lab.flipper.net/apps).
+
+<details>
+<summary><b>Build it yourself</b></summary>
+
+With [ufbt](https://github.com/flipperdevices/flipperzero-ufbt), Flipper's official build tool. The short version, on Windows with Python 3.8 or newer, the Flipper plugged in and qFlipper closed. macOS and Linux need a few more steps: see [Or build it yourself](docs/install.md#or-build-it-yourself).
+
+```bash
+python -m pip install --upgrade ufbt
+git clone https://github.com/arudaev/duckwalk
+cd duckwalk/app && python -m ufbt launch
+```
+
+</details>
+
 ## Why Duckwalk
 
 - **It does not look like a jiggler.** Three ways, never the same path twice. **Walk** takes a short, curved, random walk every few minutes. **Subtle** moves one pixel out and back, invisible while you work. **Wander** drifts the pointer around without stopping and glides it back to where it started when you turn it off. [See them move.](https://arudaev.github.io/duckwalk/#modes)
@@ -31,36 +68,6 @@ Harold lives on your desk. When you step away, he moves the mouse pointer so Tea
 - **A remote too.** Play, pause, volume and tracks; next and previous slide; a D-pad mouse.
 - **Under the hood.** Over USB it is one device with a mouse, media keys and a data channel. The walks, timers and settings are unit-tested on a computer, and every screen is rendered from the app's own drawing code on each change, so the screenshots in these docs are the real thing. [How it works.](#how-it-works)
 - **Harold is good company.** He reads code, types, sips coffee, hunts bugs and quacks at them.
-
-## Install
-
-1. Update the Flipper to the official firmware, 1.5.1 or newer, with [qFlipper](https://flipper.net/pages/downloads).
-2. Download [`duckwalk.fap`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk.fap) (v0.1-rc1).
-3. In qFlipper's file manager, drag it into **SD Card > apps > USB**.
-4. On the Flipper: **Apps > USB > Duckwalk**. On the first launch Harold asks how to reach the computer: **Left** for USB, **Right** for Bluetooth. Bluetooth walks you through pairing on the Flipper's screen.
-
-The [install guide](docs/install.md) has every step and the optional desktop app for Windows, macOS and Linux. Once Duckwalk is in the Flipper Apps Catalog, you can also install it from the **USB** category of the Flipper mobile app or [Flipper Lab](https://lab.flipper.net/apps).
-
-**Build it yourself** with [ufbt](https://github.com/flipperdevices/flipperzero-ufbt), Flipper's official build tool. The short version, on Windows with Python 3.8 or newer, the Flipper plugged in and qFlipper closed (macOS and Linux need a few more steps: see [Or build it yourself](docs/install.md#or-build-it-yourself)):
-
-```bash
-python -m pip install --upgrade ufbt
-git clone https://github.com/arudaev/duckwalk
-cd duckwalk/app && python -m ufbt launch
-```
-
-<details>
-<summary><b>Or let your coding agent install it</b></summary>
-
-Your own coding agent, working on your computer (in your terminal or code editor, not a chat in the browser), can read the code for you and say what it couldn't check, then install everything and test that it really works on your computer and your Flipper. If something doesn't, it helps you report it, so it gets fixed for setups like yours. Plug in the Flipper and paste this to it:
-
-```text
-Install Duckwalk on this computer and my plugged-in Flipper Zero by following https://raw.githubusercontent.com/arudaev/duckwalk/main/docs/agents/install.md. Check the code for me, ask before you change anything, test that it all works here, and help me report anything that doesn't to the maintainer.
-```
-
-It follows the [install guide for coding agents](docs/agents/install.md) and asks you before every change.
-
-</details>
 
 ## Use
 
