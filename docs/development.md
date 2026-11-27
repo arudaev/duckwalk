@@ -88,8 +88,8 @@ Every pull request runs:
 3. Optional, before tagging: **Actions > Release > Run workflow** does a dry run that checks the tag you give it, builds everything and releases nothing.
 4. Check the [efficiency budget](efficiency.md) on the reference machine, with the Flipper connected: the native build (the dry run's `windows-arm64` file, or `cargo build --release`), at rest and with `--working`. Attach both reports to the release-notes pull request. A release over budget waits.
 5. The author tags `main`, for example `git tag v0.1 && git push origin v0.1`. A pre-release adds `-rcN` to the same version, like `v0.1-rc1`.
-6. The Release workflow checks the tag against `fap_version` (`scripts/release_tag.py`), builds `duckwalk.fap` and the desktop app for Windows (x64, ARM64), macOS (Apple silicon, Intel) and Linux (x64), and leaves a draft release with them, `70-duckwalk.rules` and `SHA256SUMS` attached. An `-rcN` tag makes it a pre-release, which never becomes the latest release. Before publishing, check that the firmware the run summary names matches the release notes.
-7. The author reads the draft and publishes it, then updates the catalog manifest's `commit_sha` (issue #10).
+6. The Release workflow checks the tag against `fap_version` (`scripts/release_tag.py`), builds `duckwalk.fap` and the desktop app for Windows (x64, ARM64), macOS (Apple silicon, Intel) and Linux (x64), attests where each file was built ([build provenance](code-signing.md#until-then)), and leaves a draft release with them, `70-duckwalk.rules` and `SHA256SUMS` attached. An `-rcN` tag makes it a pre-release, which never becomes the latest release. Before publishing, check that the firmware the run summary names matches the release notes.
+7. The author reads the draft, checks one downloaded file with `gh attestation verify <file> --repo arudaev/duckwalk --signer-workflow arudaev/duckwalk/.github/workflows/release.yml`, and publishes it, then updates the catalog manifest's `commit_sha` (issue #10).
 
 ---
 
