@@ -148,6 +148,10 @@ pub struct Harold {
     quacked: Mutex<Option<Instant>>,
 }
 
+/// Harold just started walking: the link loop wakes and starts sending
+/// where the pointer may go (main.rs), instead of checking all the time.
+pub static WALK_STARTED: tokio::sync::Notify = tokio::sync::Notify::const_new();
+
 pub static HAROLD: Harold = Harold {
     heard: AtomicBool::new(false),
     awake: AtomicBool::new(false),
@@ -176,7 +180,9 @@ impl Harold {
             } => {
                 self.heard.store(true, Ordering::Relaxed);
                 self.awake.store(*awake, Ordering::Relaxed);
-                self.walking.store(*walking, Ordering::Relaxed);
+                if !self.walking.swap(*walking, Ordering::Relaxed) && *walking {
+                    WALK_STARTED.notify_one();
+                }
                 self.waiting.store(*waiting, Ordering::Relaxed);
                 self.mode.store(
                     match mode {

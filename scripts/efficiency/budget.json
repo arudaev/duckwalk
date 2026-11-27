@@ -4,8 +4,8 @@
     "private_mb": 20,
     "cpu_rest_pct": 2,
     "cpu_working_pct": 4,
-    "wakeups_rest": 350,
-    "wakeups_working": 700
+    "wakeups_rest": 250,
+    "wakeups_working": 550
   },
   "windows-ci": {
     "about": "GitHub's windows-latest runner, x64, no Flipper, at rest only",

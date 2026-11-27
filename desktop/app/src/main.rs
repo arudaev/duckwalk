@@ -24,6 +24,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use tokio::sync::{watch, Notify};
+use tokio::time::MissedTickBehavior;
 
 use protocol::{bye_packet, command_packet, idle_packet, usb_report, HEARTBEAT};
 use status::{Connection, STATUS};
@@ -199,22 +200,26 @@ async fn link(verbose: bool, pretend_working: bool, quit: Arc<Notify>) {
     let mut last_try = Instant::now() - RETRY_OPEN;
     let mut ticker = tokio::time::interval(HEARTBEAT);
     let mut sent = Instant::now() - SEND_ACTIVE;
-    // Duckwalk's own packets (flipper.rs) are read this often over USB.
+    // Duckwalk's own packets (flipper.rs) are read this often over USB, and
+    // only while it is open there. The area goes out only while Harold walks.
+    // Neither timer runs otherwise, so the app sleeps between heartbeats.
     let mut listen = tokio::time::interval(LISTEN);
+    listen.set_missed_tick_behavior(MissedTickBehavior::Delay);
     let mut area_tick = tokio::time::interval(AREA_WALKING);
+    area_tick.set_missed_tick_behavior(MissedTickBehavior::Delay);
     let mut area_sent = Instant::now();
     loop {
         tokio::select! {
-            _ = listen.tick() => {
+            _ = listen.tick(), if usb.is_open() => {
                 usb.poll(|p| flipper::HAROLD.receive(p, verbose));
                 continue;
             }
-            _ = area_tick.tick() => {
-                if flipper::HAROLD.walking() {
-                    send_area(&mut usb, &mut area_sent);
-                }
+            _ = area_tick.tick(), if flipper::HAROLD.walking() => {
+                send_area(&mut usb, &mut area_sent);
                 continue;
             }
+            // Over Bluetooth, news that he walks arrives on another thread.
+            _ = flipper::WALK_STARTED.notified() => continue,
             Some(cmd) = cmd_rx.recv() => {
                 if usb.is_open() {
                     usb.send(&usb_report(&command_packet(&cmd)));
