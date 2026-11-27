@@ -20,7 +20,7 @@
 Harold lives on your desk. When you step away, he moves the mouse pointer so Teams, the screen saver and the lock timer still see someone there, and he puts it back where it was. Never the same path twice, so it does not look like a jiggler. Over USB or Bluetooth, no drivers, nothing to install on the computer. The same Flipper is a media, slides and mouse remote.
 
 > [!NOTE]
-> **v0.1-rc1 is out**, a preview of the first release. It is built for the official firmware 1.5.1 (API 88.2) and tested with Windows 11, over USB and Bluetooth. Custom firmware such as Momentum or Unleashed isn't supported, because it hasn't been tested; if you try it anyway, [say how it went](https://github.com/arudaev/duckwalk/issues/new/choose). Progress: [v0.1 milestone](https://github.com/arudaev/duckwalk/milestone/2).
+> **v0.1-rc2 is out**, a preview of the first release. It is built for the official firmware 1.5.1 (API 88.2) and tested with Windows 11, over USB and Bluetooth. Custom firmware such as Momentum or Unleashed isn't supported, because it hasn't been tested; if you try it anyway, [say how it went](https://github.com/arudaev/duckwalk/issues/new/choose). Progress: [v0.1 milestone](https://github.com/arudaev/duckwalk/milestone/2).
 
 ## Install
 
@@ -40,7 +40,7 @@ It reads the code and tells you what it couldn't check, installs the Flipper app
 ### By hand
 
 1. Update the Flipper to the official firmware, 1.5.1 or newer, with [qFlipper](https://flipper.net/pages/downloads).
-2. Download [`duckwalk.fap`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk.fap) (v0.1-rc1).
+2. Download [`duckwalk.fap`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc2/duckwalk.fap) (v0.1-rc2).
 3. In qFlipper's file manager, drag it into **SD Card > apps > USB**.
 4. On the Flipper: **Apps > USB > Duckwalk**. On the first launch Harold asks how to reach the computer: **Left** for USB, **Right** for Bluetooth. Bluetooth walks you through pairing on the Flipper's screen.
 
