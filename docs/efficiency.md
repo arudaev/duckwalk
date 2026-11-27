@@ -10,7 +10,7 @@ The desktop app runs all day on work laptops, so it has to cost nothing you'd no
 |---|---|---|
 | **Private memory** | 20 MB | 20 MB |
 | **CPU,** % of one core | 2 % | 4 % |
-| **Wake-ups** per second | 350 | 700 |
+| **Wake-ups** per second | 250 | 550 |
 | **Battery** | Task Manager's **Power usage** says **Very low** | the same |
 
 - **At rest:** the app runs, the Flipper is connected, and nobody touches the computer.
@@ -50,10 +50,12 @@ With `--exe` it refuses to start while another Duckwalk runs: quit that one from
 | 6 Nov 2026 | Windows 11 ARM64 | at rest | about 9 MB | 0.1 % in Task Manager | – |
 | 25 Nov 2026 | Windows 11 ARM64, Bluetooth | at rest | 9.4–10.4 MB | 1.3–1.5 % | 207–218 |
 | 25 Nov 2026 | Windows 11 ARM64, Bluetooth | while you work | 9.4 MB | 1.8–2.1 % | 335–383 |
+| 27 Nov 2026 | Windows 11 ARM64, Bluetooth, #201 | at rest | 9.2 MB | 0.52–0.55 % | 136–176 |
+| 27 Nov 2026 | Windows 11 ARM64, Bluetooth, #201 | while you work | 9.1–9.6 MB | 0.83–0.96 % | 371–401 |
 | 25 Nov 2026 | GitHub `windows-latest`, x64, no Flipper | at rest | 7.6–8.9 MB | 0.29–0.47 % | 131–152 |
 | 25 Nov 2026 | GitHub `ubuntu-latest`, xvfb, no Flipper | at rest, input not watched | 68.7 MB (USS, most of it GTK) | 0.20 % | 71 |
 
-Where the wake-ups come from today: the main loop checks for news from the Flipper every 50 ms and for the pointer's area every 100 ms, the tray redraws every 250 to 500 ms, and over Bluetooth the Windows link checks every 20 ms. Each tick wakes a few threads.
+Where the wake-ups come from today: the tray redraws every 250 to 500 ms, and your own input wakes the thread that watches it. The main loop reads Duckwalk's packets every 50 ms only while it is open over USB, and sends the pointer's area every 100 ms only while Harold walks. The Bluetooth link sleeps until there is a new packet or a heartbeat is up. Before #201 all three checked all the time: on 27 Nov the build before it measured 297–425 wake-ups a second at rest and 549–551 while you work.
 
 ---
 
