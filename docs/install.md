@@ -12,14 +12,14 @@ Duckwalk comes in two parts. **Part 1** puts Harold on your Flipper Zero, and th
 - **A USB-C cable that carries data.** Some cables only charge; with one of those the computer doesn't see the Flipper at all.
 - **[qFlipper](https://flipper.net/pages/downloads),** Flipper's app for your computer, to copy Duckwalk onto the Flipper. (Or a microSD card reader.)
 
-The files below are from **v0.1-rc1**, a preview of the first release: the same app, while Duckwalk waits for the Flipper Apps Catalog and its USB ID waits for [pid.codes](https://github.com/pidcodes/pidcodes.github.com/pull/1353). [What's in it](https://github.com/arudaev/duckwalk/releases/tag/v0.1-rc1).
+The files below are from **v0.1-rc2**, a preview of the first release: the same app, while Duckwalk waits for the Flipper Apps Catalog and its USB ID waits for [pid.codes](https://github.com/pidcodes/pidcodes.github.com/pull/1353). [What's in it](https://github.com/arudaev/duckwalk/releases/tag/v0.1-rc2).
 
 ## Part 1: the Flipper app
 
 ### Copy the ready-made app
 
 1. **Update the Flipper** to the latest official firmware with qFlipper or the Flipper mobile app. This Duckwalk is built for firmware 1.5.1; on older firmware the Flipper says **Outdated Firmware**.
-2. **Download [`duckwalk.fap`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk.fap).**
+2. **Download [`duckwalk.fap`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc2/duckwalk.fap).**
 3. **Copy it to the Flipper.** Plug in and unlock the Flipper, open qFlipper and go to its file manager. Open **SD Card**, then **apps**, then **USB**, and drag `duckwalk.fap` into it. (With a card reader instead: copy it to `apps/USB/` on the Flipper's microSD card.)
 4. **Start it** on the Flipper: **Apps > USB > Duckwalk**. You can close qFlipper.
 5. **Choose how Harold reaches the computer:** **Left** for USB if the Flipper stays plugged in, or **Right** for Bluetooth to keep it cable-free. Bluetooth walks you through pairing on the Flipper's screen ([more in the user guide](guide.md#connecting-over-bluetooth)).
@@ -107,7 +107,7 @@ It's ready-made for Windows, macOS and Linux. It isn't signed yet ([here's why](
 
 ### Windows
 
-1. Download [`duckwalk-desktop-windows-x64.exe`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk-desktop-windows-x64.exe). On Windows on ARM (**Settings > System > About** says ARM), take [`duckwalk-desktop-windows-arm64.exe`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk-desktop-windows-arm64.exe) instead.
+1. Download [`duckwalk-desktop-windows-x64.exe`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc2/duckwalk-desktop-windows-x64.exe). On Windows on ARM (**Settings > System > About** says ARM), take [`duckwalk-desktop-windows-arm64.exe`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc2/duckwalk-desktop-windows-arm64.exe) instead.
 2. If your browser warns that the file isn't commonly downloaded, keep it. In Edge: the **...** next to the warning, **Keep**, then **Show more > Keep anyway**.
 3. Open it. If Windows says **Windows protected your PC**, choose **More info**, then **Run anyway**. No window opens: Harold appears in the tray by the clock, where Windows may hide him behind the **^**.
 
@@ -124,7 +124,7 @@ brew install --HEAD arudaev/tap/duckwalk
 duckwalk
 ```
 
-Without Homebrew: download [`duckwalk-desktop-macos-arm64`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk-desktop-macos-arm64) (Apple silicon) or [`duckwalk-desktop-macos-x64`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk-desktop-macos-x64) (Intel; **Apple menu > About This Mac** says which). Move it to a folder where it can stay, run `chmod +x` on it in Terminal, and start it from there. macOS refuses it the first time: choose **Open Anyway** under **System Settings > Privacy & Security**, then start it again.
+Without Homebrew: download [`duckwalk-desktop-macos-arm64`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc2/duckwalk-desktop-macos-arm64) (Apple silicon) or [`duckwalk-desktop-macos-x64`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc2/duckwalk-desktop-macos-x64) (Intel; **Apple menu > About This Mac** says which). Move it to a folder where it can stay, run `chmod +x` on it in Terminal, and start it from there. macOS refuses it the first time: choose **Open Anyway** under **System Settings > Privacy & Security**, then start it again.
 
 Harold appears in the menu bar, and from then on the app starts when you log in. Started from Terminal, it keeps that window busy: closing the window quits Duckwalk until your next login, when it starts by itself.
 
@@ -134,7 +134,7 @@ On its first start the app asks for **Input Monitoring**. Allow it in **System S
 
 ### Linux
 
-Download [`duckwalk-desktop-linux-x64`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/duckwalk-desktop-linux-x64), then put it in a folder where it can stay (it starts from there at every login), make it executable and start it:
+Download [`duckwalk-desktop-linux-x64`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc2/duckwalk-desktop-linux-x64), then put it in a folder where it can stay (it starts from there at every login), make it executable and start it:
 
 ```bash
 mkdir -p ~/.local/bin
@@ -173,7 +173,7 @@ Every program you run can then read your keyboard and mouse; on a shared or work
 
 #### Over USB: let the app reach Duckwalk
 
-Over USB, the app talks to Duckwalk through `/dev/hidraw`, which on most systems only root may open. Duckwalk's udev rule lets whoever is logged in open Duckwalk's own device (USB ID `1209:d0c4`) and nothing else. Download [`70-duckwalk.rules`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc1/70-duckwalk.rules), then:
+Over USB, the app talks to Duckwalk through `/dev/hidraw`, which on most systems only root may open. Duckwalk's udev rule lets whoever is logged in open Duckwalk's own device (USB ID `1209:d0c4`) and nothing else. Download [`70-duckwalk.rules`](https://github.com/arudaev/duckwalk/releases/download/v0.1-rc2/70-duckwalk.rules), then:
 
 ```bash
 cd ~/Downloads   # or wherever your browser saved it
