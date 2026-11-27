@@ -48,7 +48,7 @@ The [desktop app](../desktop/app/README.md) has to tell Duckwalk's input apart f
 
 ## Where the IDs are in the source
 
-Duckwalk uses `1209:D0C4` ([pid.codes entry](https://pid.codes/1209/D0C4/)); development builds before it was assigned used the test IDs `1209:0001`. If the ID ever changes, change it in all of these at once:
+Duckwalk uses `1209:D0C4`, and v0.1-rc1 ships with it. The ID is requested from pid.codes and still pending: [the request](https://github.com/pidcodes/pidcodes.github.com/pull/1353) has not been merged yet. Development builds before the request used the test IDs `1209:0001`. If pid.codes gives Duckwalk another ID, or the ID ever changes, change it in all of these at once:
 
 | Part | File | Constant |
 |---|---|---|
