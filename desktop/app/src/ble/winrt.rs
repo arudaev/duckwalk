@@ -4,6 +4,7 @@
 
 use std::time::Instant;
 
+use tokio::runtime::Handle;
 use tokio::sync::watch;
 use windows::core::{Result, GUID};
 use windows::Devices::Bluetooth::BluetoothCacheMode;
@@ -15,16 +16,23 @@ use windows::Devices::Enumeration::DeviceInformation;
 use windows::Foundation::TypedEventHandler;
 use windows::Storage::Streams::{DataReader, DataWriter};
 
-use super::{has_once, linked, take_once, LOOK_AGAIN, NOTIFY, PACKET, SERVICE};
+use super::{has_once, linked, take_once, LOOK_AGAIN, NEWS, NOTIFY, PACKET, SERVICE};
 use crate::flipper::HAROLD;
 use crate::protocol::{HEARTBEAT, PACKET_LEN};
 
 pub async fn run(packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bool>, verbose: bool) {
-    // WinRT calls block, so the link gets a thread of its own.
-    let _ = tokio::task::spawn_blocking(move || link(packets, usb_busy, verbose)).await;
+    // WinRT calls block, so the link gets a thread of its own; it waits on
+    // the runtime's channels and timers through `runtime`.
+    let runtime = Handle::current();
+    let _ = tokio::task::spawn_blocking(move || link(&runtime, packets, usb_busy, verbose)).await;
 }
 
-fn link(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receiver<bool>, verbose: bool) {
+fn link(
+    runtime: &Handle,
+    mut packets: watch::Receiver<[u8; PACKET_LEN]>,
+    usb_busy: watch::Receiver<bool>,
+    verbose: bool,
+) {
     let mut packet: Option<GattCharacteristic> = None;
     // Duckwalk's notifications, kept alive while the link is.
     let mut _listening: Option<GattCharacteristic> = None;
@@ -54,14 +62,18 @@ fn link(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receive
         // up: written again later, an idle time would read as newer than it
         // is, as if you had just touched the mouse.
         if !packets.has_changed().unwrap_or(false) && idle_sent.elapsed() < HEARTBEAT {
-            wait_for_news(&mut packets, idle_sent + HEARTBEAT);
+            if !wait_for_news(runtime, &mut packets, idle_sent + HEARTBEAT) {
+                return;
+            }
             continue;
         }
         let data = *packets.borrow_and_update();
         if matches!(write(target, &data), Ok(true)) {
             linked(true, false);
             idle_sent = Instant::now();
-            wait_for_news(&mut packets, idle_sent + HEARTBEAT);
+            if !wait_for_news(runtime, &mut packets, idle_sent + HEARTBEAT) {
+                return;
+            }
         } else {
             linked(false, false);
             packet = None;
@@ -71,11 +83,28 @@ fn link(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch::Receive
     }
 }
 
-/// Wait until `until`, or less when a new packet comes in (you are active).
-fn wait_for_news(packets: &mut watch::Receiver<[u8; PACKET_LEN]>, until: Instant) {
-    while Instant::now() < until && !packets.has_changed().unwrap_or(false) && !has_once() {
-        std::thread::sleep(std::time::Duration::from_millis(20));
+/// Wait until `until`, or less when a new packet comes in (you are active)
+/// or one waits to go once. The thread sleeps until then, without checking.
+/// `false` once the app has quit: the link stops before the runtime goes.
+fn wait_for_news(runtime: &Handle, packets: &mut watch::Receiver<[u8; PACKET_LEN]>, until: Instant) -> bool {
+    if has_once() || packets.has_changed().unwrap_or(false) {
+        return true;
     }
+    let until = tokio::time::Instant::from_std(until);
+    runtime.block_on(async {
+        tokio::select! {
+            changed = packets.changed() => match changed {
+                // Seen by `changed`; the loop still has to write it.
+                Ok(()) => {
+                    packets.mark_changed();
+                    true
+                }
+                Err(_) => false, // the app has quit
+            },
+            _ = NEWS.notified() => true,
+            _ = tokio::time::sleep_until(until) => true,
+        }
+    })
 }
 
 fn guid(uuid: uuid::Uuid) -> GUID {

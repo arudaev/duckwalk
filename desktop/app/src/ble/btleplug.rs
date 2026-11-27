@@ -6,7 +6,7 @@ use btleplug::platform::{Adapter, Manager, Peripheral};
 use futures::StreamExt;
 use tokio::sync::watch;
 
-use super::{linked, take_once, LOOK_AGAIN, NAME_PREFIX, NOTIFY, PACKET, SERVICE};
+use super::{linked, take_once, LOOK_AGAIN, NAME_PREFIX, NEWS, NOTIFY, PACKET, SERVICE};
 use crate::flipper::HAROLD;
 use crate::protocol::{HEARTBEAT, PACKET_LEN};
 
@@ -46,8 +46,15 @@ pub async fn run(mut packets: watch::Receiver<[u8; PACKET_LEN]>, usb_busy: watch
                 break;
             }
             linked(true, false);
-            // Write at least once a heartbeat, and straight away on news.
-            let _ = tokio::time::timeout(HEARTBEAT, packets.changed()).await;
+            // Write at least once a heartbeat, and straight away on news: a
+            // new packet, or one that must go once.
+            let _ = tokio::time::timeout(HEARTBEAT, async {
+                tokio::select! {
+                    _ = packets.changed() => {}
+                    _ = NEWS.notified() => {}
+                }
+            })
+            .await;
         }
     }
 }

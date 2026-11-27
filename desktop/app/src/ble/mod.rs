@@ -34,8 +34,12 @@ pub static LINKED: AtomicBool = AtomicBool::new(false);
 /// from an agent): written before the next idle packet.
 static ONCE: Mutex<VecDeque<[u8; PACKET_LEN]>> = Mutex::new(VecDeque::new());
 
+/// Something waits in `ONCE`: wakes the link instead of it checking.
+static NEWS: tokio::sync::Notify = tokio::sync::Notify::const_new();
+
 pub fn send_once(packet: [u8; PACKET_LEN]) {
     ONCE.lock().unwrap().push_back(packet);
+    NEWS.notify_one();
 }
 
 /// A packet only the newest of which matters (the pointer's area): it
@@ -45,6 +49,7 @@ pub fn send_latest(packet: [u8; PACKET_LEN]) {
     let mut once = ONCE.lock().unwrap();
     once.retain(|p| p[2] != packet[2]);
     once.push_back(packet);
+    NEWS.notify_one();
 }
 
 fn take_once() -> Option<[u8; PACKET_LEN]> {
