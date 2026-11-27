@@ -13,6 +13,13 @@ Only what this repository builds: the desktop app (`desktop/app`) for Windows, b
 ## Until then
 
 - Download only from [the releases page](https://github.com/arudaev/duckwalk/releases). Every release is built in the open by GitHub Actions from a tagged commit.
+- Check where a file came from. For every release after v0.1-rc1, GitHub keeps a build provenance attestation: a signed record that the file was built by this repository's Release workflow, and from which commit. With the [GitHub CLI](https://cli.github.com/) signed in:
+
+  ```sh
+  gh attestation verify duckwalk-desktop-windows-x64.exe --repo arudaev/duckwalk --signer-workflow arudaev/duckwalk/.github/workflows/release.yml
+  ```
+
+  It works for every file of the release, `SHA256SUMS` too. It proves where the file was built, not that the code is safe, and Windows and macOS don't read it: SmartScreen and Gatekeeper still warn until the app is signed.
 - Or, with Rust installed, build it yourself from source: `cargo install --git https://github.com/arudaev/duckwalk duckwalk`. A build made on your own computer doesn't trigger SmartScreen.
 
 ## Roles

@@ -88,6 +88,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # For the build provenance: who built each file, from which commit.
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -97,9 +100,19 @@ jobs:
       - name: Add the Linux USB rule and the checksums
         working-directory: dist
         run: |
+          test -f "../docs/releases/$GITHUB_REF_NAME.md" || { echo "Write docs/releases/$GITHUB_REF_NAME.md first"; exit 1; }
           cp ../desktop/app/linux/70-duckwalk.rules .
           sha256sum duckwalk.fap duckwalk-desktop-* 70-duckwalk.rules > SHA256SUMS
           cat SHA256SUMS
+      - name: Attest where each file was built
+        # Anyone can check a file with `gh attestation verify <file> --repo arudaev/duckwalk --signer-workflow arudaev/duckwalk/.github/workflows/release.yml`.
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            dist/duckwalk.fap
+            dist/duckwalk-desktop-*
+            dist/70-duckwalk.rules
+            dist/SHA256SUMS
       - name: Create the draft
         env:
           GH_TOKEN: ${{ github.token }}
